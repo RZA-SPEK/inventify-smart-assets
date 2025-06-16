@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -44,7 +43,12 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    // Convert "unassigned" back to empty string for consistency with existing data structure
+    const submitData = {
+      ...formData,
+      assignedTo: formData.assignedTo === "unassigned" ? "" : formData.assignedTo
+    };
+    onSave(submitData);
   };
 
   const assetTypes = [
@@ -185,12 +189,15 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
 
           <div className="space-y-2">
             <Label htmlFor="assignedTo">Toegewezen aan</Label>
-            <Select value={formData.assignedTo} onValueChange={(value) => setFormData({ ...formData, assignedTo: value })}>
+            <Select 
+              value={formData.assignedTo || "unassigned"} 
+              onValueChange={(value) => setFormData({ ...formData, assignedTo: value === "unassigned" ? "" : value })}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Geen toewijzing" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Geen toewijzing</SelectItem>
+                <SelectItem value="unassigned">Geen toewijzing</SelectItem>
                 {mockUsers.map((user) => (
                   <SelectItem key={user} value={user}>
                     {user}
