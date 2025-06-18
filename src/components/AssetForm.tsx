@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Asset } from "@/pages/Index";
+import { Plus } from "lucide-react";
 
 interface AssetFormProps {
   asset?: Asset | null;
@@ -26,6 +26,18 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     assignedTo: "",
     assignedToLocation: ""
   });
+
+  const [customAssetTypes, setCustomAssetTypes] = useState<string[]>([]);
+  const [showCustomTypeInput, setShowCustomTypeInput] = useState(false);
+  const [newCustomType, setNewCustomType] = useState("");
+
+  const defaultAssetTypes = [
+    "Laptop", "Desktop", "Monitor", "Telefoon", "Tablet", "Headset", 
+    "Kabel", "Lader", "Muis", "Toetsenbord", "Webcam", "Printer",
+    "Bureau", "Stoel", "Lamp", "Kast", "Whiteboard"
+  ];
+
+  const allAssetTypes = [...defaultAssetTypes, ...customAssetTypes];
 
   useEffect(() => {
     if (asset) {
@@ -55,11 +67,15 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     onSave(submitData);
   };
 
-  const assetTypes = [
-    "Laptop", "Desktop", "Monitor", "Telefoon", "Tablet", "Headset", 
-    "Kabel", "Lader", "Muis", "Toetsenbord", "Webcam", "Printer",
-    "Bureau", "Stoel", "Lamp", "Kast", "Whiteboard"
-  ];
+  const handleAddCustomType = () => {
+    if (newCustomType.trim() && !allAssetTypes.includes(newCustomType.trim())) {
+      const newType = newCustomType.trim();
+      setCustomAssetTypes([...customAssetTypes, newType]);
+      setFormData({ ...formData, type: newType });
+      setNewCustomType("");
+      setShowCustomTypeInput(false);
+    }
+  };
 
   const locations = [
     "Kantoor Amsterdam", "Kantoor Utrecht", "Kantoor Rotterdam",
@@ -96,18 +112,56 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="type">Asset Type</Label>
-              <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecteer type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {assetTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecteer type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allAssetTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {showCustomTypeInput ? (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Nieuw asset type"
+                      value={newCustomType}
+                      onChange={(e) => setNewCustomType(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddCustomType();
+                        }
+                      }}
+                    />
+                    <Button type="button" size="sm" onClick={handleAddCustomType}>
+                      Toevoegen
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => {
+                      setShowCustomTypeInput(false);
+                      setNewCustomType("");
+                    }}>
+                      Annuleren
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full flex items-center gap-2"
+                    onClick={() => setShowCustomTypeInput(true)}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Aangepast type toevoegen
+                  </Button>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">
