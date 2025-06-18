@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Asset } from "@/pages/Index";
-import { Plus } from "lucide-react";
+import { AssetTypeSelector } from "./AssetTypeSelector";
+import { LocationSelector } from "./LocationSelector";
+import { AssignmentSelector } from "./AssignmentSelector";
 
 interface AssetFormProps {
   asset?: Asset | null;
@@ -26,18 +29,6 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     assignedTo: "",
     assignedToLocation: ""
   });
-
-  const [customAssetTypes, setCustomAssetTypes] = useState<string[]>([]);
-  const [showCustomTypeInput, setShowCustomTypeInput] = useState(false);
-  const [newCustomType, setNewCustomType] = useState("");
-
-  const defaultAssetTypes = [
-    "Laptop", "Desktop", "Monitor", "Telefoon", "Tablet", "Headset", 
-    "Kabel", "Lader", "Muis", "Toetsenbord", "Webcam", "Printer",
-    "Bureau", "Stoel", "Lamp", "Kast", "Whiteboard"
-  ];
-
-  const allAssetTypes = [...defaultAssetTypes, ...customAssetTypes];
 
   useEffect(() => {
     if (asset) {
@@ -67,35 +58,6 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     onSave(submitData);
   };
 
-  const handleAddCustomType = () => {
-    if (newCustomType.trim() && !allAssetTypes.includes(newCustomType.trim())) {
-      const newType = newCustomType.trim();
-      setCustomAssetTypes([...customAssetTypes, newType]);
-      setFormData({ ...formData, type: newType });
-      setNewCustomType("");
-      setShowCustomTypeInput(false);
-    }
-  };
-
-  const locations = [
-    "Kantoor Amsterdam", "Kantoor Utrecht", "Kantoor Rotterdam",
-    "ICT Magazijn", "Facilitair Magazijn", "Thuiswerken"
-  ];
-
-  const specificLocations = [
-    "Werkplek A-101", "Werkplek A-102", "Werkplek A-150", "Werkplek A-200",
-    "Werkplek U-201", "Werkplek U-205", "Werkplek U-210", "Werkplek U-250",
-    "Werkplek R-301", "Werkplek R-305", "Werkplek R-310", "Werkplek R-350",
-    "Magazijn Rek A-1", "Magazijn Rek A-2", "Magazijn Rek B-1", "Magazijn Rek B-3",
-    "Vergaderruimte Alpha", "Vergaderruimte Beta", "Vergaderruimte Gamma",
-    "Reception", "Keuken", "Break Room", "Server Room", "Storage Room"
-  ];
-
-  const mockUsers = [
-    "Jan Janssen", "Marie Peeters", "Tom de Vries", "Lisa de Jong",
-    "Peter van Dam", "Sara Smit", "Mike Jansen"
-  ];
-
   return (
     <Dialog open={true} onOpenChange={onCancel}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -110,59 +72,10 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="type">Asset Type</Label>
-              <div className="space-y-2">
-                <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecteer type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allAssetTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                {showCustomTypeInput ? (
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Nieuw asset type"
-                      value={newCustomType}
-                      onChange={(e) => setNewCustomType(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddCustomType();
-                        }
-                      }}
-                    />
-                    <Button type="button" size="sm" onClick={handleAddCustomType}>
-                      Toevoegen
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={() => {
-                      setShowCustomTypeInput(false);
-                      setNewCustomType("");
-                    }}>
-                      Annuleren
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-full flex items-center gap-2"
-                    onClick={() => setShowCustomTypeInput(true)}
-                  >
-                    <Plus className="h-4 w-4" />
-                    Aangepast type toevoegen
-                  </Button>
-                )}
-              </div>
-            </div>
+            <AssetTypeSelector
+              value={formData.type}
+              onChange={(value) => setFormData({ ...formData, type: value })}
+            />
 
             <div className="space-y-2">
               <Label htmlFor="category">Categorie</Label>
@@ -238,61 +151,17 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="location">Hoofdlocatie</Label>
-            <Select value={formData.location} onValueChange={(value) => setFormData({ ...formData, location: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecteer hoofdlocatie" />
-              </SelectTrigger>
-              <SelectContent>
-                {locations.map((location) => (
-                  <SelectItem key={location} value={location}>
-                    {location}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <LocationSelector
+            mainLocation={formData.location}
+            specificLocation={formData.assignedToLocation}
+            onMainLocationChange={(value) => setFormData({ ...formData, location: value })}
+            onSpecificLocationChange={(value) => setFormData({ ...formData, assignedToLocation: value })}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="assignedToLocation">Specifieke Locatie</Label>
-            <Select 
-              value={formData.assignedToLocation || "unassigned"} 
-              onValueChange={(value) => setFormData({ ...formData, assignedToLocation: value === "unassigned" ? "" : value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Geen specifieke locatie" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="unassigned">Geen specifieke locatie</SelectItem>
-                {specificLocations.map((location) => (
-                  <SelectItem key={location} value={location}>
-                    {location}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="assignedTo">Toegewezen aan</Label>
-            <Select 
-              value={formData.assignedTo || "unassigned"} 
-              onValueChange={(value) => setFormData({ ...formData, assignedTo: value === "unassigned" ? "" : value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Geen toewijzing" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="unassigned">Geen toewijzing</SelectItem>
-                {mockUsers.map((user) => (
-                  <SelectItem key={user} value={user}>
-                    {user}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <AssignmentSelector
+            assignedTo={formData.assignedTo}
+            onAssignedToChange={(value) => setFormData({ ...formData, assignedTo: value })}
+          />
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onCancel}>
