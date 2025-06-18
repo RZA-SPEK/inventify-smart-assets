@@ -1,14 +1,15 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Camera } from "lucide-react";
 import { Asset } from "@/pages/Index";
 import { AssetTypeSelector } from "./AssetTypeSelector";
 import { LocationSelector } from "./LocationSelector";
 import { AssignmentSelector } from "./AssignmentSelector";
+import { BarcodeScanner } from "./BarcodeScanner";
 
 interface AssetFormProps {
   asset?: Asset | null;
@@ -17,6 +18,7 @@ interface AssetFormProps {
 }
 
 export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
+  const [showScanner, setShowScanner] = useState(false);
   const [formData, setFormData] = useState({
     type: "",
     brand: "",
@@ -58,121 +60,148 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     onSave(submitData);
   };
 
+  const handleBarcodeScanned = (scannedData: string) => {
+    console.log("Setting serial number from barcode:", scannedData);
+    setFormData({ ...formData, serialNumber: scannedData });
+    setShowScanner(false);
+  };
+
   return (
-    <Dialog open={true} onOpenChange={onCancel}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {asset ? "Asset Bewerken" : "Nieuw Asset Toevoegen"}
-          </DialogTitle>
-          <DialogDescription>
-            Vul de gegevens van het asset in.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={true} onOpenChange={onCancel}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {asset ? "Asset Bewerken" : "Nieuw Asset Toevoegen"}
+            </DialogTitle>
+            <DialogDescription>
+              Vul de gegevens van het asset in.
+            </DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <AssetTypeSelector
-              value={formData.type}
-              onChange={(value) => setFormData({ ...formData, type: value })}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <AssetTypeSelector
+                value={formData.type}
+                onChange={(value) => setFormData({ ...formData, type: value })}
+              />
+
+              <div className="space-y-2">
+                <Label htmlFor="category">Categorie</Label>
+                <Select value={formData.category} onValueChange={(value: "ICT" | "Facilitair") => setFormData({ ...formData, category: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ICT">ICT</SelectItem>
+                    <SelectItem value="Facilitair">Facilitair</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="brand">Merk</Label>
+                <Input
+                  id="brand"
+                  value={formData.brand}
+                  onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="model">Model</Label>
+                <Input
+                  id="model"
+                  value={formData.model}
+                  onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="serialNumber">Serienummer</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="serialNumber"
+                  value={formData.serialNumber}
+                  onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowScanner(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Camera className="h-4 w-4" />
+                  Scan
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="purchaseDate">Aankoopdatum</Label>
+                <Input
+                  id="purchaseDate"
+                  type="date"
+                  value={formData.purchaseDate}
+                  onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select value={formData.status} onValueChange={(value: Asset["status"]) => setFormData({ ...formData, status: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="In voorraad">In voorraad</SelectItem>
+                    <SelectItem value="In gebruik">In gebruik</SelectItem>
+                    <SelectItem value="Defect">Defect</SelectItem>
+                    <SelectItem value="Onderhoud">Onderhoud</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <LocationSelector
+              mainLocation={formData.location}
+              specificLocation={formData.assignedToLocation}
+              onMainLocationChange={(value) => setFormData({ ...formData, location: value })}
+              onSpecificLocationChange={(value) => setFormData({ ...formData, assignedToLocation: value })}
             />
 
-            <div className="space-y-2">
-              <Label htmlFor="category">Categorie</Label>
-              <Select value={formData.category} onValueChange={(value: "ICT" | "Facilitair") => setFormData({ ...formData, category: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ICT">ICT</SelectItem>
-                  <SelectItem value="Facilitair">Facilitair</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="brand">Merk</Label>
-              <Input
-                id="brand"
-                value={formData.brand}
-                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="model">Model</Label>
-              <Input
-                id="model"
-                value={formData.model}
-                onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="serialNumber">Serienummer</Label>
-            <Input
-              id="serialNumber"
-              value={formData.serialNumber}
-              onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
-              required
+            <AssignmentSelector
+              assignedTo={formData.assignedTo}
+              onAssignedToChange={(value) => setFormData({ ...formData, assignedTo: value })}
             />
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="purchaseDate">Aankoopdatum</Label>
-              <Input
-                id="purchaseDate"
-                type="date"
-                value={formData.purchaseDate}
-                onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
-                required
-              />
-            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onCancel}>
+                Annuleren
+              </Button>
+              <Button type="submit">
+                {asset ? "Bijwerken" : "Toevoegen"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select value={formData.status} onValueChange={(value: Asset["status"]) => setFormData({ ...formData, status: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="In voorraad">In voorraad</SelectItem>
-                  <SelectItem value="In gebruik">In gebruik</SelectItem>
-                  <SelectItem value="Defect">Defect</SelectItem>
-                  <SelectItem value="Onderhoud">Onderhoud</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <LocationSelector
-            mainLocation={formData.location}
-            specificLocation={formData.assignedToLocation}
-            onMainLocationChange={(value) => setFormData({ ...formData, location: value })}
-            onSpecificLocationChange={(value) => setFormData({ ...formData, assignedToLocation: value })}
-          />
-
-          <AssignmentSelector
-            assignedTo={formData.assignedTo}
-            onAssignedToChange={(value) => setFormData({ ...formData, assignedTo: value })}
-          />
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Annuleren
-            </Button>
-            <Button type="submit">
-              {asset ? "Bijwerken" : "Toevoegen"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      {showScanner && (
+        <BarcodeScanner
+          onScan={handleBarcodeScanned}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
+    </>
   );
 };
