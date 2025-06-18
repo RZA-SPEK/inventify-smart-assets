@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PlusCircle, Laptop, Smartphone, Headphones, Cable, Monitor, User, Settings, BarChart3, MapPin } from "lucide-react";
+import { PlusCircle, Laptop, Smartphone, Headphones, Cable, Monitor, User, Settings, BarChart3, MapPin, Calendar } from "lucide-react";
 import { AssetForm } from "@/components/AssetForm";
 import { UserRole } from "@/components/UserRole";
 import { DashboardStats } from "@/components/DashboardStats";
+import { ReservationDialog } from "@/components/ReservationDialog";
 
 export interface Asset {
   id: string;
@@ -23,6 +24,7 @@ export interface Asset {
   category: "ICT" | "Facilitair";
   assignedTo?: string;
   assignedToLocation?: string;
+  image?: string;
 }
 
 const mockAssets: Asset[] = [
@@ -87,6 +89,7 @@ const Index = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [showAssetForm, setShowAssetForm] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+  const [reservationAsset, setReservationAsset] = useState<Asset | null>(null);
 
   const getAssetIcon = (type: string) => {
     switch (type.toLowerCase()) {
@@ -274,6 +277,7 @@ const Index = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>Foto</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Merk & Model</TableHead>
                         <TableHead>Serienummer</TableHead>
@@ -282,14 +286,25 @@ const Index = () => {
                         <TableHead>Toegewezen aan</TableHead>
                         <TableHead>Locatie</TableHead>
                         <TableHead>Specifieke Locatie</TableHead>
-                        {(currentRole === "ICT Admin" || currentRole === "Facilitair Medewerker") && (
-                          <TableHead>Acties</TableHead>
-                        )}
+                        <TableHead>Acties</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredAssets.map((asset) => (
                         <TableRow key={asset.id}>
+                          <TableCell>
+                            {asset.image ? (
+                              <img
+                                src={asset.image}
+                                alt={`${asset.brand} ${asset.model}`}
+                                className="w-12 h-12 object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                                {getAssetIcon(asset.type)}
+                              </div>
+                            )}
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
                               {getAssetIcon(asset.type)}
@@ -329,17 +344,30 @@ const Index = () => {
                               <span className="text-gray-400">Geen specifieke locatie</span>
                             )}
                           </TableCell>
-                          {(currentRole === "ICT Admin" || currentRole === "Facilitair Medewerker") && (
-                            <TableCell>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => startEditAsset(asset)}
-                              >
-                                Bewerken
-                              </Button>
-                            </TableCell>
-                          )}
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              {asset.status === "In voorraad" && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setReservationAsset(asset)}
+                                  className="flex items-center gap-1"
+                                >
+                                  <Calendar className="h-3 w-3" />
+                                  Reserveren
+                                </Button>
+                              )}
+                              {(currentRole === "ICT Admin" || currentRole === "Facilitair Medewerker") && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => startEditAsset(asset)}
+                                >
+                                  Bewerken
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -402,6 +430,13 @@ const Index = () => {
             setShowAssetForm(false);
             setEditingAsset(null);
           }}
+        />
+      )}
+
+      {reservationAsset && (
+        <ReservationDialog
+          asset={reservationAsset}
+          onClose={() => setReservationAsset(null)}
         />
       )}
     </div>

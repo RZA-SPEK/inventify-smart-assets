@@ -10,6 +10,7 @@ import { AssetTypeSelector } from "./AssetTypeSelector";
 import { LocationSelector } from "./LocationSelector";
 import { AssignmentSelector } from "./AssignmentSelector";
 import { BarcodeScanner } from "./BarcodeScanner";
+import { ImageUpload } from "./ImageUpload";
 
 interface AssetFormProps {
   asset?: Asset | null;
@@ -29,7 +30,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     location: "",
     category: "ICT" as Asset["category"],
     assignedTo: "",
-    assignedToLocation: ""
+    assignedToLocation: "",
+    image: ""
   });
 
   useEffect(() => {
@@ -44,7 +46,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
         location: asset.location,
         category: asset.category,
         assignedTo: asset.assignedTo || "",
-        assignedToLocation: asset.assignedToLocation || ""
+        assignedToLocation: asset.assignedToLocation || "",
+        image: asset.image || ""
       });
     }
   }, [asset]);
@@ -55,7 +58,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     const submitData = {
       ...formData,
       assignedTo: formData.assignedTo === "unassigned" ? "" : formData.assignedTo,
-      assignedToLocation: formData.assignedToLocation === "unassigned" ? "" : formData.assignedToLocation
+      assignedToLocation: formData.assignedToLocation === "unassigned" ? "" : formData.assignedToLocation,
+      image: formData.image || undefined
     };
     onSave(submitData);
   };
@@ -80,6 +84,11 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <ImageUpload
+              currentImage={formData.image}
+              onImageChange={(imageUrl) => setFormData({ ...formData, image: imageUrl || "" })}
+            />
+
             <div className="grid grid-cols-2 gap-4">
               <AssetTypeSelector
                 value={formData.type}
