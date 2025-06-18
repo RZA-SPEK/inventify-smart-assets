@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     status: "In voorraad" as Asset["status"],
     location: "",
     category: "ICT" as Asset["category"],
-    assignedTo: ""
+    assignedTo: "",
+    assignedToLocation: ""
   });
 
   useEffect(() => {
@@ -36,7 +38,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
         status: asset.status,
         location: asset.location,
         category: asset.category,
-        assignedTo: asset.assignedTo || ""
+        assignedTo: asset.assignedTo || "",
+        assignedToLocation: asset.assignedToLocation || ""
       });
     }
   }, [asset]);
@@ -46,7 +49,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     // Convert "unassigned" back to empty string for consistency with existing data structure
     const submitData = {
       ...formData,
-      assignedTo: formData.assignedTo === "unassigned" ? "" : formData.assignedTo
+      assignedTo: formData.assignedTo === "unassigned" ? "" : formData.assignedTo,
+      assignedToLocation: formData.assignedToLocation === "unassigned" ? "" : formData.assignedToLocation
     };
     onSave(submitData);
   };
@@ -62,6 +66,15 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     "ICT Magazijn", "Facilitair Magazijn", "Thuiswerken"
   ];
 
+  const specificLocations = [
+    "Werkplek A-101", "Werkplek A-102", "Werkplek A-150", "Werkplek A-200",
+    "Werkplek U-201", "Werkplek U-205", "Werkplek U-210", "Werkplek U-250",
+    "Werkplek R-301", "Werkplek R-305", "Werkplek R-310", "Werkplek R-350",
+    "Magazijn Rek A-1", "Magazijn Rek A-2", "Magazijn Rek B-1", "Magazijn Rek B-3",
+    "Vergaderruimte Alpha", "Vergaderruimte Beta", "Vergaderruimte Gamma",
+    "Reception", "Keuken", "Break Room", "Server Room", "Storage Room"
+  ];
+
   const mockUsers = [
     "Jan Janssen", "Marie Peeters", "Tom de Vries", "Lisa de Jong",
     "Peter van Dam", "Sara Smit", "Mike Jansen"
@@ -69,7 +82,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
 
   return (
     <Dialog open={true} onOpenChange={onCancel}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {asset ? "Asset Bewerken" : "Nieuw Asset Toevoegen"}
@@ -172,13 +185,33 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="location">Locatie</Label>
+            <Label htmlFor="location">Hoofdlocatie</Label>
             <Select value={formData.location} onValueChange={(value) => setFormData({ ...formData, location: value })}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecteer locatie" />
+                <SelectValue placeholder="Selecteer hoofdlocatie" />
               </SelectTrigger>
               <SelectContent>
                 {locations.map((location) => (
+                  <SelectItem key={location} value={location}>
+                    {location}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="assignedToLocation">Specifieke Locatie</Label>
+            <Select 
+              value={formData.assignedToLocation || "unassigned"} 
+              onValueChange={(value) => setFormData({ ...formData, assignedToLocation: value === "unassigned" ? "" : value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Geen specifieke locatie" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unassigned">Geen specifieke locatie</SelectItem>
+                {specificLocations.map((location) => (
                   <SelectItem key={location} value={location}>
                     {location}
                   </SelectItem>

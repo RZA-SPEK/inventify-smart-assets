@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PlusCircle, Laptop, Smartphone, Headphones, Cable, Monitor, User, Settings, BarChart3 } from "lucide-react";
+import { PlusCircle, Laptop, Smartphone, Headphones, Cable, Monitor, User, Settings, BarChart3, MapPin } from "lucide-react";
 import { AssetForm } from "@/components/AssetForm";
 import { UserRole } from "@/components/UserRole";
 import { DashboardStats } from "@/components/DashboardStats";
@@ -23,6 +22,7 @@ export interface Asset {
   location: string;
   category: "ICT" | "Facilitair";
   assignedTo?: string;
+  assignedToLocation?: string;
 }
 
 const mockAssets: Asset[] = [
@@ -36,7 +36,8 @@ const mockAssets: Asset[] = [
     status: "In gebruik",
     location: "Kantoor Amsterdam",
     category: "ICT",
-    assignedTo: "Jan Janssen"
+    assignedTo: "Jan Janssen",
+    assignedToLocation: "Werkplek A-101"
   },
   {
     id: "2",
@@ -47,7 +48,8 @@ const mockAssets: Asset[] = [
     purchaseDate: "2023-03-20",
     status: "In voorraad",
     location: "ICT Magazijn",
-    category: "ICT"
+    category: "ICT",
+    assignedToLocation: "Magazijn Rek B-3"
   },
   {
     id: "3",
@@ -59,7 +61,8 @@ const mockAssets: Asset[] = [
     status: "In gebruik",
     location: "Kantoor Utrecht",
     category: "ICT",
-    assignedTo: "Marie Peeters"
+    assignedTo: "Marie Peeters",
+    assignedToLocation: "Werkplek U-205"
   },
   {
     id: "4",
@@ -71,7 +74,8 @@ const mockAssets: Asset[] = [
     status: "In gebruik",
     location: "Kantoor Amsterdam",
     category: "Facilitair",
-    assignedTo: "Tom de Vries"
+    assignedTo: "Tom de Vries",
+    assignedToLocation: "Werkplek A-150"
   }
 ];
 
@@ -277,6 +281,7 @@ const Index = () => {
                         <TableHead>Categorie</TableHead>
                         <TableHead>Toegewezen aan</TableHead>
                         <TableHead>Locatie</TableHead>
+                        <TableHead>Specifieke Locatie</TableHead>
                         {(currentRole === "ICT Admin" || currentRole === "Facilitair Medewerker") && (
                           <TableHead>Acties</TableHead>
                         )}
@@ -314,6 +319,16 @@ const Index = () => {
                             )}
                           </TableCell>
                           <TableCell>{asset.location}</TableCell>
+                          <TableCell>
+                            {asset.assignedToLocation ? (
+                              <div className="flex items-center space-x-1">
+                                <MapPin className="h-3 w-3 text-blue-500" />
+                                <span className="text-sm">{asset.assignedToLocation}</span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">Geen specifieke locatie</span>
+                            )}
+                          </TableCell>
                           {(currentRole === "ICT Admin" || currentRole === "Facilitair Medewerker") && (
                             <TableCell>
                               <Button
