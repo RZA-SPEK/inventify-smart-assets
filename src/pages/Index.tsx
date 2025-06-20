@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +11,10 @@ import { AssetForm } from "@/components/AssetForm";
 import { UserRole } from "@/components/UserRole";
 import { DashboardStats } from "@/components/DashboardStats";
 import { ReservationDialog } from "@/components/ReservationDialog";
+import { BrandingSettings } from "@/components/BrandingSettings";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { LogOut } from "lucide-react";
 
 export interface Asset {
   id: string;
@@ -82,6 +86,9 @@ const mockAssets: Asset[] = [
 ];
 
 const Index = () => {
+  const { isLoggedIn, userEmail, logout } = useAuth();
+  const navigate = useNavigate();
+  
   const [assets, setAssets] = useState<Asset[]>(mockAssets);
   const [currentRole, setCurrentRole] = useState<"ICT Admin" | "Facilitair Medewerker" | "Gebruiker">("ICT Admin");
   const [searchTerm, setSearchTerm] = useState("");
@@ -90,6 +97,17 @@ const Index = () => {
   const [showAssetForm, setShowAssetForm] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [reservationAsset, setReservationAsset] = useState<Asset | null>(null);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate('/login');
+    }
+  }, [isLoggedIn, navigate]);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const getAssetIcon = (type: string) => {
     switch (type.toLowerCase()) {
@@ -168,6 +186,10 @@ const Index = () => {
     setShowAssetForm(true);
   };
 
+  if (!isLoggedIn) {
+    return null; // Don't render anything while redirecting to login
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="border-b bg-white shadow-sm">
@@ -179,7 +201,14 @@ const Index = () => {
                 <h1 className="text-2xl font-bold text-gray-900">Asset Management Tool</h1>
               </div>
             </div>
-            <UserRole currentRole={currentRole} onRoleChange={setCurrentRole} />
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-600">Welkom, {userEmail}</span>
+              <UserRole currentRole={currentRole} onRoleChange={setCurrentRole} />
+              <Button variant="outline" size="sm" onClick={handleLogout} className="flex items-center gap-2">
+                <LogOut className="h-4 w-4" />
+                Uitloggen
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -401,23 +430,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Systeem Instellingen</CardTitle>
-                <CardDescription>Configuratie opties voor ICT Administrators</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center py-8">
-                    <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Instellingen</h3>
-                    <p className="text-gray-600">
-                      Systeem configuratie en AD synchronisatie instellingen komen hier.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <BrandingSettings />
           </TabsContent>
         </Tabs>
       </div>
