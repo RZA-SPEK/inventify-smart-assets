@@ -15,8 +15,8 @@ import { ReservationDialog } from "@/components/ReservationDialog";
 export interface Asset {
   id: string;
   type: string;
-  brand: string;
-  model: string;
+  brand?: string;
+  model?: string;
   serialNumber: string;
   purchaseDate: string;
   status: "In gebruik" | "In voorraad" | "Defect" | "Onderhoud";

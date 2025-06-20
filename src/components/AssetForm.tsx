@@ -111,22 +111,20 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="brand">Merk</Label>
+                <Label htmlFor="brand">Merk (optioneel)</Label>
                 <Input
                   id="brand"
                   value={formData.brand}
                   onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="model">Model</Label>
+                <Label htmlFor="model">Model (optioneel)</Label>
                 <Input
                   id="model"
                   value={formData.model}
                   onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                  required
                 />
               </div>
             </div>
