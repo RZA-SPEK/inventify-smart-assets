@@ -12,6 +12,8 @@ import { LocationSelector } from "./LocationSelector";
 import { AssignmentSelector } from "./AssignmentSelector";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { ImageUpload } from "./ImageUpload";
+import { sanitizeInput, validateSerialNumber, validateDate, generateCSRFToken } from "@/utils/security";
+import { useToast } from "@/hooks/use-toast";
 
 interface AssetFormProps {
   asset?: Asset | null;
@@ -20,7 +22,10 @@ interface AssetFormProps {
 }
 
 export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
+  const { toast } = useToast();
   const [showScanner, setShowScanner] = useState(false);
+  const [csrfToken] = useState(generateCSRFToken());
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     type: "",
     brand: "",
@@ -53,15 +58,82 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     }
   }, [asset]);
 
+  const validateForm = (): string | null => {
+    if (!formData.type.trim()) {
+      return "Type is verplicht";
+    }
+    
+    if (!validateSerialNumber(formData.serial_number)) {
+      return "Serienummer moet 3-50 alfanumerieke karakters bevatten";
+    }
+    
+    if (!formData.purchase_date || !validateDate(formData.purchase_date)) {
+      return "Geldige aankoopdatum is verplicht";
+    }
+    
+    if (!formData.location.trim()) {
+      return "Locatie is verplicht";
+    }
+    
+    return null;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    
+    if (isSubmitting) return;
+    
+    const validationError = validateForm();
+    if (validationError) {
+      toast({
+        title: "Validatiefout",
+        description: validationError,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const sanitizedData = {
+        type: sanitizeInput(formData.type),
+        brand: sanitizeInput(formData.brand),
+        model: sanitizeInput(formData.model),
+        serial_number: sanitizeInput(formData.serial_number),
+        purchase_date: formData.purchase_date,
+        status: formData.status,
+        location: sanitizeInput(formData.location),
+        category: formData.category,
+        assigned_to: sanitizeInput(formData.assigned_to),
+        assigned_to_location: sanitizeInput(formData.assigned_to_location),
+        image_url: formData.image_url
+      };
+      
+      onSave(sanitizedData);
+    } catch (error) {
+      toast({
+        title: "Fout bij opslaan",
+        description: "Er is een onverwachte fout opgetreden.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleBarcodeScanned = (scannedData: string) => {
-    console.log("Setting serial number from barcode:", scannedData);
-    setFormData({ ...formData, serial_number: scannedData });
-    setShowScanner(false);
+    const sanitizedData = sanitizeInput(scannedData);
+    if (validateSerialNumber(sanitizedData)) {
+      setFormData({ ...formData, serial_number: sanitizedData });
+      setShowScanner(false);
+    } else {
+      toast({
+        title: "Ongeldige barcode",
+        description: "De gescande barcode is geen geldig serienummer",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -78,6 +150,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <input type="hidden" name="csrf_token" value={csrfToken} />
+            
             <ImageUpload
               currentImage={formData.image_url}
               onImageChange={(imageUrl) => setFormData({ ...formData, image_url: imageUrl || "" })}
@@ -110,6 +184,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
                   id="brand"
                   value={formData.brand}
                   onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                  maxLength={50}
                 />
               </div>
 
@@ -119,6 +194,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
                   id="model"
                   value={formData.model}
                   onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                  maxLength={50}
                 />
               </div>
             </div>
@@ -130,6 +206,9 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
                   id="serial_number"
                   value={formData.serial_number}
                   onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
+                  maxLength={50}
+                  pattern="[A-Za-z0-9\-_]+"
+                  title="Alleen letters, cijfers, streepjes en underscores toegestaan"
                   required
                 />
                 <Button
@@ -186,11 +265,11 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={onCancel}>
+              <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
                 Annuleren
               </Button>
-              <Button type="submit">
-                {asset ? "Bijwerken" : "Toevoegen"}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Bezig..." : (asset ? "Bijwerken" : "Toevoegen")}
               </Button>
             </DialogFooter>
           </form>
