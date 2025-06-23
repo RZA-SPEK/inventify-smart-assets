@@ -39,7 +39,25 @@ export const useAssets = () => {
     if (error) {
       console.error('Error fetching assets:', error);
     } else {
-      setAssets(data || []);
+      // Type cast the data from Supabase to our Asset interface
+      const typedAssets: Asset[] = (data || []).map(item => ({
+        id: item.id,
+        type: item.type,
+        brand: item.brand,
+        model: item.model,
+        serial_number: item.serial_number,
+        purchase_date: item.purchase_date,
+        status: item.status as Asset['status'],
+        location: item.location,
+        category: item.category as Asset['category'],
+        assigned_to: item.assigned_to,
+        assigned_to_location: item.assigned_to_location,
+        image_url: item.image_url,
+        created_by: item.created_by,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+      }));
+      setAssets(typedAssets);
     }
     
     setLoading(false);
@@ -67,8 +85,27 @@ export const useAssets = () => {
       return { error: error.message };
     }
 
-    setAssets(prev => [data, ...prev]);
-    return { data };
+    // Type cast the returned data
+    const typedAsset: Asset = {
+      id: data.id,
+      type: data.type,
+      brand: data.brand,
+      model: data.model,
+      serial_number: data.serial_number,
+      purchase_date: data.purchase_date,
+      status: data.status as Asset['status'],
+      location: data.location,
+      category: data.category as Asset['category'],
+      assigned_to: data.assigned_to,
+      assigned_to_location: data.assigned_to_location,
+      image_url: data.image_url,
+      created_by: data.created_by,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    };
+
+    setAssets(prev => [typedAsset, ...prev]);
+    return { data: typedAsset };
   };
 
   const updateAsset = async (id: string, assetData: Partial<Asset>) => {
@@ -89,8 +126,27 @@ export const useAssets = () => {
       return { error: error.message };
     }
 
-    setAssets(prev => prev.map(asset => asset.id === id ? data : asset));
-    return { data };
+    // Type cast the returned data
+    const typedAsset: Asset = {
+      id: data.id,
+      type: data.type,
+      brand: data.brand,
+      model: data.model,
+      serial_number: data.serial_number,
+      purchase_date: data.purchase_date,
+      status: data.status as Asset['status'],
+      location: data.location,
+      category: data.category as Asset['category'],
+      assigned_to: data.assigned_to,
+      assigned_to_location: data.assigned_to_location,
+      image_url: data.image_url,
+      created_by: data.created_by,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    };
+
+    setAssets(prev => prev.map(asset => asset.id === id ? typedAsset : asset));
+    return { data: typedAsset };
   };
 
   return {
