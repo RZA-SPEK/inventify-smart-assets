@@ -18,7 +18,7 @@ const Login = () => {
   const [signupFullName, setSignupFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login, signup } = useAuth();
+  const { login, signUp } = useAuth();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -44,7 +44,7 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    const { error } = await signup(signupEmail, signupPassword, signupFullName);
+    const { error } = await signUp(signupEmail, signupPassword, signupFullName);
     
     if (error) {
       toast({

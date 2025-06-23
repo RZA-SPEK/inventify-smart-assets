@@ -36,7 +36,12 @@ export const useReservations = () => {
     if (error) {
       console.error('Error fetching reservations:', error);
     } else {
-      setReservations(data || []);
+      // Type assertion to ensure proper typing
+      const typedReservations = (data || []).map(item => ({
+        ...item,
+        status: item.status as Reservation['status']
+      })) as Reservation[];
+      setReservations(typedReservations);
     }
     
     setLoading(false);
@@ -69,8 +74,14 @@ export const useReservations = () => {
       return { error: error.message };
     }
 
-    setReservations(prev => [data, ...prev]);
-    return { data };
+    // Type assertion for the returned data
+    const typedReservation = {
+      ...data,
+      status: data.status as Reservation['status']
+    } as Reservation;
+
+    setReservations(prev => [typedReservation, ...prev]);
+    return { data: typedReservation };
   };
 
   const updateReservationStatus = async (
@@ -102,12 +113,18 @@ export const useReservations = () => {
       return { error: error.message };
     }
 
+    // Type assertion for the returned data
+    const typedReservation = {
+      ...data,
+      status: data.status as Reservation['status']
+    } as Reservation;
+
     setReservations(prev => 
       prev.map(reservation => 
-        reservation.id === id ? data : reservation
+        reservation.id === id ? typedReservation : reservation
       )
     );
-    return { data };
+    return { data: typedReservation };
   };
 
   return {
