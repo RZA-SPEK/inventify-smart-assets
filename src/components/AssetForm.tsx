@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Camera } from "lucide-react";
-import { Asset } from "@/pages/Index";
+import { Asset } from "@/hooks/useAssets";
 import { AssetTypeSelector } from "./AssetTypeSelector";
 import { LocationSelector } from "./LocationSelector";
 import { AssignmentSelector } from "./AssignmentSelector";
@@ -14,7 +15,7 @@ import { ImageUpload } from "./ImageUpload";
 
 interface AssetFormProps {
   asset?: Asset | null;
-  onSave: (asset: Omit<Asset, "id">) => void;
+  onSave: (asset: Omit<Asset, "id" | "created_at" | "updated_at" | "created_by">) => void;
   onCancel: () => void;
 }
 
@@ -24,49 +25,42 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     type: "",
     brand: "",
     model: "",
-    serialNumber: "",
-    purchaseDate: "",
+    serial_number: "",
+    purchase_date: "",
     status: "In voorraad" as Asset["status"],
     location: "",
     category: "ICT" as Asset["category"],
-    assignedTo: "",
-    assignedToLocation: "",
-    image: ""
+    assigned_to: "",
+    assigned_to_location: "",
+    image_url: ""
   });
 
   useEffect(() => {
     if (asset) {
       setFormData({
         type: asset.type,
-        brand: asset.brand,
-        model: asset.model,
-        serialNumber: asset.serialNumber,
-        purchaseDate: asset.purchaseDate,
+        brand: asset.brand || "",
+        model: asset.model || "",
+        serial_number: asset.serial_number,
+        purchase_date: asset.purchase_date,
         status: asset.status,
         location: asset.location,
         category: asset.category,
-        assignedTo: asset.assignedTo || "",
-        assignedToLocation: asset.assignedToLocation || "",
-        image: asset.image || ""
+        assigned_to: asset.assigned_to || "",
+        assigned_to_location: asset.assigned_to_location || "",
+        image_url: asset.image_url || ""
       });
     }
   }, [asset]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Convert "unassigned" back to empty string for consistency with existing data structure
-    const submitData = {
-      ...formData,
-      assignedTo: formData.assignedTo === "unassigned" ? "" : formData.assignedTo,
-      assignedToLocation: formData.assignedToLocation === "unassigned" ? "" : formData.assignedToLocation,
-      image: formData.image || undefined
-    };
-    onSave(submitData);
+    onSave(formData);
   };
 
   const handleBarcodeScanned = (scannedData: string) => {
     console.log("Setting serial number from barcode:", scannedData);
-    setFormData({ ...formData, serialNumber: scannedData });
+    setFormData({ ...formData, serial_number: scannedData });
     setShowScanner(false);
   };
 
@@ -85,8 +79,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <ImageUpload
-              currentImage={formData.image}
-              onImageChange={(imageUrl) => setFormData({ ...formData, image: imageUrl || "" })}
+              currentImage={formData.image_url}
+              onImageChange={(imageUrl) => setFormData({ ...formData, image_url: imageUrl || "" })}
             />
 
             <div className="grid grid-cols-2 gap-4">
@@ -130,12 +124,12 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="serialNumber">Serienummer</Label>
+              <Label htmlFor="serial_number">Serienummer</Label>
               <div className="flex gap-2">
                 <Input
-                  id="serialNumber"
-                  value={formData.serialNumber}
-                  onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
+                  id="serial_number"
+                  value={formData.serial_number}
+                  onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
                   required
                 />
                 <Button
@@ -153,12 +147,12 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="purchaseDate">Aankoopdatum</Label>
+                <Label htmlFor="purchase_date">Aankoopdatum</Label>
                 <Input
-                  id="purchaseDate"
+                  id="purchase_date"
                   type="date"
-                  value={formData.purchaseDate}
-                  onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
+                  value={formData.purchase_date}
+                  onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
                   required
                 />
               </div>
@@ -181,14 +175,14 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
 
             <LocationSelector
               mainLocation={formData.location}
-              specificLocation={formData.assignedToLocation}
+              specificLocation={formData.assigned_to_location}
               onMainLocationChange={(value) => setFormData({ ...formData, location: value })}
-              onSpecificLocationChange={(value) => setFormData({ ...formData, assignedToLocation: value })}
+              onSpecificLocationChange={(value) => setFormData({ ...formData, assigned_to_location: value })}
             />
 
             <AssignmentSelector
-              assignedTo={formData.assignedTo}
-              onAssignedToChange={(value) => setFormData({ ...formData, assignedTo: value })}
+              assignedTo={formData.assigned_to}
+              onAssignedToChange={(value) => setFormData({ ...formData, assigned_to: value })}
             />
 
             <DialogFooter>
