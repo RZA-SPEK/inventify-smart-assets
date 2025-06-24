@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,7 +29,7 @@ const Login = () => {
     if (error) {
       toast({
         title: "Inloggen mislukt",
-        description: error,
+        description: error?.message || String(error) || "Er is een onbekende fout opgetreden",
         variant: "destructive",
       });
     } else {
@@ -49,7 +48,7 @@ const Login = () => {
     if (error) {
       toast({
         title: "Registreren mislukt",
-        description: error,
+        description: error?.message || String(error) || "Er is een onbekende fout opgetreden",
         variant: "destructive",
       });
     } else {
