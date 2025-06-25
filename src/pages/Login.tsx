@@ -1,13 +1,15 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { useSecureAuth } from "@/hooks/useSecureAuth";
+import { generateCSRFToken } from "@/utils/security";
 
 const Login = () => {
   const [loginEmail, setLoginEmail] = useState("");
@@ -15,50 +17,36 @@ const Login = () => {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupFullName, setSignupFullName] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [csrfToken, setCsrfToken] = useState("");
   const navigate = useNavigate();
-  const { login, signUp } = useAuth();
-  const { toast } = useToast();
+  const { isLoggedIn } = useAuth();
+  const { secureLogin, secureSignUp, isLoading } = useSecureAuth();
+
+  useEffect(() => {
+    // Generate CSRF token on component mount
+    setCsrfToken(generateCSRFToken());
+    
+    // Redirect if already logged in
+    if (isLoggedIn) {
+      navigate("/");
+    }
+  }, [isLoggedIn, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     
-    const { error } = await login(loginEmail, loginPassword);
+    const { error } = await secureLogin(loginEmail, loginPassword);
     
-    if (error) {
-      toast({
-        title: "Inloggen mislukt",
-        description: error?.message || String(error) || "Er is een onbekende fout opgetreden",
-        variant: "destructive",
-      });
-    } else {
+    if (!error) {
       navigate("/");
     }
-    
-    setIsLoading(false);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     
-    const { error } = await signUp(signupEmail, signupPassword, signupFullName);
-    
-    if (error) {
-      toast({
-        title: "Registreren mislukt",
-        description: error?.message || String(error) || "Er is een onbekende fout opgetreden",
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Account aangemaakt",
-        description: "Check je email voor de bevestigingslink.",
-      });
-    }
-    
-    setIsLoading(false);
+    await secureSignUp(signupEmail, signupPassword, signupFullName);
   };
 
   return (
@@ -83,6 +71,7 @@ const Login = () => {
             
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
+                <input type="hidden" name="csrf_token" value={csrfToken} />
                 <div className="space-y-2">
                   <Label htmlFor="login-email">E-mailadres</Label>
                   <Input
@@ -91,18 +80,35 @@ const Login = () => {
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     placeholder="je@bedrijf.nl"
+                    autoComplete="username"
                     required
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="login-password">Wachtwoord</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="login-password"
+                      type={showPassword ? "text" : "password"}
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      autoComplete="current-password"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Inloggen..." : "Inloggen"}
@@ -112,6 +118,7 @@ const Login = () => {
             
             <TabsContent value="signup">
               <form onSubmit={handleSignup} className="space-y-4">
+                <input type="hidden" name="csrf_token" value={csrfToken} />
                 <div className="space-y-2">
                   <Label htmlFor="signup-name">Volledige naam</Label>
                   <Input
@@ -120,6 +127,7 @@ const Login = () => {
                     value={signupFullName}
                     onChange={(e) => setSignupFullName(e.target.value)}
                     placeholder="Jan Janssen"
+                    autoComplete="name"
                     required
                   />
                 </div>
@@ -131,27 +139,56 @@ const Login = () => {
                     value={signupEmail}
                     onChange={(e) => setSignupEmail(e.target.value)}
                     placeholder="je@bedrijf.nl"
+                    autoComplete="username"
                     required
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Wachtwoord</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    value={signupPassword}
-                    onChange={(e) => setSignupPassword(e.target.value)}
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="signup-password"
+                      type={showPassword ? "text" : "password"}
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      autoComplete="new-password"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Minimaal 8 karakters met hoofdletters, kleine letters, cijfers en speciale tekens
+                  </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Registreren..." : "Account aanmaken"}
                 </Button>
               </form>
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-700">
-                  <strong>Admin account:</strong> Gebruik het e-mailadres "admin@assetspek.nl" om automatisch admin rechten te krijgen.
-                </p>
+              <div className="mt-4 space-y-2">
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-700">
+                    <strong>Admin accounts:</strong> Gebruik "admin@assetspek.nl" of "superadmin@assetspek.nl" voor admin rechten.
+                  </p>
+                </div>
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <p className="text-sm text-green-700">
+                    <strong>Super Admin credentials:</strong><br />
+                    Email: superadmin@assetspek.nl<br />
+                    Password: SuperSecure2024!
+                  </p>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
