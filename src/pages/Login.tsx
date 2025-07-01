@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSecureAuth } from "@/hooks/useSecureAuth";
 import { generateCSRFToken } from "@/utils/security";
+import { SecurityBanner } from "@/components/SecurityBanner";
 
 const Login = () => {
   const [loginEmail, setLoginEmail] = useState("");
@@ -51,149 +52,138 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <BarChart3 className="h-8 w-8 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Asset Management</h1>
-          </div>
-          <CardTitle>Welkom bij Asset Spek</CardTitle>
-          <CardDescription>
-            Log in of maak een account aan
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Inloggen</TabsTrigger>
-              <TabsTrigger value="signup">Registreren</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <input type="hidden" name="csrf_token" value={csrfToken} />
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">E-mailadres</Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="je@bedrijf.nl"
-                    autoComplete="username"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Wachtwoord</Label>
-                  <div className="relative">
+      <div className="w-full max-w-md">
+        <SecurityBanner />
+        <Card>
+          <CardHeader className="text-center">
+            <div className="flex items-center justify-center space-x-2 mb-4">
+              <BarChart3 className="h-8 w-8 text-blue-600" />
+              <h1 className="text-2xl font-bold text-gray-900">Asset Management</h1>
+            </div>
+            <CardTitle>Welkom bij Asset Spek</CardTitle>
+            <CardDescription>
+              Log in of maak een account aan
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="login" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login">Inloggen</TabsTrigger>
+                <TabsTrigger value="signup">Registreren</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="login">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <input type="hidden" name="csrf_token" value={csrfToken} />
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">E-mailadres</Label>
                     <Input
-                      id="login-password"
-                      type={showPassword ? "text" : "password"}
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      autoComplete="current-password"
+                      id="login-email"
+                      type="email"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      placeholder="je@bedrijf.nl"
+                      autoComplete="username"
                       required
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
                   </div>
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Inloggen..." : "Inloggen"}
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="signup">
-              <form onSubmit={handleSignup} className="space-y-4">
-                <input type="hidden" name="csrf_token" value={csrfToken} />
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Volledige naam</Label>
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    value={signupFullName}
-                    onChange={(e) => setSignupFullName(e.target.value)}
-                    placeholder="Jan Janssen"
-                    autoComplete="name"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">E-mailadres</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    value={signupEmail}
-                    onChange={(e) => setSignupEmail(e.target.value)}
-                    placeholder="je@bedrijf.nl"
-                    autoComplete="username"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Wachtwoord</Label>
-                  <div className="relative">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">Wachtwoord</Label>
+                    <div className="relative">
+                      <Input
+                        id="login-password"
+                        type={showPassword ? "text" : "password"}
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        autoComplete="current-password"
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Inloggen..." : "Inloggen"}
+                  </Button>
+                </form>
+              </TabsContent>
+              
+              <TabsContent value="signup">
+                <form onSubmit={handleSignup} className="space-y-4">
+                  <input type="hidden" name="csrf_token" value={csrfToken} />
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-name">Volledige naam</Label>
                     <Input
-                      id="signup-password"
-                      type={showPassword ? "text" : "password"}
-                      value={signupPassword}
-                      onChange={(e) => setSignupPassword(e.target.value)}
-                      autoComplete="new-password"
+                      id="signup-name"
+                      type="text"
+                      value={signupFullName}
+                      onChange={(e) => setSignupFullName(e.target.value)}
+                      placeholder="Jan Janssen"
+                      autoComplete="name"
                       required
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Minimaal 8 karakters met hoofdletters, kleine letters, cijfers en speciale tekens
-                  </p>
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Registreren..." : "Account aanmaken"}
-                </Button>
-              </form>
-              <div className="mt-4 space-y-2">
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-700">
-                    <strong>Admin accounts:</strong> Gebruik "admin@assetspek.nl" of "superadmin@assetspek.nl" voor admin rechten.
-                  </p>
-                </div>
-                <div className="p-3 bg-green-50 rounded-lg">
-                  <p className="text-sm text-green-700">
-                    <strong>Super Admin credentials:</strong><br />
-                    Email: superadmin@assetspek.nl<br />
-                    Password: SuperSecure2024!
-                  </p>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">E-mailadres</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      value={signupEmail}
+                      onChange={(e) => setSignupEmail(e.target.value)}
+                      placeholder="je@bedrijf.nl"
+                      autoComplete="username"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Wachtwoord</Label>
+                    <div className="relative">
+                      <Input
+                        id="signup-password"
+                        type={showPassword ? "text" : "password"}
+                        value={signupPassword}
+                        onChange={(e) => setSignupPassword(e.target.value)}
+                        autoComplete="new-password"
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Minimaal 8 karakters met hoofdletters, kleine letters, cijfers en speciale tekens
+                    </p>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Registreren..." : "Account aanmaken"}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
