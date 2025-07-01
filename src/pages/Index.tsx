@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
@@ -188,12 +189,7 @@ const Index = () => {
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <SecurityBanner />
         
-        <DashboardStats 
-          totalAssets={visibleAssets.length}
-          availableAssets={visibleAssets.filter(a => a.status === "In voorraad").length}
-          inUseAssets={visibleAssets.filter(a => a.status === "In gebruik").length}
-          pendingReservations={pendingReservations.length}
-        />
+        <DashboardStats assets={visibleAssets} />
 
         {canUserModifyAssets() && pendingReservations.length > 0 && (
           <Card className="mb-6">
@@ -387,8 +383,7 @@ const Index = () => {
       {showReservationDialog && reservationAsset && (
         <ReservationDialog
           asset={reservationAsset}
-          onReserve={handleReservation}
-          onCancel={() => {
+          onClose={() => {
             setShowReservationDialog(false);
             setReservationAsset(null);
           }}
