@@ -30,7 +30,16 @@ export const useSavedSearches = () => {
     if (error) {
       console.error('Error fetching saved searches:', error);
     } else {
-      setSavedSearches(data || []);
+      // Type cast the data to properly handle the Json type from Supabase
+      const typedSavedSearches: SavedSearch[] = (data || []).map(item => ({
+        id: item.id,
+        user_id: item.user_id,
+        name: item.name,
+        search_criteria: item.search_criteria as Record<string, any>,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+      }));
+      setSavedSearches(typedSavedSearches);
     }
     
     setLoading(false);
@@ -54,8 +63,18 @@ export const useSavedSearches = () => {
       return { error: error.message };
     }
 
-    setSavedSearches(prev => [data, ...prev]);
-    return { data };
+    // Type cast the returned data
+    const typedSavedSearch: SavedSearch = {
+      id: data.id,
+      user_id: data.user_id,
+      name: data.name,
+      search_criteria: data.search_criteria as Record<string, any>,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    };
+
+    setSavedSearches(prev => [typedSavedSearch, ...prev]);
+    return { data: typedSavedSearch };
   };
 
   const deleteSearch = async (id: string) => {
