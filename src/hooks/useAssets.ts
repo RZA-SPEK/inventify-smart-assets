@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +15,12 @@ export interface Asset {
   assigned_to?: string;
   assigned_to_location?: string;
   image_url?: string;
+  warranty_expiry?: string;
+  purchase_price?: number;
+  depreciation_rate?: number;
+  condition_notes?: string;
+  last_maintenance?: string;
+  next_maintenance?: string;
   created_by?: string;
   created_at: string;
   updated_at: string;
@@ -53,6 +58,83 @@ export const useAssets = () => {
         assigned_to: item.assigned_to,
         assigned_to_location: item.assigned_to_location,
         image_url: item.image_url,
+        warranty_expiry: item.warranty_expiry,
+        purchase_price: item.purchase_price,
+        depreciation_rate: item.depreciation_rate,
+        condition_notes: item.condition_notes,
+        last_maintenance: item.last_maintenance,
+        next_maintenance: item.next_maintenance,
+        created_by: item.created_by,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+      }));
+      setAssets(typedAssets);
+    }
+    
+    setLoading(false);
+  };
+
+  const searchAssets = async (filters: any) => {
+    if (!user) return;
+    
+    setLoading(true);
+    
+    let query = supabase
+      .from('assets')
+      .select('*');
+
+    // Apply filters
+    if (filters.query) {
+      query = query.or(`type.ilike.%${filters.query}%,serial_number.ilike.%${filters.query}%,brand.ilike.%${filters.query}%,model.ilike.%${filters.query}%`);
+    }
+    if (filters.category) {
+      query = query.eq('category', filters.category);
+    }
+    if (filters.status) {
+      query = query.eq('status', filters.status);
+    }
+    if (filters.location) {
+      query = query.ilike('location', `%${filters.location}%`);
+    }
+    if (filters.brand) {
+      query = query.ilike('brand', `%${filters.brand}%`);
+    }
+    if (filters.assignedTo) {
+      query = query.ilike('assigned_to', `%${filters.assignedTo}%`);
+    }
+    if (filters.dateFrom) {
+      query = query.gte('purchase_date', filters.dateFrom);
+    }
+    if (filters.dateTo) {
+      query = query.lte('purchase_date', filters.dateTo);
+    }
+
+    query = query.order('created_at', { ascending: false });
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error searching assets:', error);
+    } else {
+      const typedAssets: Asset[] = (data || []).map(item => ({
+        id: item.id,
+        type: item.type,
+        brand: item.brand,
+        model: item.model,
+        serial_number: item.serial_number,
+        purchase_date: item.purchase_date,
+        status: item.status as Asset['status'],
+        location: item.location,
+        category: item.category as Asset['category'],
+        assigned_to: item.assigned_to,
+        assigned_to_location: item.assigned_to_location,
+        image_url: item.image_url,
+        warranty_expiry: item.warranty_expiry,
+        purchase_price: item.purchase_price,
+        depreciation_rate: item.depreciation_rate,
+        condition_notes: item.condition_notes,
+        last_maintenance: item.last_maintenance,
+        next_maintenance: item.next_maintenance,
         created_by: item.created_by,
         created_at: item.created_at,
         updated_at: item.updated_at,
@@ -99,6 +181,12 @@ export const useAssets = () => {
       assigned_to: data.assigned_to,
       assigned_to_location: data.assigned_to_location,
       image_url: data.image_url,
+      warranty_expiry: data.warranty_expiry,
+      purchase_price: data.purchase_price,
+      depreciation_rate: data.depreciation_rate,
+      condition_notes: data.condition_notes,
+      last_maintenance: data.last_maintenance,
+      next_maintenance: data.next_maintenance,
       created_by: data.created_by,
       created_at: data.created_at,
       updated_at: data.updated_at,
@@ -140,6 +228,12 @@ export const useAssets = () => {
       assigned_to: data.assigned_to,
       assigned_to_location: data.assigned_to_location,
       image_url: data.image_url,
+      warranty_expiry: data.warranty_expiry,
+      purchase_price: data.purchase_price,
+      depreciation_rate: data.depreciation_rate,
+      condition_notes: data.condition_notes,
+      last_maintenance: data.last_maintenance,
+      next_maintenance: data.next_maintenance,
       created_by: data.created_by,
       created_at: data.created_at,
       updated_at: data.updated_at,
@@ -153,6 +247,7 @@ export const useAssets = () => {
     assets,
     loading,
     fetchAssets,
+    searchAssets,
     addAsset,
     updateAsset,
   };
