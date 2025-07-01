@@ -26,7 +26,7 @@ export const useMaintenanceHistory = () => {
     
     setLoading(true);
     
-    let query = supabase
+    let query = (supabase as any)
       .from('maintenance_history')
       .select('*')
       .order('performed_date', { ascending: false });
@@ -49,7 +49,7 @@ export const useMaintenanceHistory = () => {
   const addMaintenanceRecord = async (recordData: Omit<MaintenanceRecord, 'id' | 'created_at' | 'updated_at'>) => {
     if (!user) return { error: 'Not authenticated' };
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('maintenance_history')
       .insert(recordData)
       .select()
@@ -67,7 +67,7 @@ export const useMaintenanceHistory = () => {
   const updateMaintenanceRecord = async (id: string, recordData: Partial<MaintenanceRecord>) => {
     if (!user) return { error: 'Not authenticated' };
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('maintenance_history')
       .update({
         ...recordData,

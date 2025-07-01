@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,7 +37,7 @@ export const useAssets = () => {
     
     setLoading(true);
     
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('assets')
       .select('*')
       .order('created_at', { ascending: false });
@@ -44,8 +45,7 @@ export const useAssets = () => {
     if (error) {
       console.error('Error fetching assets:', error);
     } else {
-      // Type cast the data from Supabase to our Asset interface
-      const typedAssets: Asset[] = (data || []).map(item => ({
+      const typedAssets: Asset[] = (data || []).map((item: any) => ({
         id: item.id,
         type: item.type,
         brand: item.brand,
@@ -79,7 +79,7 @@ export const useAssets = () => {
     
     setLoading(true);
     
-    let query = supabase
+    let query = (supabase as any)
       .from('assets')
       .select('*');
 
@@ -116,7 +116,7 @@ export const useAssets = () => {
     if (error) {
       console.error('Error searching assets:', error);
     } else {
-      const typedAssets: Asset[] = (data || []).map(item => ({
+      const typedAssets: Asset[] = (data || []).map((item: any) => ({
         id: item.id,
         type: item.type,
         brand: item.brand,
@@ -152,7 +152,7 @@ export const useAssets = () => {
   const addAsset = async (assetData: Omit<Asset, 'id' | 'created_at' | 'updated_at' | 'created_by'>) => {
     if (!user) return { error: 'Not authenticated' };
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('assets')
       .insert({
         ...assetData,
@@ -167,29 +167,28 @@ export const useAssets = () => {
       return { error: error.message };
     }
 
-    // Type cast the returned data
     const typedAsset: Asset = {
-      id: data.id,
-      type: data.type,
-      brand: data.brand,
-      model: data.model,
-      serial_number: data.serial_number,
-      purchase_date: data.purchase_date,
-      status: data.status as Asset['status'],
-      location: data.location,
-      category: data.category as Asset['category'],
-      assigned_to: data.assigned_to,
-      assigned_to_location: data.assigned_to_location,
-      image_url: data.image_url,
-      warranty_expiry: data.warranty_expiry,
-      purchase_price: data.purchase_price,
-      depreciation_rate: data.depreciation_rate,
-      condition_notes: data.condition_notes,
-      last_maintenance: data.last_maintenance,
-      next_maintenance: data.next_maintenance,
-      created_by: data.created_by,
-      created_at: data.created_at,
-      updated_at: data.updated_at,
+      id: data?.id || '',
+      type: data?.type || '',
+      brand: data?.brand,
+      model: data?.model,
+      serial_number: data?.serial_number || '',
+      purchase_date: data?.purchase_date || '',
+      status: data?.status as Asset['status'] || 'In voorraad',
+      location: data?.location || '',
+      category: data?.category as Asset['category'] || 'ICT',
+      assigned_to: data?.assigned_to,
+      assigned_to_location: data?.assigned_to_location,
+      image_url: data?.image_url,
+      warranty_expiry: data?.warranty_expiry,
+      purchase_price: data?.purchase_price,
+      depreciation_rate: data?.depreciation_rate,
+      condition_notes: data?.condition_notes,
+      last_maintenance: data?.last_maintenance,
+      next_maintenance: data?.next_maintenance,
+      created_by: data?.created_by,
+      created_at: data?.created_at || '',
+      updated_at: data?.updated_at || '',
     };
 
     setAssets(prev => [typedAsset, ...prev]);
@@ -199,7 +198,7 @@ export const useAssets = () => {
   const updateAsset = async (id: string, assetData: Partial<Asset>) => {
     if (!user) return { error: 'Not authenticated' };
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('assets')
       .update({
         ...assetData,
@@ -214,29 +213,28 @@ export const useAssets = () => {
       return { error: error.message };
     }
 
-    // Type cast the returned data
     const typedAsset: Asset = {
-      id: data.id,
-      type: data.type,
-      brand: data.brand,
-      model: data.model,
-      serial_number: data.serial_number,
-      purchase_date: data.purchase_date,
-      status: data.status as Asset['status'],
-      location: data.location,
-      category: data.category as Asset['category'],
-      assigned_to: data.assigned_to,
-      assigned_to_location: data.assigned_to_location,
-      image_url: data.image_url,
-      warranty_expiry: data.warranty_expiry,
-      purchase_price: data.purchase_price,
-      depreciation_rate: data.depreciation_rate,
-      condition_notes: data.condition_notes,
-      last_maintenance: data.last_maintenance,
-      next_maintenance: data.next_maintenance,
-      created_by: data.created_by,
-      created_at: data.created_at,
-      updated_at: data.updated_at,
+      id: data?.id || id,
+      type: data?.type || '',
+      brand: data?.brand,
+      model: data?.model,
+      serial_number: data?.serial_number || '',
+      purchase_date: data?.purchase_date || '',
+      status: data?.status as Asset['status'] || 'In voorraad',
+      location: data?.location || '',
+      category: data?.category as Asset['category'] || 'ICT',
+      assigned_to: data?.assigned_to,
+      assigned_to_location: data?.assigned_to_location,
+      image_url: data?.image_url,
+      warranty_expiry: data?.warranty_expiry,
+      purchase_price: data?.purchase_price,
+      depreciation_rate: data?.depreciation_rate,
+      condition_notes: data?.condition_notes,
+      last_maintenance: data?.last_maintenance,
+      next_maintenance: data?.next_maintenance,
+      created_by: data?.created_by,
+      created_at: data?.created_at || '',
+      updated_at: data?.updated_at || '',
     };
 
     setAssets(prev => prev.map(asset => asset.id === id ? typedAsset : asset));

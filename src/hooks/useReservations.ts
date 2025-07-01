@@ -28,7 +28,7 @@ export const useReservations = () => {
     
     setLoading(true);
     
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('reservations')
       .select('*')
       .order('created_at', { ascending: false });
@@ -36,8 +36,7 @@ export const useReservations = () => {
     if (error) {
       console.error('Error fetching reservations:', error);
     } else {
-      // Type assertion to ensure proper typing
-      const typedReservations = (data || []).map(item => ({
+      const typedReservations = (data || []).map((item: any) => ({
         ...item,
         status: item.status as Reservation['status']
       })) as Reservation[];
@@ -60,7 +59,7 @@ export const useReservations = () => {
   }) => {
     if (!user) return { error: 'Not authenticated' };
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('reservations')
       .insert({
         ...reservationData,
@@ -74,7 +73,6 @@ export const useReservations = () => {
       return { error: error.message };
     }
 
-    // Type assertion for the returned data
     const typedReservation = {
       ...data,
       status: data.status as Reservation['status']
@@ -101,7 +99,7 @@ export const useReservations = () => {
       updateData.approved_at = new Date().toISOString();
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('reservations')
       .update(updateData)
       .eq('id', id)
@@ -113,7 +111,6 @@ export const useReservations = () => {
       return { error: error.message };
     }
 
-    // Type assertion for the returned data
     const typedReservation = {
       ...data,
       status: data.status as Reservation['status']

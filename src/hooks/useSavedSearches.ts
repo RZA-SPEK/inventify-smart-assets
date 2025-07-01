@@ -22,7 +22,7 @@ export const useSavedSearches = () => {
     
     setLoading(true);
     
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('saved_searches')
       .select('*')
       .order('updated_at', { ascending: false });
@@ -30,8 +30,7 @@ export const useSavedSearches = () => {
     if (error) {
       console.error('Error fetching saved searches:', error);
     } else {
-      // Type cast the data to properly handle the Json type from Supabase
-      const typedSavedSearches: SavedSearch[] = (data || []).map(item => ({
+      const typedSavedSearches: SavedSearch[] = (data || []).map((item: any) => ({
         id: item.id,
         user_id: item.user_id,
         name: item.name,
@@ -48,7 +47,7 @@ export const useSavedSearches = () => {
   const saveSearch = async (name: string, searchCriteria: Record<string, any>) => {
     if (!user) return { error: 'Not authenticated' };
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('saved_searches')
       .insert({
         user_id: user.id,
@@ -63,7 +62,6 @@ export const useSavedSearches = () => {
       return { error: error.message };
     }
 
-    // Type cast the returned data
     const typedSavedSearch: SavedSearch = {
       id: data.id,
       user_id: data.user_id,
@@ -80,7 +78,7 @@ export const useSavedSearches = () => {
   const deleteSearch = async (id: string) => {
     if (!user) return { error: 'Not authenticated' };
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('saved_searches')
       .delete()
       .eq('id', id);

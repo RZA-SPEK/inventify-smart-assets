@@ -9,7 +9,319 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      asset_relationships: {
+        Row: {
+          child_asset_id: string
+          created_at: string | null
+          id: string
+          parent_asset_id: string
+          relationship_type: string
+        }
+        Insert: {
+          child_asset_id: string
+          created_at?: string | null
+          id?: string
+          parent_asset_id: string
+          relationship_type: string
+        }
+        Update: {
+          child_asset_id?: string
+          created_at?: string | null
+          id?: string
+          parent_asset_id?: string
+          relationship_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_relationships_child_asset_id_fkey"
+            columns: ["child_asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_relationships_parent_asset_id_fkey"
+            columns: ["parent_asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assets: {
+        Row: {
+          assigned_to: string | null
+          assigned_to_location: string | null
+          brand: string | null
+          category: string
+          condition_notes: string | null
+          created_at: string | null
+          created_by: string | null
+          depreciation_rate: number | null
+          id: string
+          image_url: string | null
+          last_maintenance: string | null
+          location: string
+          model: string | null
+          next_maintenance: string | null
+          purchase_date: string
+          purchase_price: number | null
+          serial_number: string
+          status: string
+          type: string
+          updated_at: string | null
+          warranty_expiry: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          assigned_to_location?: string | null
+          brand?: string | null
+          category?: string
+          condition_notes?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          depreciation_rate?: number | null
+          id?: string
+          image_url?: string | null
+          last_maintenance?: string | null
+          location: string
+          model?: string | null
+          next_maintenance?: string | null
+          purchase_date: string
+          purchase_price?: number | null
+          serial_number: string
+          status?: string
+          type: string
+          updated_at?: string | null
+          warranty_expiry?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          assigned_to_location?: string | null
+          brand?: string | null
+          category?: string
+          condition_notes?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          depreciation_rate?: number | null
+          id?: string
+          image_url?: string | null
+          last_maintenance?: string | null
+          location?: string
+          model?: string | null
+          next_maintenance?: string | null
+          purchase_date?: string
+          purchase_price?: number | null
+          serial_number?: string
+          status?: string
+          type?: string
+          updated_at?: string | null
+          warranty_expiry?: string | null
+        }
+        Relationships: []
+      }
+      maintenance_history: {
+        Row: {
+          asset_id: string
+          cost: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          maintenance_type: string
+          next_due_date: string | null
+          performed_by: string | null
+          performed_date: string
+          updated_at: string | null
+        }
+        Insert: {
+          asset_id: string
+          cost?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          maintenance_type: string
+          next_due_date?: string | null
+          performed_by?: string | null
+          performed_date: string
+          updated_at?: string | null
+        }
+        Update: {
+          asset_id?: string
+          cost?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          maintenance_type?: string
+          next_due_date?: string | null
+          performed_by?: string | null
+          performed_date?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_history_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          read_at: string | null
+          related_asset_id: string | null
+          related_reservation_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          read_at?: string | null
+          related_asset_id?: string | null
+          related_reservation_id?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          read_at?: string | null
+          related_asset_id?: string | null
+          related_reservation_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_related_asset_id_fkey"
+            columns: ["related_asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_related_reservation_id_fkey"
+            columns: ["related_reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      reservations: {
+        Row: {
+          approved_by: string | null
+          asset_id: string
+          created_at: string | null
+          id: string
+          purpose: string
+          requested_date: string
+          requester_id: string
+          requester_name: string
+          return_date: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          approved_by?: string | null
+          asset_id: string
+          created_at?: string | null
+          id?: string
+          purpose: string
+          requested_date: string
+          requester_id: string
+          requester_name: string
+          return_date: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          approved_by?: string | null
+          asset_id?: string
+          created_at?: string | null
+          id?: string
+          purpose?: string
+          requested_date?: string
+          requester_id?: string
+          requester_name?: string
+          return_date?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_searches: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          search_criteria: Json
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          search_criteria: Json
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          search_criteria?: Json
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
