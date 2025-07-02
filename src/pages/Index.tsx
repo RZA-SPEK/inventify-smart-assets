@@ -1,28 +1,16 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PlusCircle, Laptop, Smartphone, Headphones, Cable, Monitor, User, Settings, BarChart3, MapPin, Calendar, Tag, Trash2 } from "lucide-react";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PlusCircle, Laptop, Smartphone, Headphones, Cable, Monitor, User, Settings, BarChart3 } from "lucide-react";
 import { AssetForm } from "@/components/AssetForm";
+import { AssetFilters } from "@/components/AssetFilters";
+import { AssetTableRow } from "@/components/AssetTableRow";
+import { AssetMobileCard } from "@/components/AssetMobileCard";
 import { UserRole } from "@/components/UserRole";
 import { DashboardStats } from "@/components/DashboardStats";
 import { ReservationDialog } from "@/components/ReservationDialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 export interface Asset {
   id: string;
@@ -167,13 +155,12 @@ const Index = () => {
     const matchesStatus = statusFilter === "all" || asset.status === statusFilter;
     const matchesCategory = categoryFilter === "all" || asset.category === categoryFilter;
     
-    // Role-based filtering
     if (currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") {
       return matchesSearch && matchesStatus && matchesCategory && asset.category === "Facilitair";
     }
     
     if (currentRole === "Gebruiker") {
-      return matchesSearch && matchesStatus && matchesCategory && asset.assignedTo === "Jan Janssen"; // Mock current user
+      return matchesSearch && matchesStatus && matchesCategory && asset.assignedTo === "Jan Janssen";
     }
     
     return matchesSearch && matchesStatus && matchesCategory;
@@ -276,41 +263,14 @@ const Index = () => {
 
           <TabsContent value="assets" className="space-y-6">
             <div className="flex flex-col space-y-4">
-              <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
-                <Input
-                  placeholder="Zoek assets..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full sm:w-64"
-                />
-                <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-40">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Alle statussen</SelectItem>
-                      <SelectItem value="In gebruik">In gebruik</SelectItem>
-                      <SelectItem value="In voorraad">In voorraad</SelectItem>
-                      <SelectItem value="Defect">Defect</SelectItem>
-                      <SelectItem value="Onderhoud">Onderhoud</SelectItem>
-                      <SelectItem value="Deleted">Verwijderd</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                    <SelectTrigger className="w-full sm:w-40">
-                      <SelectValue placeholder="Categorie" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Alle categorieën</SelectItem>
-                      <SelectItem value="ICT">ICT</SelectItem>
-                      <SelectItem value="Facilitair">Facilitair</SelectItem>
-                      <SelectItem value="Catering">Catering</SelectItem>
-                      <SelectItem value="Logistics">Logistiek</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              <AssetFilters
+                searchTerm={searchTerm}
+                statusFilter={statusFilter}
+                categoryFilter={categoryFilter}
+                onSearchChange={setSearchTerm}
+                onStatusFilterChange={setStatusFilter}
+                onCategoryFilterChange={setCategoryFilter}
+              />
               {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && (
                 <div className="flex justify-end">
                   <Button onClick={() => setShowAssetForm(true)} className="flex items-center space-x-2 w-full sm:w-auto">
@@ -332,107 +292,17 @@ const Index = () => {
                 {/* Mobile Card View */}
                 <div className="block sm:hidden space-y-4">
                   {filteredAssets.map((asset) => (
-                    <Card key={asset.id} className="p-4">
-                      <div className="flex items-start space-x-3">
-                        <div className="flex-shrink-0">
-                          {asset.image ? (
-                            <img
-                              src={asset.image}
-                              alt={`${asset.brand} ${asset.model}`}
-                              className="w-16 h-16 object-cover rounded-lg"
-                            />
-                          ) : (
-                            <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                              {getAssetIcon(asset.type)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2 mb-2">
-                            {getAssetIcon(asset.type)}
-                            <h3 className="font-medium text-lg truncate">{asset.type}</h3>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-1">{asset.brand} {asset.model}</p>
-                          <p className="text-xs text-gray-500 font-mono mb-2">{asset.serialNumber}</p>
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            <Badge className={getStatusColor(asset.status)}>
-                              {asset.status === "Deleted" ? "Verwijderd" : asset.status}
-                            </Badge>
-                            <Badge variant="outline">
-                              {getCategoryDisplayName(asset.category)}
-                            </Badge>
-                          </div>
-                          {asset.assignedTo && (
-                            <div className="flex items-center space-x-1 mb-2">
-                              <User className="h-3 w-3" />
-                              <span className="text-sm">{asset.assignedTo}</span>
-                            </div>
-                          )}
-                          <div className="flex flex-col space-y-1 text-sm text-gray-600">
-                            <span>{asset.location}</span>
-                            {asset.assignedToLocation && (
-                              <div className="flex items-center space-x-1">
-                                <MapPin className="h-3 w-3 text-blue-500" />
-                                <span className="text-xs">{asset.assignedToLocation}</span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            {asset.status === "In voorraad" && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setReservationAsset(asset)}
-                                className="flex items-center gap-1 text-xs"
-                              >
-                                <Calendar className="h-3 w-3" />
-                                Reserveren
-                              </Button>
-                            )}
-                            {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && asset.status !== "Deleted" && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => startEditAsset(asset)}
-                                className="text-xs"
-                              >
-                                Bewerken
-                              </Button>
-                            )}
-                            {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin") && asset.status !== "Deleted" && (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Asset verwijderen</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Weet je zeker dat je dit asset wilt verwijderen? Het asset wordt gemarkeerd als "Deleted" en kan later worden hersteld.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => handleDeleteAsset(asset.id)}
-                                      className="bg-red-600 hover:bg-red-700"
-                                    >
-                                      Verwijderen
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
+                    <AssetMobileCard
+                      key={asset.id}
+                      asset={asset}
+                      currentRole={currentRole}
+                      onEdit={startEditAsset}
+                      onDelete={handleDeleteAsset}
+                      onReserve={setReservationAsset}
+                      getAssetIcon={getAssetIcon}
+                      getStatusColor={getStatusColor}
+                      getCategoryDisplayName={getCategoryDisplayName}
+                    />
                   ))}
                 </div>
 
@@ -456,131 +326,17 @@ const Index = () => {
                     </TableHeader>
                     <TableBody>
                       {filteredAssets.map((asset) => (
-                        <TableRow key={asset.id}>
-                          <TableCell>
-                            {asset.image ? (
-                              <img
-                                src={asset.image}
-                                alt={`${asset.brand} ${asset.model}`}
-                                className="w-12 h-12 object-cover rounded-lg"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                                {getAssetIcon(asset.type)}
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              {getAssetIcon(asset.type)}
-                              <div>
-                                <span className="font-medium">{asset.type}</span>
-                                <div className="block md:hidden text-xs text-gray-500">
-                                  {asset.brand} {asset.model}
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">{asset.brand} {asset.model}</TableCell>
-                          <TableCell className="hidden lg:table-cell font-mono text-sm">{asset.serialNumber}</TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            {asset.assetTag ? (
-                              <div className="flex items-center space-x-1">
-                                <Tag className="h-3 w-3 text-blue-500" />
-                                <span className="font-mono text-sm">{asset.assetTag}</span>
-                              </div>
-                            ) : (
-                              <span className="text-gray-400">Geen tag</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={getStatusColor(asset.status)}>
-                              {asset.status === "Deleted" ? "Verwijderd" : asset.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            <Badge variant="outline">
-                              {getCategoryDisplayName(asset.category)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            {asset.assignedTo ? (
-                              <div className="flex items-center space-x-1">
-                                <User className="h-3 w-3" />
-                                <span>{asset.assignedTo}</span>
-                              </div>
-                            ) : (
-                              <span className="text-gray-400">Niet toegewezen</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="hidden xl:table-cell">{asset.location}</TableCell>
-                          <TableCell className="hidden xl:table-cell">
-                            {asset.assignedToLocation ? (
-                              <div className="flex items-center space-x-1">
-                                <MapPin className="h-3 w-3 text-blue-500" />
-                                <span className="text-sm">{asset.assignedToLocation}</span>
-                              </div>
-                            ) : (
-                              <span className="text-gray-400">Geen specifieke locatie</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-1">
-                              {asset.status === "In voorraad" && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setReservationAsset(asset)}
-                                  className="flex items-center gap-1 text-xs"
-                                >
-                                  <Calendar className="h-3 w-3" />
-                                  <span className="hidden sm:inline">Reserveren</span>
-                                </Button>
-                              )}
-                              {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && asset.status !== "Deleted" && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => startEditAsset(asset)}
-                                  className="text-xs"
-                                >
-                                  <span className="hidden sm:inline">Bewerken</span>
-                                  <span className="sm:hidden">Edit</span>
-                                </Button>
-                              )}
-                              {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin") && asset.status !== "Deleted" && (
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="text-red-600 hover:text-red-700"
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Asset verwijderen</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Weet je zeker dat je dit asset wilt verwijderen? Het asset wordt gemarkeerd als "Deleted" en kan later worden hersteld.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() => handleDeleteAsset(asset.id)}
-                                        className="bg-red-600 hover:bg-red-700"
-                                      >
-                                        Verwijderen
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
+                        <AssetTableRow
+                          key={asset.id}
+                          asset={asset}
+                          currentRole={currentRole}
+                          onEdit={startEditAsset}
+                          onDelete={handleDeleteAsset}
+                          onReserve={setReservationAsset}
+                          getAssetIcon={getAssetIcon}
+                          getStatusColor={getStatusColor}
+                          getCategoryDisplayName={getCategoryDisplayName}
+                        />
                       ))}
                     </TableBody>
                   </Table>

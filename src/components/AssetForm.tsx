@@ -2,16 +2,9 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, Tag } from "lucide-react";
 import { Asset } from "@/pages/Index";
-import { AssetTypeSelector } from "./AssetTypeSelector";
-import { LocationSelector } from "./LocationSelector";
-import { AssignmentSelector } from "./AssignmentSelector";
+import { AssetFormFields } from "./AssetFormFields";
 import { BarcodeScanner } from "./BarcodeScanner";
-import { ImageUpload } from "./ImageUpload";
 
 interface AssetFormProps {
   asset?: Asset | null;
@@ -57,7 +50,6 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Convert "unassigned" back to empty string for consistency with existing data structure
     const submitData = {
       ...formData,
       assignedTo: formData.assignedTo === "unassigned" ? "" : formData.assignedTo,
@@ -74,17 +66,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     setShowScanner(false);
   };
 
-  const handleAssetTagChange = (value: string) => {
-    // If user starts typing without prefix and it's not empty, add MVDS- prefix
-    if (value && !value.startsWith("MVDS-") && value !== "MVDS-") {
-      setFormData({ ...formData, assetTag: "MVDS-" + value });
-    } else {
-      setFormData({ ...formData, assetTag: value });
-    }
-  };
-
   const generateAssetTag = () => {
-    // Generate asset tag based on category with specific starting numbers
     const prefix = "MVDS-";
     let baseNumber: number;
     
@@ -100,11 +82,9 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
       baseNumber = 1;
     }
     
-    // Add some randomness to avoid duplicates in this demo
     const randomOffset = Math.floor(Math.random() * 100);
     const finalNumber = baseNumber + randomOffset;
     
-    // Format number with leading zeros based on category
     let formattedNumber: string;
     if (formData.category === "ICT") {
       formattedNumber = finalNumber.toString();
@@ -130,140 +110,11 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <ImageUpload
-              currentImage={formData.image}
-              onImageChange={(imageUrl) => setFormData({ ...formData, image: imageUrl || "" })}
-            />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <AssetTypeSelector
-                value={formData.type}
-                onChange={(value) => setFormData({ ...formData, type: value })}
-              />
-
-              <div className="space-y-2">
-                <Label htmlFor="category">Categorie</Label>
-                <Select value={formData.category} onValueChange={(value: Asset["category"]) => setFormData({ ...formData, category: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ICT">ICT</SelectItem>
-                    <SelectItem value="Facilitair">Facilitair</SelectItem>
-                    <SelectItem value="Catering">Catering</SelectItem>
-                    <SelectItem value="Logistics">Logistiek</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="brand">Merk (optioneel)</Label>
-                <Input
-                  id="brand"
-                  value={formData.brand}
-                  onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="model">Model (optioneel)</Label>
-                <Input
-                  id="model"
-                  value={formData.model}
-                  onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="serialNumber">Serienummer</Label>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Input
-                  id="serialNumber"
-                  value={formData.serialNumber}
-                  onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
-                  required
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowScanner(true)}
-                  className="flex items-center gap-2 w-full sm:w-auto"
-                >
-                  <Camera className="h-4 w-4" />
-                  <span>Scan</span>
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="assetTag">Asset Tag (optioneel)</Label>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Input
-                  id="assetTag"
-                  value={formData.assetTag}
-                  onChange={(e) => handleAssetTagChange(e.target.value)}
-                  placeholder="MVDS-XXX123 of laat leeg"
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={generateAssetTag}
-                  className="flex items-center gap-2 w-full sm:w-auto"
-                >
-                  <Tag className="h-4 w-4" />
-                  <span>Genereer</span>
-                </Button>
-              </div>
-              <p className="text-xs text-gray-500">
-                Voer een asset tag in met optioneel MVDS- prefix, of klik op "Genereer" voor automatische tag
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="purchaseDate">Aankoopdatum</Label>
-                <Input
-                  id="purchaseDate"
-                  type="date"
-                  value={formData.purchaseDate}
-                  onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value: Asset["status"]) => setFormData({ ...formData, status: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="In voorraad">In voorraad</SelectItem>
-                    <SelectItem value="In gebruik">In gebruik</SelectItem>
-                    <SelectItem value="Defect">Defect</SelectItem>
-                    <SelectItem value="Onderhoud">Onderhoud</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <LocationSelector
-              mainLocation={formData.location}
-              specificLocation={formData.assignedToLocation}
-              onMainLocationChange={(value) => setFormData({ ...formData, location: value })}
-              onSpecificLocationChange={(value) => setFormData({ ...formData, assignedToLocation: value })}
-            />
-
-            <AssignmentSelector
-              assignedTo={formData.assignedTo}
-              onAssignedToChange={(value) => setFormData({ ...formData, assignedTo: value })}
+            <AssetFormFields
+              formData={formData}
+              onFormDataChange={setFormData}
+              onShowScanner={() => setShowScanner(true)}
+              onGenerateAssetTag={generateAssetTag}
             />
 
             <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
