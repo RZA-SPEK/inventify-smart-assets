@@ -46,6 +46,20 @@ export type Database = {
             referencedRelation: "assets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_asset_relationships_child"
+            columns: ["child_asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_asset_relationships_parent"
+            columns: ["parent_asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
         ]
       }
       assets: {
@@ -159,6 +173,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_maintenance_history_asset"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "maintenance_history_asset_id_fkey"
             columns: ["asset_id"]
             isOneToOne: false
@@ -202,6 +223,20 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_notifications_asset"
+            columns: ["related_asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_notifications_reservation"
+            columns: ["related_reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notifications_related_asset_id_fkey"
             columns: ["related_asset_id"]
@@ -289,6 +324,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_reservations_asset"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reservations_asset_id_fkey"
             columns: ["asset_id"]
