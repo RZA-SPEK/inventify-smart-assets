@@ -17,31 +17,33 @@ export const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
   useEffect(() => {
     const config = {
       fps: 10,
-      qrbox: { width: 300, height: 200 },
-      aspectRatio: 1.77, // 16:9 aspect ratio for better camera view
+      qrbox: function(viewfinderWidth: number, viewfinderHeight: number) {
+        // Make scanning box responsive
+        const minEdgePercentage = 0.7;
+        const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+        const qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
+        return {
+          width: Math.min(qrboxSize, 300),
+          height: Math.min(qrboxSize * 0.7, 200)
+        };
+      },
+      aspectRatio: 1.777778, // 16:9 aspect ratio
       disableFlip: false,
       videoConstraints: {
-        facingMode: "environment" // Use back camera on mobile devices
+        facingMode: "environment", // Use back camera on mobile
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
       },
-      formatsToSupport: [
+      rememberLastUsedCamera: true,
+      supportedScanTypes: [
         // Support multiple barcode formats
         0, // QR_CODE
-        1, // AZTEC
-        2, // CODABAR
         3, // CODE_128
         4, // CODE_39
-        5, // CODE_93
-        6, // DATA_MATRIX
         7, // EAN_13
         8, // EAN_8
-        9, // ITF
-        10, // MAXICODE
-        11, // PDF_417
-        12, // RSS_14
-        13, // RSS_EXPANDED
         14, // UPC_A
         15, // UPC_E
-        16, // UPC_EAN_EXTENSION
       ]
     };
 
@@ -58,7 +60,8 @@ export const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
 
     const onScanError = (errorMessage: string) => {
       // Only log actual errors, not scanning attempts
-      if (!errorMessage.includes("No MultiFormat Readers were able to detect the code")) {
+      if (!errorMessage.includes("No MultiFormat Readers were able to detect the code") && 
+          !errorMessage.includes("QR code parse error")) {
         console.log("Scan error:", errorMessage);
       }
     };
@@ -69,7 +72,7 @@ export const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
       setError(null);
     } catch (err) {
       console.error("Failed to start scanner:", err);
-      setError("Failed to start camera. Please check camera permissions.");
+      setError("Camera kon niet worden gestart. Controleer camera permissies.");
     }
 
     return () => {
@@ -88,42 +91,45 @@ export const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <div className="flex justify-between items-center mb-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex justify-between items-center p-4 border-b">
           <h3 className="text-lg font-semibold">Scan Asset Barcode</h3>
           <Button variant="ghost" size="sm" onClick={handleClose}>
             <X className="h-4 w-4" />
           </Button>
         </div>
         
-        <div className="mb-4">
+        <div className="flex-1 p-4 overflow-y-auto">
           <p className="text-sm text-gray-600 mb-4">
-            Richt de camera op de barcode van het asset. Ondersteunt QR codes en verschillende barcode formaten.
+            Richt de camera op de barcode. Werkt met QR codes en barcodes.
           </p>
           
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-md">
               <p className="text-sm text-red-600">{error}</p>
               <p className="text-xs text-red-500 mt-1">
-                Zorg ervoor dat je camera toegang hebt gegeven aan deze website.
+                Zorg dat je camera toegang hebt gegeven.
               </p>
             </div>
           )}
           
-          <div id="barcode-reader" className="w-full min-h-[300px]"></div>
+          <div id="barcode-reader" className="w-full min-h-[250px] max-h-[400px]"></div>
           
           {isScanning && (
             <div className="mt-4 text-center">
-              <p className="text-sm text-gray-500">
-                Scanner actief... Houd de barcode binnen het kader.
-              </p>
+              <div className="flex items-center justify-center space-x-2">
+                <Camera className="h-4 w-4 text-blue-500" />
+                <p className="text-sm text-gray-500">
+                  Camera actief - Houd barcode in beeld
+                </p>
+              </div>
             </div>
           )}
         </div>
 
-        <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={handleClose}>
+        <div className="p-4 border-t">
+          <Button variant="outline" onClick={handleClose} className="w-full">
             Annuleren
           </Button>
         </div>

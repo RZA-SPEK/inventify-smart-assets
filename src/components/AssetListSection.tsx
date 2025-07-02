@@ -64,31 +64,64 @@ export const AssetListSection = ({
     return displayMap[category] || category;
   };
 
+  // Show loading state
+  if (assets === undefined) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Asset List</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-gray-500">
+            Assets laden...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show empty state
+  if (assets.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Asset List</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-gray-500">
+            Geen assets gevonden.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Asset List</CardTitle>
+        <CardTitle>Asset List ({assets.length})</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="hidden sm:block rounded-md border">
+      <CardContent className="p-0 sm:p-6">
+        {/* Desktop Table View */}
+        <div className="hidden lg:block rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Image</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead className="hidden md:table-cell">Brand/Model</TableHead>
-                <TableHead className="hidden lg:table-cell">Serial Number</TableHead>
-                <TableHead className="hidden lg:table-cell">Asset Tag</TableHead>
+                <TableHead>Brand/Model</TableHead>
+                <TableHead>Serial Number</TableHead>
+                <TableHead>Asset Tag</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="hidden md:table-cell">Category</TableHead>
-                <TableHead className="hidden lg:table-cell">Assigned To</TableHead>
-                <TableHead className="hidden xl:table-cell">Location</TableHead>
-                <TableHead className="hidden xl:table-cell">Specific Location</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Assigned To</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Specific Location</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {assets?.map((asset) => (
+              {assets.map((asset) => (
                 <AssetTableRow
                   key={asset.id}
                   asset={asset}
@@ -104,20 +137,113 @@ export const AssetListSection = ({
             </TableBody>
           </Table>
         </div>
-        <div className="sm:hidden grid gap-4">
-          {assets?.map((asset) => (
-            <AssetMobileCard
-              key={asset.id}
-              asset={asset}
-              currentRole={currentRole}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onReserve={onReserve}
-              getAssetIcon={getAssetIcon}
-              getStatusColor={getStatusColor}
-              getCategoryDisplayName={getCategoryDisplayName}
-            />
-          ))}
+
+        {/* Tablet Table View */}
+        <div className="hidden sm:block lg:hidden rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Asset</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Assigned To</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {assets.map((asset) => (
+                <TableRow key={asset.id}>
+                  <TableCell>
+                    <div className="flex items-center space-x-3">
+                      {asset.image ? (
+                        <img
+                          src={asset.image}
+                          alt={`${asset.brand} ${asset.model}`}
+                          className="w-12 h-12 object-cover rounded-lg"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                          {getAssetIcon(asset.type)}
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-medium">{asset.type}</div>
+                        <div className="text-sm text-gray-500">
+                          {asset.brand} {asset.model}
+                        </div>
+                        <div className="text-xs text-gray-400 font-mono">
+                          {asset.serialNumber}
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(asset.status)}`}>
+                      {asset.status === "Deleted" ? "Verwijderd" : asset.status}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {asset.assignedTo || "-"}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {asset.location}
+                      {asset.assignedToLocation && (
+                        <div className="text-xs text-gray-500">
+                          {asset.assignedToLocation}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex space-x-1">
+                      {asset.status === "In voorraad" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onReserve(asset)}
+                          className="text-xs"
+                        >
+                          Reserveren
+                        </Button>
+                      )}
+                      {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && asset.status !== "Deleted" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onEdit(asset)}
+                          className="text-xs"
+                        >
+                          Bewerken
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="sm:hidden">
+          <div className="divide-y">
+            {assets.map((asset) => (
+              <AssetMobileCard
+                key={asset.id}
+                asset={asset}
+                currentRole={currentRole}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onReserve={onReserve}
+                getAssetIcon={getAssetIcon}
+                getStatusColor={getStatusColor}
+                getCategoryDisplayName={getCategoryDisplayName}
+              />
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>

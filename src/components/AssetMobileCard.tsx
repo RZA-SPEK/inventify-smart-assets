@@ -51,7 +51,7 @@ export const AssetMobileCard = ({
   };
 
   return (
-    <Card className="p-4">
+    <div className="p-4 bg-white">
       <div className="flex items-start space-x-3">
         <div className="flex-shrink-0">
           {asset.image ? (
@@ -66,70 +66,91 @@ export const AssetMobileCard = ({
             </div>
           )}
         </div>
+        
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-2 mb-2">
             {getAssetIcon(asset.type)}
-            <h3 className="font-medium text-lg truncate">{asset.type}</h3>
+            <h3 className="font-medium text-base truncate">{asset.type}</h3>
           </div>
-          <p className="text-sm text-gray-600 mb-1">{asset.brand} {asset.model}</p>
-          <p className="text-xs text-gray-500 font-mono mb-2">{asset.serialNumber}</p>
+          
+          <div className="space-y-1 mb-3">
+            <p className="text-sm text-gray-600">
+              {asset.brand} {asset.model}
+            </p>
+            <p className="text-xs text-gray-500 font-mono">
+              SN: {asset.serialNumber}
+            </p>
+            {asset.assetTag && (
+              <p className="text-xs text-gray-500 font-mono">
+                Tag: {asset.assetTag}
+              </p>
+            )}
+          </div>
+          
           <div className="flex flex-wrap gap-2 mb-3">
-            <Badge className={getStatusColor(asset.status)}>
+            <Badge className={`text-xs ${getStatusColor(asset.status)}`}>
               {asset.status === "Deleted" ? "Verwijderd" : asset.status}
             </Badge>
-            <Badge variant="outline">
+            <Badge variant="outline" className="text-xs">
               {getCategoryDisplayName(asset.category)}
             </Badge>
           </div>
+          
           {asset.assignedTo && (
             <div className="flex items-center space-x-1 mb-2">
-              <User className="h-3 w-3" />
-              <span className="text-sm">{asset.assignedTo}</span>
+              <User className="h-3 w-3 text-gray-400" />
+              <span className="text-sm text-gray-600">{asset.assignedTo}</span>
             </div>
           )}
-          <div className="flex flex-col space-y-1 text-sm text-gray-600">
-            <span>{asset.location}</span>
+          
+          <div className="flex flex-col space-y-1 text-sm text-gray-600 mb-3">
+            <div className="flex items-center space-x-1">
+              <MapPin className="h-3 w-3 text-gray-400" />
+              <span className="text-sm">{asset.location}</span>
+            </div>
             {asset.assignedToLocation && (
-              <div className="flex items-center space-x-1">
-                <MapPin className="h-3 w-3 text-blue-500" />
-                <span className="text-xs">{asset.assignedToLocation}</span>
+              <div className="flex items-center space-x-1 ml-4">
+                <span className="text-xs text-gray-500">{asset.assignedToLocation}</span>
               </div>
             )}
           </div>
-          <div className="flex flex-wrap gap-2 mt-3">
+          
+          <div className="flex flex-wrap gap-2">
             {asset.status === "In voorraad" && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onReserve(asset)}
-                className="flex items-center gap-1 text-xs"
+                className="flex items-center gap-1 text-xs h-8"
               >
                 <Calendar className="h-3 w-3" />
                 Reserveren
               </Button>
             )}
+            
             {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && asset.status !== "Deleted" && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onEdit(asset)}
-                className="text-xs"
+                className="text-xs h-8"
               >
                 Bewerken
               </Button>
             )}
+            
             {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin") && asset.status !== "Deleted" && (
               <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-red-600 hover:text-red-700"
+                    className="text-red-600 hover:text-red-700 text-xs h-8"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="mx-4 max-w-sm">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Asset verwijderen</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -166,6 +187,6 @@ export const AssetMobileCard = ({
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 };
