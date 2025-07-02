@@ -1,5 +1,7 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,13 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Search, Filter, Activity } from "lucide-react";
+import { Search, Filter, Activity, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { ActivityLogChanges } from "@/components/ActivityLogChanges";
 
 const ITEMS_PER_PAGE = 20;
 
 export default function ActivityLog() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [tableFilter, setTableFilter] = useState<string>("all");
@@ -121,9 +124,19 @@ export default function ActivityLog() {
 
   return (
     <div className="container mx-auto py-8 space-y-6">
-      <div className="flex items-center space-x-2">
-        <Activity className="h-8 w-8" />
-        <h1 className="text-3xl font-bold">Activiteitenlog</h1>
+      <div className="flex items-center space-x-4">
+        <Button
+          variant="outline"
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Terug naar Dashboard
+        </Button>
+        <div className="flex items-center space-x-2">
+          <Activity className="h-8 w-8" />
+          <h1 className="text-3xl font-bold">Activiteitenlog</h1>
+        </div>
       </div>
 
       <Card>
