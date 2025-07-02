@@ -31,7 +31,6 @@ export const AssetListSection = ({
       "Tablet": <Smartphone className="h-4 w-4" />,
       "Headset": <Headphones className="h-4 w-4" />,
       "Printer": <Printer className="h-4 w-4" />,
-      "Scanner": <Camera className="h-4 w-4" />,
       "Router": <Wifi className="h-4 w-4" />,
       "Switch": <Wifi className="h-4 w-4" />,
       "Camera": <Camera className="h-4 w-4" />,
@@ -153,76 +152,17 @@ export const AssetListSection = ({
             </TableHeader>
             <TableBody>
               {assets.map((asset) => (
-                <TableRow key={asset.id}>
-                  <TableCell>
-                    <div className="flex items-center space-x-3">
-                      {asset.image ? (
-                        <img
-                          src={asset.image}
-                          alt={`${asset.brand} ${asset.model}`}
-                          className="w-12 h-12 object-cover rounded-lg"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                          {getAssetIcon(asset.type)}
-                        </div>
-                      )}
-                      <div>
-                        <div className="font-medium">{asset.type}</div>
-                        <div className="text-sm text-gray-500">
-                          {asset.brand} {asset.model}
-                        </div>
-                        <div className="text-xs text-gray-400 font-mono">
-                          {asset.serialNumber}
-                        </div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(asset.status)}`}>
-                      {asset.status === "Deleted" ? "Verwijderd" : asset.status}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {asset.assignedTo || "-"}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {asset.location}
-                      {asset.assignedToLocation && (
-                        <div className="text-xs text-gray-500">
-                          {asset.assignedToLocation}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-1">
-                      {asset.status === "In voorraad" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onReserve(asset)}
-                          className="text-xs"
-                        >
-                          Reserveren
-                        </Button>
-                      )}
-                      {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && asset.status !== "Deleted" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onEdit(asset)}
-                          className="text-xs"
-                        >
-                          Bewerken
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
+                <AssetTableRow
+                  key={asset.id}
+                  asset={asset}
+                  currentRole={currentRole}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onReserve={onReserve}
+                  getAssetIcon={getAssetIcon}
+                  getStatusColor={getStatusColor}
+                  getCategoryDisplayName={getCategoryDisplayName}
+                />
               ))}
             </TableBody>
           </Table>
