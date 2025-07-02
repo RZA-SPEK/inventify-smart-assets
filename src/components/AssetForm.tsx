@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera } from "lucide-react";
+import { Camera, Tag } from "lucide-react";
 import { Asset } from "@/pages/Index";
 import { AssetTypeSelector } from "./AssetTypeSelector";
 import { LocationSelector } from "./LocationSelector";
@@ -25,6 +26,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     brand: "",
     model: "",
     serialNumber: "",
+    assetTag: "",
     purchaseDate: "",
     status: "In voorraad" as Asset["status"],
     location: "",
@@ -38,9 +40,10 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     if (asset) {
       setFormData({
         type: asset.type,
-        brand: asset.brand,
-        model: asset.model,
+        brand: asset.brand || "",
+        model: asset.model || "",
         serialNumber: asset.serialNumber,
+        assetTag: asset.assetTag || "",
         purchaseDate: asset.purchaseDate,
         status: asset.status,
         location: asset.location,
@@ -59,7 +62,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
       ...formData,
       assignedTo: formData.assignedTo === "unassigned" ? "" : formData.assignedTo,
       assignedToLocation: formData.assignedToLocation === "unassigned" ? "" : formData.assignedToLocation,
-      image: formData.image || undefined
+      image: formData.image || undefined,
+      assetTag: formData.assetTag || undefined
     };
     onSave(submitData);
   };
@@ -68,6 +72,24 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     console.log("Setting serial number from barcode:", scannedData);
     setFormData({ ...formData, serialNumber: scannedData });
     setShowScanner(false);
+  };
+
+  const handleAssetTagChange = (value: string) => {
+    // If user starts typing without prefix and it's not empty, add MVDS- prefix
+    if (value && !value.startsWith("MVDS-") && value !== "MVDS-") {
+      setFormData({ ...formData, assetTag: "MVDS-" + value });
+    } else {
+      setFormData({ ...formData, assetTag: value });
+    }
+  };
+
+  const generateAssetTag = () => {
+    // Generate a simple asset tag based on category and current timestamp
+    const prefix = "MVDS-";
+    const categoryCode = formData.category === "ICT" ? "ICT" : "FAC";
+    const timestamp = Date.now().toString().slice(-4);
+    const generatedTag = `${prefix}${categoryCode}${timestamp}`;
+    setFormData({ ...formData, assetTag: generatedTag });
   };
 
   return (
@@ -149,6 +171,31 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
                   Scan
                 </Button>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="assetTag">Asset Tag (optioneel)</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="assetTag"
+                  value={formData.assetTag}
+                  onChange={(e) => handleAssetTagChange(e.target.value)}
+                  placeholder="MVDS-XXX123 of laat leeg"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={generateAssetTag}
+                  className="flex items-center gap-2"
+                >
+                  <Tag className="h-4 w-4" />
+                  Genereer
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500">
+                Voer een asset tag in met optioneel MVDS- prefix, of klik op "Genereer" voor automatische tag
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

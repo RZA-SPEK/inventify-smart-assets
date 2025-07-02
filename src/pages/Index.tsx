@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PlusCircle, Laptop, Smartphone, Headphones, Cable, Monitor, User, Settings, BarChart3, MapPin, Calendar } from "lucide-react";
+import { PlusCircle, Laptop, Smartphone, Headphones, Cable, Monitor, User, Settings, BarChart3, MapPin, Calendar, Tag } from "lucide-react";
 import { AssetForm } from "@/components/AssetForm";
 import { UserRole } from "@/components/UserRole";
 import { DashboardStats } from "@/components/DashboardStats";
@@ -18,6 +18,7 @@ export interface Asset {
   brand?: string;
   model?: string;
   serialNumber: string;
+  assetTag?: string;
   purchaseDate: string;
   status: "In gebruik" | "In voorraad" | "Defect" | "Onderhoud";
   location: string;
@@ -34,6 +35,7 @@ const mockAssets: Asset[] = [
     brand: "Dell",
     model: "Latitude 7420",
     serialNumber: "DL7420001",
+    assetTag: "MVDS-LAP001",
     purchaseDate: "2023-01-15",
     status: "In gebruik",
     location: "Kantoor Amsterdam",
@@ -47,6 +49,7 @@ const mockAssets: Asset[] = [
     brand: "Apple",
     model: "iPhone 14",
     serialNumber: "IP14002",
+    assetTag: "MVDS-PHN002",
     purchaseDate: "2023-03-20",
     status: "In voorraad",
     location: "ICT Magazijn",
@@ -59,6 +62,7 @@ const mockAssets: Asset[] = [
     brand: "Jabra",
     model: "Evolve2 65",
     serialNumber: "JB65003",
+    assetTag: "MVDS-HDS003",
     purchaseDate: "2023-02-10",
     status: "In gebruik",
     location: "Kantoor Utrecht",
@@ -72,6 +76,7 @@ const mockAssets: Asset[] = [
     brand: "IKEA",
     model: "Bekant",
     serialNumber: "IK-BK004",
+    assetTag: "MVDS-DSK004",
     purchaseDate: "2022-11-01",
     status: "In gebruik",
     location: "Kantoor Amsterdam",
@@ -125,9 +130,10 @@ const Index = () => {
 
   const filteredAssets = assets.filter(asset => {
     const matchesSearch = asset.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         asset.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         asset.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase());
+                         asset.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         asset.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         asset.assetTag?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || asset.status === statusFilter;
     const matchesCategory = categoryFilter === "all" || asset.category === categoryFilter;
@@ -281,6 +287,7 @@ const Index = () => {
                         <TableHead>Type</TableHead>
                         <TableHead>Merk & Model</TableHead>
                         <TableHead>Serienummer</TableHead>
+                        <TableHead>Asset Tag</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Categorie</TableHead>
                         <TableHead>Toegewezen aan</TableHead>
@@ -313,6 +320,16 @@ const Index = () => {
                           </TableCell>
                           <TableCell>{asset.brand} {asset.model}</TableCell>
                           <TableCell className="font-mono text-sm">{asset.serialNumber}</TableCell>
+                          <TableCell>
+                            {asset.assetTag ? (
+                              <div className="flex items-center space-x-1">
+                                <Tag className="h-3 w-3 text-blue-500" />
+                                <span className="font-mono text-sm">{asset.assetTag}</span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">Geen tag</span>
+                            )}
+                          </TableCell>
                           <TableCell>
                             <Badge className={getStatusColor(asset.status)}>
                               {asset.status}
