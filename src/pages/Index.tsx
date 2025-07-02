@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -270,7 +269,7 @@ const Index = () => {
                     <SelectItem value="In voorraad">In voorraad</SelectItem>
                     <SelectItem value="Defect">Defect</SelectItem>
                     <SelectItem value="Onderhoud">Onderhoud</SelectItem>
-                    <SelectItem value="Deleted">Deleted</SelectItem>
+                    <SelectItem value="Deleted">Verwijderd</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -353,7 +352,7 @@ const Index = () => {
                           </TableCell>
                           <TableCell>
                             <Badge className={getStatusColor(asset.status)}>
-                              {asset.status}
+                              {asset.status === "Deleted" ? "Verwijderd" : asset.status}
                             </Badge>
                           </TableCell>
                           <TableCell>
