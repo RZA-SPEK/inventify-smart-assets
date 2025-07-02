@@ -1,272 +1,132 @@
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Search, Filter, Activity, ArrowLeft } from "lucide-react";
-import { format } from "date-fns";
-import { ActivityLogChanges } from "@/components/ActivityLogChanges";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Activity, User, Calendar, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-const ITEMS_PER_PAGE = 20;
-
-export default function ActivityLog() {
+const ActivityLog = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [actionFilter, setActionFilter] = useState<string>("all");
-  const [tableFilter, setTableFilter] = useState<string>("all");
-  const [currentPage, setCurrentPage] = useState(1);
 
-  const { data: auditLogs, isLoading, error } = useQuery({
-    queryKey: ['audit-logs', searchTerm, actionFilter, tableFilter, currentPage],
-    queryFn: async () => {
-      let query = supabase
-        .from('security_audit_log')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (actionFilter !== "all") {
-        query = query.eq('action', actionFilter);
-      }
-
-      if (tableFilter !== "all") {
-        query = query.eq('table_name', tableFilter);
-      }
-
-      if (searchTerm) {
-        query = query.or(`user_id.ilike.%${searchTerm}%,action.ilike.%${searchTerm}%,table_name.ilike.%${searchTerm}%`);
-      }
-
-      const { data, error } = await query
-        .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
-
-      if (error) throw error;
-      return data;
+  // Mock activity data for demonstration
+  const activities = [
+    {
+      id: 1,
+      action: "Asset Created",
+      description: "New laptop MVDS-50023 added to inventory",
+      user: "Admin User",
+      timestamp: "2024-07-02 14:30",
+      type: "create"
     },
-  });
-
-  const { data: totalCount } = useQuery({
-    queryKey: ['audit-logs-count', searchTerm, actionFilter, tableFilter],
-    queryFn: async () => {
-      let query = supabase
-        .from('security_audit_log')
-        .select('*', { count: 'exact', head: true });
-
-      if (actionFilter !== "all") {
-        query = query.eq('action', actionFilter);
-      }
-
-      if (tableFilter !== "all") {
-        query = query.eq('table_name', tableFilter);
-      }
-
-      if (searchTerm) {
-        query = query.or(`user_id.ilike.%${searchTerm}%,action.ilike.%${searchTerm}%,table_name.ilike.%${searchTerm}%`);
-      }
-
-      const { count, error } = await query;
-      if (error) throw error;
-      return count || 0;
+    {
+      id: 2,
+      action: "Asset Updated",
+      description: "Monitor MVDS-50015 status changed to 'In gebruik'",
+      user: "IT Manager",
+      timestamp: "2024-07-02 13:15",
+      type: "update"
     },
-  });
+    {
+      id: 3,
+      action: "Asset Reserved",
+      description: "Laptop MVDS-50010 reserved by John Doe",
+      user: "John Doe",
+      timestamp: "2024-07-02 12:45",
+      type: "reserve"
+    },
+    {
+      id: 4,
+      action: "Asset Deleted",
+      description: "Old printer MVDS-50001 marked as deleted",
+      user: "Admin User",
+      timestamp: "2024-07-02 11:20",
+      type: "delete"
+    }
+  ];
 
-  const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
-
-  const getActionBadgeColor = (action: string) => {
-    switch (action) {
-      case 'INSERT':
-        return 'bg-green-100 text-green-800';
-      case 'UPDATE':
-        return 'bg-blue-100 text-blue-800';
-      case 'DELETE':
-        return 'bg-red-100 text-red-800';
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case "create":
+        return <Activity className="w-4 h-4 text-green-600" />;
+      case "update":
+        return <Activity className="w-4 h-4 text-blue-600" />;
+      case "reserve":
+        return <Calendar className="w-4 h-4 text-orange-600" />;
+      case "delete":
+        return <Activity className="w-4 h-4 text-red-600" />;
       default:
-        return 'bg-gray-100 text-gray-800';
+        return <Activity className="w-4 h-4 text-gray-600" />;
     }
   };
 
-  const formatJsonValue = (value: any) => {
-    if (!value) return 'N/A';
-    return JSON.stringify(value, null, 2);
+  const getActivityColor = (type: string) => {
+    switch (type) {
+      case "create":
+        return "bg-green-50 border-green-200";
+      case "update":
+        return "bg-blue-50 border-blue-200";
+      case "reserve":
+        return "bg-orange-50 border-orange-200";
+      case "delete":
+        return "bg-red-50 border-red-200";
+      default:
+        return "bg-gray-50 border-gray-200";
+    }
   };
 
-  const getTableDisplayName = (tableName: string) => {
-    const tableMap: { [key: string]: string } = {
-      'assets': 'Assets',
-      'reservations': 'Reserveringen',
-      'maintenance_history': 'Onderhoud',
-      'profiles': 'Profielen',
-      'notifications': 'Notificaties'
-    };
-    
-    return tableMap[tableName] || tableName;
-  };
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto py-8 space-y-6">
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/")}
+            className="flex items-center space-x-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Terug naar Dashboard</span>
+          </Button>
+          <h1 className="text-3xl font-bold text-gray-900">Activity Log</h1>
+        </div>
 
-  if (error) {
-    return (
-      <div className="container mx-auto py-8">
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-center text-red-600">
-              Error loading activity log: {error.message}
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Activity className="w-5 h-5" />
+              <span>Recente Activiteiten</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {activities.map((activity) => (
+                <div
+                  key={activity.id}
+                  className={`p-4 rounded-lg border ${getActivityColor(activity.type)}`}
+                >
+                  <div className="flex items-start space-x-3">
+                    {getActivityIcon(activity.type)}
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium text-gray-900">{activity.action}</h3>
+                        <div className="flex items-center space-x-1 text-sm text-gray-500">
+                          <Clock className="w-3 h-3" />
+                          <span>{activity.timestamp}</span>
+                        </div>
+                      </div>
+                      <p className="text-gray-600 mt-1">{activity.description}</p>
+                      <div className="flex items-center space-x-1 text-sm text-gray-500 mt-2">
+                        <User className="w-3 h-3" />
+                        <span>Door: {activity.user}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       </div>
-    );
-  }
-
-  return (
-    <div className="container mx-auto py-8 space-y-6">
-      <div className="flex items-center space-x-4">
-        <Button
-          variant="outline"
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Terug naar Dashboard
-        </Button>
-        <div className="flex items-center space-x-2">
-          <Activity className="h-8 w-8" />
-          <h1 className="text-3xl font-bold">Activiteitenlog</h1>
-        </div>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Beveiligings Auditlog</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Zoek op gebruiker ID, actie of tabel..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Select value={actionFilter} onValueChange={setActionFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <Filter className="h-4 w-4" />
-                <SelectValue placeholder="Filter op actie" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Acties</SelectItem>
-                <SelectItem value="INSERT">Toevoegen</SelectItem>
-                <SelectItem value="UPDATE">Bijwerken</SelectItem>
-                <SelectItem value="DELETE">Verwijderen</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={tableFilter} onValueChange={setTableFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <Filter className="h-4 w-4" />
-                <SelectValue placeholder="Filter op tabel" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Tabelen</SelectItem>
-                <SelectItem value="assets">Assets</SelectItem>
-                <SelectItem value="reservations">Reserveringen</SelectItem>
-                <SelectItem value="maintenance_history">Onderhoud</SelectItem>
-                <SelectItem value="profiles">Profielen</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {isLoading ? (
-            <div className="text-center py-8">Activiteitenlog laden...</div>
-          ) : (
-            <>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tijdstip</TableHead>
-                      <TableHead>Actie</TableHead>
-                      <TableHead>Tabel</TableHead>
-                      <TableHead>Gebruiker ID</TableHead>
-                      <TableHead>Wijzigingen</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {auditLogs?.map((log) => (
-                      <TableRow key={log.id}>
-                        <TableCell className="font-mono text-sm">
-                          {format(new Date(log.created_at), 'dd MMM yyyy HH:mm:ss')}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getActionBadgeColor(log.action)}>
-                            {log.action}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {getTableDisplayName(log.table_name)}
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {log.user_id ? log.user_id.substring(0, 8) + '...' : 'Systeem'}
-                        </TableCell>
-                        <TableCell className="max-w-md">
-                          <ActivityLogChanges
-                            action={log.action}
-                            tableName={log.table_name}
-                            oldValues={log.old_values}
-                            newValues={log.new_values}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {totalPages > 1 && (
-                <div className="mt-6">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious 
-                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                          className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                        />
-                      </PaginationItem>
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        const page = i + 1;
-                        return (
-                          <PaginationItem key={page}>
-                            <PaginationLink
-                              onClick={() => setCurrentPage(page)}
-                              isActive={currentPage === page}
-                              className="cursor-pointer"
-                            >
-                              {page}
-                            </PaginationLink>
-                          </PaginationItem>
-                        );
-                      })}
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                          className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
-}
+};
+
+export default ActivityLog;

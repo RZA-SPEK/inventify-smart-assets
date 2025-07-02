@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Plus, Activity, Calendar } from "lucide-react";
 import { UserRole } from "@/components/UserRole";
+import { useNavigate } from "react-router-dom";
 
 interface PageHeaderProps {
   currentRole: "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker";
@@ -10,8 +11,10 @@ interface PageHeaderProps {
 }
 
 export const PageHeader = ({ currentRole, onRoleChange, onAddAsset }: PageHeaderProps) => {
+  const navigate = useNavigate();
+
   const handleNavigation = (path: string) => {
-    window.location.href = path;
+    navigate(path);
   };
 
   console.log("PageHeader - Current role:", currentRole);

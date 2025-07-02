@@ -98,10 +98,10 @@ export const useAssetManagement = (
 
       console.log("Transformed assets before role filtering:", transformedAssets.length);
 
-      // Apply client-side filtering based on simulated role
-      // This simulates what the RLS policies would do
+      // Apply client-side filtering based on role (for demo purposes)
       if (currentRole) {
         console.log("Applying role-based filtering for role:", currentRole);
+        const beforeFilter = transformedAssets.length;
         
         if (currentRole === "ICT Admin") {
           // ICT Admin can see all assets
@@ -111,17 +111,15 @@ export const useAssetManagement = (
           console.log("Facilitair Admin - showing all assets:", transformedAssets.length);
         } else if (currentRole === "Facilitair Medewerker") {
           // Facilitair Medewerker can only see Facilitair category assets
-          const beforeFilter = transformedAssets.length;
           transformedAssets = transformedAssets.filter(asset => asset.category === "Facilitair");
           console.log(`Facilitair Medewerker - filtered from ${beforeFilter} to ${transformedAssets.length} Facilitair assets`);
         } else if (currentRole === "Gebruiker") {
-          // Regular users can only see assets assigned to them
-          // For demo purposes, we'll show a limited set since we don't have real user assignments
-          const beforeFilter = transformedAssets.length;
+          // Regular users can see assets assigned to them or unassigned assets
+          // For demo purposes, we'll show some assets
           transformedAssets = transformedAssets.filter(asset => 
-            asset.assignedTo && asset.assignedTo.includes("user") // Demo filter
+            !asset.assignedTo || asset.assignedTo.includes("demo") // Demo filter
           );
-          console.log(`Gebruiker - filtered from ${beforeFilter} to ${transformedAssets.length} assigned assets`);
+          console.log(`Gebruiker - filtered from ${beforeFilter} to ${transformedAssets.length} available assets`);
         }
       } else {
         console.log("No role specified, showing all assets");
