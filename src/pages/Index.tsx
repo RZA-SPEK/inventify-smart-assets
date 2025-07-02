@@ -51,7 +51,7 @@ export default function Index() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [currentRole, setCurrentRole] = useState<string>("Gebruiker");
+  const [currentRole, setCurrentRole] = useState<"ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker">("Gebruiker");
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const { toast } = useToast();
@@ -313,7 +313,10 @@ export default function Index() {
             <p className="text-gray-600 mt-2">Manage and track your organization's assets</p>
           </div>
           <div className="flex gap-2">
-            <UserRole />
+            <UserRole 
+              currentRole={currentRole}
+              onRoleChange={setCurrentRole}
+            />
             {currentRole === 'ICT Admin' && (
               <Button 
                 onClick={() => window.location.href = '/activity-log'}
