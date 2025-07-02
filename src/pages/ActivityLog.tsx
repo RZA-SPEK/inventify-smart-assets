@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Search, Filter, Activity } from "lucide-react";
 import { format } from "date-fns";
+import { ActivityLogChanges } from "@/components/ActivityLogChanges";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -93,6 +93,18 @@ export default function ActivityLog() {
     return JSON.stringify(value, null, 2);
   };
 
+  const getTableDisplayName = (tableName: string) => {
+    const tableMap: { [key: string]: string } = {
+      'assets': 'Assets',
+      'reservations': 'Reserveringen',
+      'maintenance_history': 'Onderhoud',
+      'profiles': 'Profielen',
+      'notifications': 'Notificaties'
+    };
+    
+    return tableMap[tableName] || tableName;
+  };
+
   if (error) {
     return (
       <div className="container mx-auto py-8">
@@ -111,12 +123,12 @@ export default function ActivityLog() {
     <div className="container mx-auto py-8 space-y-6">
       <div className="flex items-center space-x-2">
         <Activity className="h-8 w-8" />
-        <h1 className="text-3xl font-bold">Activity Log</h1>
+        <h1 className="text-3xl font-bold">Activiteitenlog</h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Security Audit Log</CardTitle>
+          <CardTitle>Beveiligings Auditlog</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -124,7 +136,7 @@ export default function ActivityLog() {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search by user ID, action, or table..."
+                  placeholder="Zoek op gebruiker ID, actie of tabel..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -134,88 +146,69 @@ export default function ActivityLog() {
             <Select value={actionFilter} onValueChange={setActionFilter}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <Filter className="h-4 w-4" />
-                <SelectValue placeholder="Filter by action" />
+                <SelectValue placeholder="Filter op actie" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Actions</SelectItem>
-                <SelectItem value="INSERT">Insert</SelectItem>
-                <SelectItem value="UPDATE">Update</SelectItem>
-                <SelectItem value="DELETE">Delete</SelectItem>
+                <SelectItem value="all">Alle Acties</SelectItem>
+                <SelectItem value="INSERT">Toevoegen</SelectItem>
+                <SelectItem value="UPDATE">Bijwerken</SelectItem>
+                <SelectItem value="DELETE">Verwijderen</SelectItem>
               </SelectContent>
             </Select>
             <Select value={tableFilter} onValueChange={setTableFilter}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <Filter className="h-4 w-4" />
-                <SelectValue placeholder="Filter by table" />
+                <SelectValue placeholder="Filter op tabel" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Tables</SelectItem>
+                <SelectItem value="all">Alle Tabelen</SelectItem>
                 <SelectItem value="assets">Assets</SelectItem>
-                <SelectItem value="reservations">Reservations</SelectItem>
-                <SelectItem value="maintenance_history">Maintenance</SelectItem>
-                <SelectItem value="profiles">Profiles</SelectItem>
+                <SelectItem value="reservations">Reserveringen</SelectItem>
+                <SelectItem value="maintenance_history">Onderhoud</SelectItem>
+                <SelectItem value="profiles">Profielen</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {isLoading ? (
-            <div className="text-center py-8">Loading activity log...</div>
+            <div className="text-center py-8">Activiteitenlog laden...</div>
           ) : (
             <>
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Timestamp</TableHead>
-                      <TableHead>Action</TableHead>
-                      <TableHead>Table</TableHead>
-                      <TableHead>User ID</TableHead>
-                      <TableHead>Record ID</TableHead>
-                      <TableHead>Changes</TableHead>
+                      <TableHead>Tijdstip</TableHead>
+                      <TableHead>Actie</TableHead>
+                      <TableHead>Tabel</TableHead>
+                      <TableHead>Gebruiker ID</TableHead>
+                      <TableHead>Wijzigingen</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {auditLogs?.map((log) => (
                       <TableRow key={log.id}>
                         <TableCell className="font-mono text-sm">
-                          {format(new Date(log.created_at), 'MMM dd, yyyy HH:mm:ss')}
+                          {format(new Date(log.created_at), 'dd MMM yyyy HH:mm:ss')}
                         </TableCell>
                         <TableCell>
                           <Badge className={getActionBadgeColor(log.action)}>
                             {log.action}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-medium">{log.table_name}</TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {log.user_id ? log.user_id.substring(0, 8) + '...' : 'System'}
+                        <TableCell className="font-medium">
+                          {getTableDisplayName(log.table_name)}
                         </TableCell>
                         <TableCell className="font-mono text-sm">
-                          {log.record_id ? log.record_id.substring(0, 8) + '...' : 'N/A'}
+                          {log.user_id ? log.user_id.substring(0, 8) + '...' : 'Systeem'}
                         </TableCell>
-                        <TableCell className="max-w-xs">
-                          <details className="cursor-pointer">
-                            <summary className="text-sm text-blue-600 hover:text-blue-800">
-                              View Changes
-                            </summary>
-                            <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
-                              {log.old_values && (
-                                <div className="mb-2">
-                                  <strong>Before:</strong>
-                                  <pre className="whitespace-pre-wrap break-all">
-                                    {formatJsonValue(log.old_values)}
-                                  </pre>
-                                </div>
-                              )}
-                              {log.new_values && (
-                                <div>
-                                  <strong>After:</strong>
-                                  <pre className="whitespace-pre-wrap break-all">
-                                    {formatJsonValue(log.new_values)}
-                                  </pre>
-                                </div>
-                              )}
-                            </div>
-                          </details>
+                        <TableCell className="max-w-md">
+                          <ActivityLogChanges
+                            action={log.action}
+                            tableName={log.table_name}
+                            oldValues={log.old_values}
+                            newValues={log.new_values}
+                          />
                         </TableCell>
                       </TableRow>
                     ))}
