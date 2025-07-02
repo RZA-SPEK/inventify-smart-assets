@@ -22,7 +22,7 @@ export const useAssetManagement = (
       statusFilter,
       typeFilter,
       scannedBarcode,
-      currentRole, // Add currentRole to the query key so it refetches when role changes
+      currentRole,
     ],
     queryFn: async () => {
       console.log("Fetching assets with filters:", { 
@@ -96,6 +96,8 @@ export const useAssetManagement = (
         createdBy: item.created_by,
       })) || [];
 
+      console.log("Transformed assets before role filtering:", transformedAssets.length);
+
       // Apply client-side filtering based on simulated role
       // This simulates what the RLS policies would do
       if (currentRole) {
@@ -103,23 +105,29 @@ export const useAssetManagement = (
         
         if (currentRole === "ICT Admin") {
           // ICT Admin can see all assets
-          console.log("ICT Admin - showing all assets");
+          console.log("ICT Admin - showing all assets:", transformedAssets.length);
         } else if (currentRole === "Facilitair Admin") {
           // Facilitair Admin can see all assets (similar to ICT Admin)
-          console.log("Facilitair Admin - showing all assets");
+          console.log("Facilitair Admin - showing all assets:", transformedAssets.length);
         } else if (currentRole === "Facilitair Medewerker") {
           // Facilitair Medewerker can only see Facilitair category assets
+          const beforeFilter = transformedAssets.length;
           transformedAssets = transformedAssets.filter(asset => asset.category === "Facilitair");
-          console.log("Facilitair Medewerker - filtered to Facilitair assets only");
+          console.log(`Facilitair Medewerker - filtered from ${beforeFilter} to ${transformedAssets.length} Facilitair assets`);
         } else if (currentRole === "Gebruiker") {
           // Regular users can only see assets assigned to them
-          // For demo purposes, we'll show a limited set or empty array
-          transformedAssets = transformedAssets.filter(asset => asset.assignedTo === "current.user@example.com");
-          console.log("Gebruiker - filtered to assigned assets only");
+          // For demo purposes, we'll show a limited set since we don't have real user assignments
+          const beforeFilter = transformedAssets.length;
+          transformedAssets = transformedAssets.filter(asset => 
+            asset.assignedTo && asset.assignedTo.includes("user") // Demo filter
+          );
+          console.log(`Gebruiker - filtered from ${beforeFilter} to ${transformedAssets.length} assigned assets`);
         }
+      } else {
+        console.log("No role specified, showing all assets");
       }
 
-      console.log("Final transformed assets:", transformedAssets);
+      console.log("Final assets after role filtering:", transformedAssets.length);
       return transformedAssets;
     },
   });
