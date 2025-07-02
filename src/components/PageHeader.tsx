@@ -2,7 +2,6 @@
 import { Button } from "@/components/ui/button";
 import { Plus, Activity, Calendar } from "lucide-react";
 import { UserRole } from "@/components/UserRole";
-import { useNavigate } from "react-router-dom";
 
 interface PageHeaderProps {
   currentRole: "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker";
@@ -11,7 +10,9 @@ interface PageHeaderProps {
 }
 
 export const PageHeader = ({ currentRole, onRoleChange, onAddAsset }: PageHeaderProps) => {
-  const navigate = useNavigate();
+  const handleNavigation = (path: string) => {
+    window.location.href = path;
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
@@ -29,7 +30,7 @@ export const PageHeader = ({ currentRole, onRoleChange, onAddAsset }: PageHeader
           <div className="flex space-x-2">
             <Button
               variant="outline"
-              onClick={() => navigate("/activity-log")}
+              onClick={() => handleNavigation("/activity-log")}
               className="flex items-center space-x-2"
             >
               <Activity className="w-4 h-4" />
@@ -40,7 +41,7 @@ export const PageHeader = ({ currentRole, onRoleChange, onAddAsset }: PageHeader
               <>
                 <Button
                   variant="outline"
-                  onClick={() => navigate("/reservations")}
+                  onClick={() => handleNavigation("/reservations")}
                   className="flex items-center space-x-2"
                 >
                   <Calendar className="w-4 h-4" />
