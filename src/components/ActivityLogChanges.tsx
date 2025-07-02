@@ -44,8 +44,7 @@ export const ActivityLogChanges = ({ action, tableName, oldValues, newValues }: 
     
     // Compare old and new values to find what changed
     Object.keys(newValues).forEach(key => {
-      if (oldValues[key] !== newValues[key] && key !== 'updated_at') {
-        const fieldName = getFieldDisplayName(key);
+      if (oldValues[key] !== newValues[key] && key !== 'updated_at' && key !== 'created_at') {
         const oldValue = formatValue(oldValues[key]);
         const newValue = formatValue(newValues[key]);
         
@@ -53,6 +52,7 @@ export const ActivityLogChanges = ({ action, tableName, oldValues, newValues }: 
         if (tableName === 'assets') {
           changes.push(getAssetSpecificChange(key, oldValue, newValue));
         } else {
+          const fieldName = getFieldDisplayName(key);
           changes.push(`${fieldName}: ${oldValue} → ${newValue}`);
         }
       }
@@ -105,6 +105,28 @@ export const ActivityLogChanges = ({ action, tableName, oldValues, newValues }: 
           : newValue === 'Leeg'
           ? `Asset tag verwijderd`
           : `Asset tag gewijzigd van "${oldValue}" naar "${newValue}"`;
+      case 'type':
+        return `Type gewijzigd van "${oldValue}" naar "${newValue}"`;
+      case 'purchase_date':
+        return `Aankoopdatum gewijzigd van ${oldValue} naar ${newValue}`;
+      case 'warranty_expiry':
+        return oldValue === 'Leeg'
+          ? `Garantie einddatum toegevoegd: ${newValue}`
+          : newValue === 'Leeg'
+          ? `Garantie einddatum verwijderd`
+          : `Garantie einddatum gewijzigd van ${oldValue} naar ${newValue}`;
+      case 'last_maintenance':
+        return oldValue === 'Leeg'
+          ? `Laatste onderhoud datum toegevoegd: ${newValue}`
+          : newValue === 'Leeg'
+          ? `Laatste onderhoud datum verwijderd`
+          : `Laatste onderhoud datum gewijzigd van ${oldValue} naar ${newValue}`;
+      case 'next_maintenance':
+        return oldValue === 'Leeg'
+          ? `Volgende onderhoud datum toegevoegd: ${newValue}`
+          : newValue === 'Leeg'
+          ? `Volgende onderhoud datum verwijderd`
+          : `Volgende onderhoud datum gewijzigd van ${oldValue} naar ${newValue}`;
       default:
         const fieldName = getFieldDisplayName(field);
         return `${fieldName}: ${oldValue} → ${newValue}`;
@@ -143,7 +165,11 @@ export const ActivityLogChanges = ({ action, tableName, oldValues, newValues }: 
       'condition_notes': 'Conditie notities',
       'role': 'Rol',
       'full_name': 'Volledige naam',
-      'email': 'E-mail'
+      'email': 'E-mail',
+      'purchase_date': 'Aankoopdatum',
+      'warranty_expiry': 'Garantie einddatum',
+      'last_maintenance': 'Laatste onderhoud',
+      'next_maintenance': 'Volgende onderhoud'
     };
     
     return fieldMap[fieldName] || fieldName;
