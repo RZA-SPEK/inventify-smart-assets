@@ -1,11 +1,11 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Shield, User, Wrench } from "lucide-react";
+import { Shield, User, Wrench, Settings } from "lucide-react";
 
 interface UserRoleProps {
-  currentRole: "ICT Admin" | "Facilitair Medewerker" | "Gebruiker";
-  onRoleChange: (role: "ICT Admin" | "Facilitair Medewerker" | "Gebruiker") => void;
+  currentRole: "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker";
+  onRoleChange: (role: "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker") => void;
 }
 
 export const UserRole = ({ currentRole, onRoleChange }: UserRoleProps) => {
@@ -13,6 +13,8 @@ export const UserRole = ({ currentRole, onRoleChange }: UserRoleProps) => {
     switch (role) {
       case "ICT Admin":
         return <Shield className="h-3 w-3" />;
+      case "Facilitair Admin":
+        return <Settings className="h-3 w-3" />;
       case "Facilitair Medewerker":
         return <Wrench className="h-3 w-3" />;
       case "Gebruiker":
@@ -26,6 +28,8 @@ export const UserRole = ({ currentRole, onRoleChange }: UserRoleProps) => {
     switch (role) {
       case "ICT Admin":
         return "bg-red-100 text-red-800";
+      case "Facilitair Admin":
+        return "bg-purple-100 text-purple-800";
       case "Facilitair Medewerker":
         return "bg-blue-100 text-blue-800";
       case "Gebruiker":
@@ -56,6 +60,12 @@ export const UserRole = ({ currentRole, onRoleChange }: UserRoleProps) => {
               <div className="flex items-center space-x-2">
                 <Shield className="h-3 w-3" />
                 <span>ICT Admin</span>
+              </div>
+            </SelectItem>
+            <SelectItem value="Facilitair Admin">
+              <div className="flex items-center space-x-2">
+                <Settings className="h-3 w-3" />
+                <span>Facilitair Admin</span>
               </div>
             </SelectItem>
             <SelectItem value="Facilitair Medewerker">

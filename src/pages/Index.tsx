@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -88,7 +89,7 @@ const mockAssets: Asset[] = [
 
 const Index = () => {
   const [assets, setAssets] = useState<Asset[]>(mockAssets);
-  const [currentRole, setCurrentRole] = useState<"ICT Admin" | "Facilitair Medewerker" | "Gebruiker">("ICT Admin");
+  const [currentRole, setCurrentRole] = useState<"ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker">("ICT Admin");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -139,7 +140,7 @@ const Index = () => {
     const matchesCategory = categoryFilter === "all" || asset.category === categoryFilter;
     
     // Role-based filtering
-    if (currentRole === "Facilitair Medewerker") {
+    if (currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") {
       return matchesSearch && matchesStatus && matchesCategory && asset.category === "Facilitair";
     }
     
@@ -263,7 +264,7 @@ const Index = () => {
                   </SelectContent>
                 </Select>
               </div>
-              {(currentRole === "ICT Admin" || currentRole === "Facilitair Medewerker") && (
+              {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && (
                 <Button onClick={() => setShowAssetForm(true)} className="flex items-center space-x-2">
                   <PlusCircle className="h-4 w-4" />
                   <span>Asset Toevoegen</span>
@@ -374,7 +375,7 @@ const Index = () => {
                                   Reserveren
                                 </Button>
                               )}
-                              {(currentRole === "ICT Admin" || currentRole === "Facilitair Medewerker") && (
+                              {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && (
                                 <Button
                                   variant="outline"
                                   size="sm"
