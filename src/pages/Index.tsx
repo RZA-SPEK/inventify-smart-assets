@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -134,7 +133,7 @@ export default function Index() {
         brand: assetData.brand,
         model: assetData.model,
         serial_number: assetData.serialNumber,
-        asset_tag: assetData.assetTag,
+        assetTag: assetData.assetTag,
         purchase_date: assetData.purchaseDate,
         status: assetData.status,
         location: assetData.location,
@@ -297,7 +296,13 @@ export default function Index() {
           return;
         }
 
-        setCurrentRole(profileData?.role || "Gebruiker");
+        // Ensure the role from database matches our expected types
+        const roleFromDb = profileData?.role;
+        if (roleFromDb === "ICT Admin" || roleFromDb === "Facilitair Admin" || roleFromDb === "Facilitair Medewerker" || roleFromDb === "Gebruiker") {
+          setCurrentRole(roleFromDb);
+        } else {
+          setCurrentRole("Gebruiker"); // Default fallback
+        }
       }
     };
 
