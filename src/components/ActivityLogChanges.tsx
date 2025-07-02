@@ -48,13 +48,67 @@ export const ActivityLogChanges = ({ action, tableName, oldValues, newValues }: 
         const fieldName = getFieldDisplayName(key);
         const oldValue = formatValue(oldValues[key]);
         const newValue = formatValue(newValues[key]);
-        changes.push(`${fieldName}: ${oldValue} → ${newValue}`);
+        
+        // Special handling for asset-specific fields
+        if (tableName === 'assets') {
+          changes.push(getAssetSpecificChange(key, oldValue, newValue));
+        } else {
+          changes.push(`${fieldName}: ${oldValue} → ${newValue}`);
+        }
       }
     });
 
     if (changes.length === 0) return 'Record bijgewerkt (geen zichtbare wijzigingen)';
     
     return changes.join(', ');
+  };
+
+  const getAssetSpecificChange = (field: string, oldValue: string, newValue: string) => {
+    switch (field) {
+      case 'status':
+        return `Status gewijzigd van "${oldValue}" naar "${newValue}"`;
+      case 'location':
+        return `Locatie verplaatst van "${oldValue}" naar "${newValue}"`;
+      case 'assigned_to':
+        return oldValue === 'Leeg' 
+          ? `Toegewezen aan ${newValue}`
+          : newValue === 'Leeg'
+          ? `Niet meer toegewezen (was: ${oldValue})`
+          : `Toegewezen gewijzigd van ${oldValue} naar ${newValue}`;
+      case 'assigned_to_location':
+        return oldValue === 'Leeg'
+          ? `Specifieke locatie toegewezen: ${newValue}`
+          : newValue === 'Leeg'
+          ? `Specifieke locatie verwijderd (was: ${oldValue})`
+          : `Specifieke locatie gewijzigd van "${oldValue}" naar "${newValue}"`;
+      case 'category':
+        return `Categorie gewijzigd van "${oldValue}" naar "${newValue}"`;
+      case 'purchase_price':
+        return `Aankoopprijs gewijzigd van €${oldValue} naar €${newValue}`;
+      case 'penalty_amount':
+        return `Boetebedrag gewijzigd van €${oldValue} naar €${newValue}`;
+      case 'condition_notes':
+        return oldValue === 'Leeg'
+          ? `Conditie notitie toegevoegd: "${newValue}"`
+          : newValue === 'Leeg'
+          ? `Conditie notitie verwijderd`
+          : `Conditie notitie gewijzigd`;
+      case 'brand':
+        return `Merk gewijzigd van "${oldValue}" naar "${newValue}"`;
+      case 'model':
+        return `Model gewijzigd van "${oldValue}" naar "${newValue}"`;
+      case 'serial_number':
+        return `Serienummer gewijzigd van "${oldValue}" naar "${newValue}"`;
+      case 'asset_tag':
+        return oldValue === 'Leeg'
+          ? `Asset tag toegevoegd: ${newValue}`
+          : newValue === 'Leeg'
+          ? `Asset tag verwijderd`
+          : `Asset tag gewijzigd van "${oldValue}" naar "${newValue}"`;
+      default:
+        const fieldName = getFieldDisplayName(field);
+        return `${fieldName}: ${oldValue} → ${newValue}`;
+    }
   };
 
   const getDeleteDescription = () => {
