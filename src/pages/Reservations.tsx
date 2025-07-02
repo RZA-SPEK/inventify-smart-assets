@@ -10,6 +10,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, CheckCircle, XCircle, Clock, User, Calendar, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+interface Asset {
+  type: string;
+  brand: string | null;
+  model: string | null;
+  serial_number: string;
+}
+
+interface Reservation {
+  id: string;
+  requester_name: string;
+  purpose: string;
+  requested_date: string;
+  return_date: string;
+  status: string;
+  created_at: string;
+  asset: Asset;
+}
+
 export default function Reservations() {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -22,8 +40,14 @@ export default function Reservations() {
       const { data, error } = await supabase
         .from("reservations")
         .select(`
-          *,
-          assets:asset_id (
+          id,
+          requester_name,
+          purpose,
+          requested_date,
+          return_date,
+          status,
+          created_at,
+          asset:assets!reservations_asset_id_fkey (
             type,
             brand,
             model,
@@ -32,8 +56,12 @@ export default function Reservations() {
         `)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error("Error fetching reservations:", error);
+        throw error;
+      }
+      
+      return data as Reservation[];
     },
   });
 
@@ -179,10 +207,10 @@ export default function Reservations() {
                         <Package className="w-4 h-4 text-gray-500" />
                         <div>
                           <div className="font-medium">
-                            {reservation.assets?.type} - {reservation.assets?.brand} {reservation.assets?.model}
+                            {reservation.asset?.type} - {reservation.asset?.brand} {reservation.asset?.model}
                           </div>
                           <div className="text-sm text-gray-500">
-                            SN: {reservation.assets?.serial_number}
+                            SN: {reservation.asset?.serial_number}
                           </div>
                         </div>
                       </div>
