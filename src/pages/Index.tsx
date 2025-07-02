@@ -1,131 +1,128 @@
-
-import { useState, useEffect, useMemo } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import { Button } from "@/components/ui/button";
-import { Plus, LogOut, FileDown, FileUp, Settings, X } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PlusCircle, Laptop, Smartphone, Headphones, Cable, Monitor, User, Settings, BarChart3, MapPin, Calendar } from "lucide-react";
 import { AssetForm } from "@/components/AssetForm";
-import { ReservationDialog } from "@/components/ReservationDialog";
-import { DashboardStats } from "@/components/DashboardStats";
 import { UserRole } from "@/components/UserRole";
-import { SecurityBanner } from "@/components/SecurityBanner";
-import { NotificationCenter } from "@/components/NotificationCenter";
-import { AdvancedSearch } from "@/components/AdvancedSearch";
-import { MaintenanceTracker } from "@/components/MaintenanceTracker";
-import { useAssets } from "@/hooks/useAssets";
-import { useReservations } from "@/hooks/useReservations";
-import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { DashboardStats } from "@/components/DashboardStats";
+import { ReservationDialog } from "@/components/ReservationDialog";
+import { BrandingSettings } from "@/components/BrandingSettings";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { LogOut } from "lucide-react";
+
+export interface Asset {
+  id: string;
+  type: string;
+  brand?: string;
+  model?: string;
+  serialNumber: string;
+  purchaseDate: string;
+  status: "In gebruik" | "In voorraad" | "Defect" | "Onderhoud";
+  location: string;
+  category: "ICT" | "Facilitair";
+  assignedTo?: string;
+  assignedToLocation?: string;
+  image?: string;
+}
+
+const mockAssets: Asset[] = [
+  {
+    id: "1",
+    type: "Laptop",
+    brand: "Dell",
+    model: "Latitude 7420",
+    serialNumber: "DL7420001",
+    purchaseDate: "2023-01-15",
+    status: "In gebruik",
+    location: "Kantoor Amsterdam",
+    category: "ICT",
+    assignedTo: "Jan Janssen",
+    assignedToLocation: "Werkplek A-101"
+  },
+  {
+    id: "2",
+    type: "Telefoon",
+    brand: "Apple",
+    model: "iPhone 14",
+    serialNumber: "IP14002",
+    purchaseDate: "2023-03-20",
+    status: "In voorraad",
+    location: "ICT Magazijn",
+    category: "ICT",
+    assignedToLocation: "Magazijn Rek B-3"
+  },
+  {
+    id: "3",
+    type: "Headset",
+    brand: "Jabra",
+    model: "Evolve2 65",
+    serialNumber: "JB65003",
+    purchaseDate: "2023-02-10",
+    status: "In gebruik",
+    location: "Kantoor Utrecht",
+    category: "ICT",
+    assignedTo: "Marie Peeters",
+    assignedToLocation: "Werkplek U-205"
+  },
+  {
+    id: "4",
+    type: "Bureau",
+    brand: "IKEA",
+    model: "Bekant",
+    serialNumber: "IK-BK004",
+    purchaseDate: "2022-11-01",
+    status: "In gebruik",
+    location: "Kantoor Amsterdam",
+    category: "Facilitair",
+    assignedTo: "Tom de Vries",
+    assignedToLocation: "Werkplek A-150"
+  }
+];
 
 const Index = () => {
-  const { user, userProfile, logout, loading: authLoading } = useAuth();
-  const { assets, loading: assetsLoading, fetchAssets, searchAssets, addAsset, updateAsset } = useAssets();
-  const { reservations, createReservation, updateReservationStatus } = useReservations();
-  const { toast } = useToast();
-
+  const { isLoggedIn, userEmail, logout } = useAuth();
+  const navigate = useNavigate();
+  
+  const [assets, setAssets] = useState<Asset[]>(mockAssets);
+  const [currentRole, setCurrentRole] = useState<"ICT Admin" | "Facilitair Medewerker" | "Gebruiker">("ICT Admin");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [showAssetForm, setShowAssetForm] = useState(false);
-  const [selectedAsset, setSelectedAsset] = useState<any>(null);
-  const [showReservationDialog, setShowReservationDialog] = useState(false);
-  const [reservationAsset, setReservationAsset] = useState<any>(null);
-  const [selectedMaintenanceAsset, setSelectedMaintenanceAsset] = useState<any>(null);
-  const [isSearching, setIsSearching] = useState(false);
+  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+  const [reservationAsset, setReservationAsset] = useState<Asset | null>(null);
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Laden...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user || !userProfile) {
-    return <Navigate to="/login" replace />;
-  }
-
-  const handleSearch = async (filters: any) => {
-    setIsSearching(true);
-    await searchAssets(filters);
-    setIsSearching(false);
-  };
-
-  const handleClearSearch = async () => {
-    setIsSearching(false);
-    await fetchAssets();
-  };
-
-  const handleSaveAsset = async (assetData: any) => {
-    try {
-      let result;
-      if (selectedAsset) {
-        result = await updateAsset(selectedAsset.id, assetData);
-      } else {
-        result = await addAsset(assetData);
-      }
-
-      if (result.error) {
-        toast({
-          title: "Fout bij opslaan",
-          description: result.error,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: selectedAsset ? "Asset bijgewerkt" : "Asset toegevoegd",
-          description: selectedAsset 
-            ? "Het asset is succesvol bijgewerkt." 
-            : "Het nieuwe asset is succesvol toegevoegd.",
-        });
-        setShowAssetForm(false);
-        setSelectedAsset(null);
-      }
-    } catch (error) {
-      console.error('Error saving asset:', error);
-      toast({
-        title: "Onverwachte fout",
-        description: "Er is een onverwachte fout opgetreden.",
-        variant: "destructive",
-      });
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate('/login');
     }
+  }, [isLoggedIn, navigate]);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
-  const handleReservation = async (reservationData: any) => {
-    const result = await createReservation(reservationData);
-    if (result.error) {
-      toast({
-        title: "Reservering mislukt",
-        description: result.error,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Reservering aangemaakt",
-        description: "Je reservering is ter goedkeuring verzonden.",
-      });
-      setShowReservationDialog(false);
-      setReservationAsset(null);
-    }
-  };
-
-  const handleApproveReservation = async (reservationId: string, newStatus: any) => {
-    const result = await updateReservationStatus(reservationId, newStatus, userProfile?.full_name || 'Admin');
-    if (result.error) {
-      toast({
-        title: "Fout bij goedkeuring",
-        description: result.error,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Reservering bijgewerkt",
-        description: `Reservering is ${newStatus === 'approved' ? 'goedgekeurd' : 'afgewezen'}.`,
-      });
+  const getAssetIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case "laptop":
+        return <Laptop className="h-4 w-4" />;
+      case "telefoon":
+        return <Smartphone className="h-4 w-4" />;
+      case "headset":
+        return <Headphones className="h-4 w-4" />;
+      case "kabel":
+        return <Cable className="h-4 w-4" />;
+      case "monitor":
+        return <Monitor className="h-4 w-4" />;
+      default:
+        return <Settings className="h-4 w-4" />;
     }
   };
 
@@ -144,216 +141,258 @@ const Index = () => {
     }
   };
 
-  const canUserModifyAssets = () => {
-    return userProfile?.role === 'ICT Admin' || userProfile?.role === 'Facilitair Medewerker';
+  const filteredAssets = assets.filter(asset => {
+    const matchesSearch = asset.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         asset.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         asset.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || asset.status === statusFilter;
+    const matchesCategory = categoryFilter === "all" || asset.category === categoryFilter;
+    
+    // Role-based filtering
+    if (currentRole === "Facilitair Medewerker") {
+      return matchesSearch && matchesStatus && matchesCategory && asset.category === "Facilitair";
+    }
+    
+    if (currentRole === "Gebruiker") {
+      return matchesSearch && matchesStatus && matchesCategory && asset.assignedTo === "Jan Janssen"; // Mock current user
+    }
+    
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
+
+  const handleAddAsset = (assetData: Omit<Asset, "id">) => {
+    const newAsset: Asset = {
+      ...assetData,
+      id: Date.now().toString()
+    };
+    setAssets([...assets, newAsset]);
+    setShowAssetForm(false);
   };
 
-  const visibleAssets = useMemo(() => {
-    if (userProfile?.role === 'ICT Admin') {
-      return assets;
-    } else if (userProfile?.role === 'Facilitair Medewerker') {
-      return assets.filter(asset => asset.category === 'Facilitair');
-    } else {
-      return assets.filter(asset => asset.assigned_to === userProfile?.email);
+  const handleEditAsset = (assetData: Omit<Asset, "id">) => {
+    if (editingAsset) {
+      setAssets(assets.map(asset => 
+        asset.id === editingAsset.id ? { ...assetData, id: editingAsset.id } : asset
+      ));
+      setEditingAsset(null);
+      setShowAssetForm(false);
     }
-  }, [assets, userProfile]);
+  };
 
-  const pendingReservations = reservations.filter(r => r.status === 'pending');
+  const startEditAsset = (asset: Asset) => {
+    setEditingAsset(asset);
+    setShowAssetForm(true);
+  };
+
+  if (!isLoggedIn) {
+    return null; // Don't render anything while redirecting to login
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">AssetSpek</h1>
-              <p className="text-sm text-gray-600">Asset Management Systeem</p>
+      <div className="border-b bg-white shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <BarChart3 className="h-8 w-8 text-blue-600" />
+                <h1 className="text-2xl font-bold text-gray-900">Asset Management Tool</h1>
+              </div>
             </div>
-            <div className="flex items-center gap-4">
-              <NotificationCenter />
-              <UserRole role={userProfile?.role || 'Gebruiker'} />
-              <Button
-                onClick={logout}
-                variant="ghost"
-                size="sm"
-                className="text-gray-600 hover:text-gray-900"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-600">Welkom, {userEmail}</span>
+              <UserRole currentRole={currentRole} onRoleChange={setCurrentRole} />
+              <Button variant="outline" size="sm" onClick={handleLogout} className="flex items-center gap-2">
+                <LogOut className="h-4 w-4" />
                 Uitloggen
               </Button>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <SecurityBanner />
-        
-        <DashboardStats assets={visibleAssets} />
+      <div className="container mx-auto px-4 py-6">
+        <Tabs defaultValue="dashboard" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="assets">Assets</TabsTrigger>
+            <TabsTrigger value="users">Gebruikers</TabsTrigger>
+            <TabsTrigger value="settings" disabled={currentRole !== "ICT Admin"}>
+              Instellingen
+            </TabsTrigger>
+          </TabsList>
 
-        {canUserModifyAssets() && pendingReservations.length > 0 && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Goedkeuring vereist</CardTitle>
-              <CardDescription>
-                {pendingReservations.length} reservering(en) wachten op goedkeuring
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {pendingReservations.map((reservation) => (
-                  <div key={reservation.id} className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <div>
-                      <p className="font-medium">{reservation.requester_name}</p>
-                      <p className="text-sm text-gray-600">
-                        {reservation.purpose} • {format(new Date(reservation.requested_date), 'dd MMM yyyy')} - {format(new Date(reservation.return_date), 'dd MMM yyyy')}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleApproveReservation(reservation.id, 'approved')}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        Goedkeuren
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleApproveReservation(reservation.id, 'rejected')}
-                        className="border-red-300 text-red-600 hover:bg-red-50"
-                      >
-                        Afwijzen
-                      </Button>
-                    </div>
+          <TabsContent value="dashboard" className="space-y-6">
+            <DashboardStats assets={filteredAssets} />
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Recente Activiteiten</CardTitle>
+                <CardDescription>Laatste wijzigingen in het asset beheer</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3 text-sm">
+                    <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                    <span className="text-gray-600">Jan Janssen heeft Dell Latitude 7420 toegewezen gekregen</span>
+                    <span className="text-gray-400">2 uur geleden</span>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                  <div className="flex items-center space-x-3 text-sm">
+                    <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-gray-600">Nieuw asset toegevoegd: iPhone 14</span>
+                    <span className="text-gray-400">1 dag geleden</span>
+                  </div>
+                  <div className="flex items-center space-x-3 text-sm">
+                    <div className="h-2 w-2 bg-yellow-500 rounded-full"></div>
+                    <span className="text-gray-600">Jabra Headset naar onderhoud</span>
+                    <span className="text-gray-400">3 dagen geleden</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        <div className="space-y-6">
-          <AdvancedSearch 
-            onSearch={handleSearch} 
-            onClear={handleClearSearch}
-          />
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Assets</CardTitle>
-                  <CardDescription>
-                    {isSearching ? "Zoekresultaten" : `${visibleAssets.length} asset(s) gevonden`}
-                  </CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  {canUserModifyAssets() && (
-                    <>
-                      <Button variant="outline" size="sm">
-                        <FileDown className="h-4 w-4 mr-2" />
-                        Exporteren
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <FileUp className="h-4 w-4 mr-2" />
-                        Importeren
-                      </Button>
-                      <Button onClick={() => setShowAssetForm(true)}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Asset toevoegen
-                      </Button>
-                    </>
-                  )}
-                </div>
+          <TabsContent value="assets" className="space-y-6">
+            <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+              <div className="flex flex-col space-y-2 md:flex-row md:items-center md:space-y-0 md:space-x-4">
+                <Input
+                  placeholder="Zoek assets..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="md:w-64"
+                />
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="md:w-40">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle statussen</SelectItem>
+                    <SelectItem value="In gebruik">In gebruik</SelectItem>
+                    <SelectItem value="In voorraad">In voorraad</SelectItem>
+                    <SelectItem value="Defect">Defect</SelectItem>
+                    <SelectItem value="Onderhoud">Onderhoud</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="md:w-40">
+                    <SelectValue placeholder="Categorie" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle categorieën</SelectItem>
+                    <SelectItem value="ICT">ICT</SelectItem>
+                    <SelectItem value="Facilitair">Facilitair</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </CardHeader>
-            <CardContent>
-              {assetsLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-gray-600">Assets laden...</p>
-                </div>
-              ) : visibleAssets.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <p className="text-lg mb-2">Geen assets gevonden</p>
-                  <p className="text-sm">
-                    {isSearching ? "Probeer andere zoektermen" : "Voeg je eerste asset toe om te beginnen"}
-                  </p>
-                </div>
-              ) : (
+              {(currentRole === "ICT Admin" || currentRole === "Facilitair Medewerker") && (
+                <Button onClick={() => setShowAssetForm(true)} className="flex items-center space-x-2">
+                  <PlusCircle className="h-4 w-4" />
+                  <span>Asset Toevoegen</span>
+                </Button>
+              )}
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Asset Overzicht</CardTitle>
+                <CardDescription>
+                  {filteredAssets.length} van {assets.length} assets weergegeven
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>Foto</TableHead>
                         <TableHead>Type</TableHead>
-                        <TableHead>Merk/Model</TableHead>
+                        <TableHead>Merk & Model</TableHead>
                         <TableHead>Serienummer</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Locatie</TableHead>
                         <TableHead>Categorie</TableHead>
-                        {userProfile?.role === 'ICT Admin' && <TableHead>Toegewezen aan</TableHead>}
+                        <TableHead>Toegewezen aan</TableHead>
+                        <TableHead>Locatie</TableHead>
+                        <TableHead>Specifieke Locatie</TableHead>
                         <TableHead>Acties</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {visibleAssets.map((asset) => (
+                      {filteredAssets.map((asset) => (
                         <TableRow key={asset.id}>
-                          <TableCell className="font-medium">{asset.type}</TableCell>
                           <TableCell>
-                            {asset.brand && asset.model 
-                              ? `${asset.brand} ${asset.model}`
-                              : asset.brand || asset.model || '-'
-                            }
+                            {asset.image ? (
+                              <img
+                                src={asset.image}
+                                alt={`${asset.brand} ${asset.model}`}
+                                className="w-12 h-12 object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                                {getAssetIcon(asset.type)}
+                              </div>
+                            )}
                           </TableCell>
-                          <TableCell className="font-mono text-sm">{asset.serial_number}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              {getAssetIcon(asset.type)}
+                              <span>{asset.type}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{asset.brand} {asset.model}</TableCell>
+                          <TableCell className="font-mono text-sm">{asset.serialNumber}</TableCell>
                           <TableCell>
                             <Badge className={getStatusColor(asset.status)}>
                               {asset.status}
                             </Badge>
                           </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {asset.category}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {asset.assignedTo ? (
+                              <div className="flex items-center space-x-1">
+                                <User className="h-3 w-3" />
+                                <span>{asset.assignedTo}</span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">Niet toegewezen</span>
+                            )}
+                          </TableCell>
                           <TableCell>{asset.location}</TableCell>
                           <TableCell>
-                            <Badge variant="outline">{asset.category}</Badge>
+                            {asset.assignedToLocation ? (
+                              <div className="flex items-center space-x-1">
+                                <MapPin className="h-3 w-3 text-blue-500" />
+                                <span className="text-sm">{asset.assignedToLocation}</span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">Geen specifieke locatie</span>
+                            )}
                           </TableCell>
-                          {userProfile?.role === 'ICT Admin' && (
-                            <TableCell>{asset.assigned_to || '-'}</TableCell>
-                          )}
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              {canUserModifyAssets() && (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      setSelectedAsset(asset);
-                                      setShowAssetForm(true);
-                                    }}
-                                  >
-                                    Bewerken
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      setSelectedMaintenanceAsset(asset);
-                                    }}
-                                  >
-                                    Onderhoud
-                                  </Button>
-                                </>
-                              )}
+                            <div className="flex space-x-2">
                               {asset.status === "In voorraad" && (
                                 <Button
-                                  variant="ghost"
+                                  variant="outline"
                                   size="sm"
-                                  onClick={() => {
-                                    setReservationAsset(asset);
-                                    setShowReservationDialog(true);
-                                  }}
+                                  onClick={() => setReservationAsset(asset)}
+                                  className="flex items-center gap-1"
                                 >
+                                  <Calendar className="h-3 w-3" />
                                   Reserveren
+                                </Button>
+                              )}
+                              {(currentRole === "ICT Admin" || currentRole === "Facilitair Medewerker") && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => startEditAsset(asset)}
+                                >
+                                  Bewerken
                                 </Button>
                               )}
                             </div>
@@ -363,58 +402,56 @@ const Index = () => {
                     </TableBody>
                   </Table>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Active Directory Gebruikers</CardTitle>
+                <CardDescription>
+                  Gebruikers gesynchroniseerd vanuit Microsoft Entra ID
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">AD Integratie Required</h3>
+                  <p className="text-gray-600 mb-4">
+                    Voor volledige AD-integratie moet backend functionaliteit worden toegevoegd.
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Mock gebruikers: Jan Janssen, Marie Peeters, Tom de Vries
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-6">
+            <BrandingSettings />
+          </TabsContent>
+        </Tabs>
+      </div>
 
       {showAssetForm && (
         <AssetForm
-          asset={selectedAsset}
-          onSave={handleSaveAsset}
+          asset={editingAsset}
+          onSave={editingAsset ? handleEditAsset : handleAddAsset}
           onCancel={() => {
             setShowAssetForm(false);
-            setSelectedAsset(null);
+            setEditingAsset(null);
           }}
         />
       )}
 
-      {showReservationDialog && reservationAsset && (
+      {reservationAsset && (
         <ReservationDialog
           asset={reservationAsset}
-          onClose={() => {
-            setShowReservationDialog(false);
-            setReservationAsset(null);
-          }}
+          onClose={() => setReservationAsset(null)}
         />
       )}
-
-      {selectedMaintenanceAsset && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">
-                  Onderhoud: {selectedMaintenanceAsset.type}
-                </h2>
-                <Button
-                  variant="ghost"
-                  onClick={() => setSelectedMaintenanceAsset(null)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <MaintenanceTracker
-                assetId={selectedMaintenanceAsset.id}
-                assetName={`${selectedMaintenanceAsset.type} (${selectedMaintenanceAsset.serial_number})`}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      <Toaster />
     </div>
   );
 };

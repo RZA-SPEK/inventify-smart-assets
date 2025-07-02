@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, Package, Users, AlertTriangle } from "lucide-react";
-import { Asset } from "@/hooks/useAssets";
+import { Asset } from "@/pages/Index";
 
 interface DashboardStatsProps {
   assets: Asset[];
@@ -10,7 +10,7 @@ interface DashboardStatsProps {
 
 export const DashboardStats = ({ assets }: DashboardStatsProps) => {
   const totalAssets = assets.length;
-  const assignedAssets = assets.filter(asset => asset.assigned_to).length;
+  const assignedAssets = assets.filter(asset => asset.assignedTo).length;
   const availableAssets = assets.filter(asset => asset.status === "In voorraad").length;
   const defectiveAssets = assets.filter(asset => asset.status === "Defect").length;
   
@@ -23,7 +23,7 @@ export const DashboardStats = ({ assets }: DashboardStatsProps) => {
   }, {} as Record<string, number>);
 
   const topAssetTypes = Object.entries(assetTypes)
-    .sort(([, a], [, b]) => (b as number) - (a as number))
+    .sort(([, a], [, b]) => b - a)
     .slice(0, 5);
 
   return (
@@ -50,7 +50,7 @@ export const DashboardStats = ({ assets }: DashboardStatsProps) => {
         <CardContent>
           <div className="text-2xl font-bold">{assignedAssets}</div>
           <p className="text-xs text-muted-foreground">
-            {totalAssets > 0 ? Math.round((assignedAssets / totalAssets) * 100) : 0}% van totaal
+            {Math.round((assignedAssets / totalAssets) * 100)}% van totaal
           </p>
         </CardContent>
       </Card>
@@ -90,7 +90,7 @@ export const DashboardStats = ({ assets }: DashboardStatsProps) => {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             {topAssetTypes.map(([type, count]) => (
               <div key={type} className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{count as number}</div>
+                <div className="text-2xl font-bold text-blue-600">{count}</div>
                 <div className="text-sm text-gray-600">{type}</div>
               </div>
             ))}
