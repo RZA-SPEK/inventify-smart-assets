@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
@@ -33,7 +32,7 @@ export const FiltersSection = ({
         <CardTitle>Asset Filters</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 sm:grid-cols-4">
+        <div className="grid gap-4">
           <AssetFilters
             searchTerm={searchTerm}
             statusFilter={statusFilter}
@@ -44,13 +43,16 @@ export const FiltersSection = ({
             onCategoryFilterChange={onCategoryFilterChange}
             onTypeFilterChange={onTypeFilterChange}
           />
-          <Button
-            variant="outline"
-            onClick={onShowBarcodeScanner}
-          >
-            <Search className="mr-2 h-4 w-4" />
-            Scan Barcode
-          </Button>
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={onShowBarcodeScanner}
+              className="h-12 text-base"
+            >
+              <Search className="mr-2 h-5 w-5" />
+              Scan Barcode
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
