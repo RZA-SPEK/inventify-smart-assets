@@ -23,7 +23,7 @@ export default function Reservations() {
         .from("reservations")
         .select(`
           *,
-          assets (
+          assets:asset_id (
             type,
             brand,
             model,
@@ -183,7 +183,7 @@ export default function Reservations() {
                           </div>
                           <div className="text-sm text-gray-500">
                             SN: {reservation.assets?.serial_number}
-                          </div>
+                          </div>  
                         </div>
                       </div>
                     </TableCell>
