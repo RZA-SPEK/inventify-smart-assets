@@ -11,24 +11,24 @@ export type Database = {
     Tables: {
       asset_relationships: {
         Row: {
-          child_asset_id: string
+          child_asset_id: string | null
           created_at: string | null
           id: string
-          parent_asset_id: string
+          parent_asset_id: string | null
           relationship_type: string
         }
         Insert: {
-          child_asset_id: string
+          child_asset_id?: string | null
           created_at?: string | null
           id?: string
-          parent_asset_id: string
-          relationship_type: string
+          parent_asset_id?: string | null
+          relationship_type?: string
         }
         Update: {
-          child_asset_id?: string
+          child_asset_id?: string | null
           created_at?: string | null
           id?: string
-          parent_asset_id?: string
+          parent_asset_id?: string | null
           relationship_type?: string
         }
         Relationships: [
@@ -55,7 +55,7 @@ export type Database = {
           brand: string | null
           category: string
           condition_notes: string | null
-          created_at: string | null
+          created_at: string
           created_by: string | null
           depreciation_rate: number | null
           id: string
@@ -69,16 +69,16 @@ export type Database = {
           serial_number: string
           status: string
           type: string
-          updated_at: string | null
+          updated_at: string
           warranty_expiry: string | null
         }
         Insert: {
           assigned_to?: string | null
           assigned_to_location?: string | null
           brand?: string | null
-          category?: string
+          category: string
           condition_notes?: string | null
-          created_at?: string | null
+          created_at?: string
           created_by?: string | null
           depreciation_rate?: number | null
           id?: string
@@ -90,9 +90,9 @@ export type Database = {
           purchase_date: string
           purchase_price?: number | null
           serial_number: string
-          status?: string
+          status: string
           type: string
-          updated_at?: string | null
+          updated_at?: string
           warranty_expiry?: string | null
         }
         Update: {
@@ -101,7 +101,7 @@ export type Database = {
           brand?: string | null
           category?: string
           condition_notes?: string | null
-          created_at?: string | null
+          created_at?: string
           created_by?: string | null
           depreciation_rate?: number | null
           id?: string
@@ -115,14 +115,14 @@ export type Database = {
           serial_number?: string
           status?: string
           type?: string
-          updated_at?: string | null
+          updated_at?: string
           warranty_expiry?: string | null
         }
         Relationships: []
       }
       maintenance_history: {
         Row: {
-          asset_id: string
+          asset_id: string | null
           cost: number | null
           created_at: string | null
           description: string | null
@@ -134,7 +134,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          asset_id: string
+          asset_id?: string | null
           cost?: number | null
           created_at?: string | null
           description?: string | null
@@ -146,7 +146,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          asset_id?: string
+          asset_id?: string | null
           cost?: number | null
           created_at?: string | null
           description?: string | null
@@ -177,7 +177,7 @@ export type Database = {
           related_reservation_id: string | null
           title: string
           type: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -187,8 +187,8 @@ export type Database = {
           related_asset_id?: string | null
           related_reservation_id?: string | null
           title: string
-          type: string
-          user_id: string
+          type?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -199,7 +199,7 @@ export type Database = {
           related_reservation_id?: string | null
           title?: string
           type?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -220,36 +220,37 @@ export type Database = {
       }
       profiles: {
         Row: {
-          created_at: string | null
-          email: string | null
+          created_at: string
+          email: string
           full_name: string | null
           id: string
-          role: string | null
-          updated_at: string | null
+          role: string
+          updated_at: string
         }
         Insert: {
-          created_at?: string | null
-          email?: string | null
+          created_at?: string
+          email: string
           full_name?: string | null
           id: string
-          role?: string | null
-          updated_at?: string | null
+          role?: string
+          updated_at?: string
         }
         Update: {
-          created_at?: string | null
-          email?: string | null
+          created_at?: string
+          email?: string
           full_name?: string | null
           id?: string
-          role?: string | null
-          updated_at?: string | null
+          role?: string
+          updated_at?: string
         }
         Relationships: []
       }
       reservations: {
         Row: {
+          approved_at: string | null
           approved_by: string | null
           asset_id: string
-          created_at: string | null
+          created_at: string
           id: string
           purpose: string
           requested_date: string
@@ -257,12 +258,13 @@ export type Database = {
           requester_name: string
           return_date: string
           status: string
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
+          approved_at?: string | null
           approved_by?: string | null
           asset_id: string
-          created_at?: string | null
+          created_at?: string
           id?: string
           purpose: string
           requested_date: string
@@ -270,12 +272,13 @@ export type Database = {
           requester_name: string
           return_date: string
           status?: string
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
+          approved_at?: string | null
           approved_by?: string | null
           asset_id?: string
-          created_at?: string | null
+          created_at?: string
           id?: string
           purpose?: string
           requested_date?: string
@@ -283,7 +286,7 @@ export type Database = {
           requester_name?: string
           return_date?: string
           status?: string
-          updated_at?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -302,7 +305,7 @@ export type Database = {
           name: string
           search_criteria: Json
           updated_at: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -310,7 +313,7 @@ export type Database = {
           name: string
           search_criteria: Json
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -318,7 +321,7 @@ export type Database = {
           name?: string
           search_criteria?: Json
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -361,11 +364,40 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          created_at: string | null
+          full_name: string | null
+          id: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          full_name?: string | null
+          id?: never
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string | null
+          id?: never
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      check_maintenance_due: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      check_warranty_expiry: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
