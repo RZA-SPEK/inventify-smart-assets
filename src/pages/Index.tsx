@@ -185,7 +185,8 @@ const Index = () => {
     }
   };
 
-  const handleDeleteAsset = (assetId: string) => {
+  const handleDeleteAsset = (assetId: string, reason: string) => {
+    console.log(`Deleting asset ${assetId} with reason: ${reason}`);
     setAssets(assets.map(asset => 
       asset.id === assetId ? { ...asset, status: "Deleted" as const } : asset
     ));

@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tag, User, MapPin, Calendar, Trash2 } from "lucide-react";
 import { Asset } from "@/pages/Index";
+import { useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +22,7 @@ interface AssetTableRowProps {
   asset: Asset;
   currentRole: string;
   onEdit: (asset: Asset) => void;
-  onDelete: (assetId: string) => void;
+  onDelete: (assetId: string, reason: string) => void;
   onReserve: (asset: Asset) => void;
   getAssetIcon: (type: string) => React.ReactNode;
   getStatusColor: (status: string) => string;
@@ -37,6 +39,17 @@ export const AssetTableRow = ({
   getStatusColor,
   getCategoryDisplayName
 }: AssetTableRowProps) => {
+  const [deleteReason, setDeleteReason] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const handleDelete = () => {
+    if (deleteReason.trim()) {
+      onDelete(asset.id, deleteReason);
+      setDeleteReason("");
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
   return (
     <TableRow>
       <TableCell>
@@ -131,7 +144,7 @@ export const AssetTableRow = ({
             </Button>
           )}
           {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin") && asset.status !== "Deleted" && (
-            <AlertDialog>
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
               <AlertDialogTrigger asChild>
                 <Button
                   variant="outline"
@@ -148,11 +161,26 @@ export const AssetTableRow = ({
                     Weet je zeker dat je dit asset wilt verwijderen? Het asset wordt gemarkeerd als "Deleted" en kan later worden hersteld.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
+                <div className="space-y-2">
+                  <label htmlFor="delete-reason" className="text-sm font-medium">
+                    Reden voor verwijdering *
+                  </label>
+                  <Textarea
+                    id="delete-reason"
+                    placeholder="Geef een reden op voor het verwijderen van dit asset..."
+                    value={deleteReason}
+                    onChange={(e) => setDeleteReason(e.target.value)}
+                    className="min-h-[80px]"
+                  />
+                </div>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                  <AlertDialogCancel onClick={() => setDeleteReason("")}>
+                    Annuleren
+                  </AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={() => onDelete(asset.id)}
-                    className="bg-red-600 hover:bg-red-700"
+                    onClick={handleDelete}
+                    disabled={!deleteReason.trim()}
+                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
                   >
                     Verwijderen
                   </AlertDialogAction>
