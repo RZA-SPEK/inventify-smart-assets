@@ -10,6 +10,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, CheckCircle, XCircle, Clock, User, Calendar, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+interface ReservationWithAsset {
+  id: string;
+  asset_id: string;
+  requester_id: string;
+  requester_name: string;
+  purpose: string;
+  requested_date: string;
+  return_date: string;
+  status: string;
+  approved_by: string | null;
+  approved_at: string | null;
+  created_at: string;
+  updated_at: string;
+  assets: {
+    type: string;
+    brand: string | null;
+    model: string | null;
+    serial_number: string;
+  } | null;
+}
+
 export default function Reservations() {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -18,12 +39,12 @@ export default function Reservations() {
 
   const { data: reservations, isLoading } = useQuery({
     queryKey: ["reservations"],
-    queryFn: async () => {
+    queryFn: async (): Promise<ReservationWithAsset[]> => {
       const { data, error } = await supabase
         .from("reservations")
         .select(`
           *,
-          assets:asset_id (
+          assets!inner (
             type,
             brand,
             model,
@@ -33,7 +54,7 @@ export default function Reservations() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
   });
 
