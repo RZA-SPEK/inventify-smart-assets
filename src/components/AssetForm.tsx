@@ -91,6 +91,10 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
       baseNumber = 50001;
     } else if (formData.category === "Facilitair") {
       baseNumber = 1;
+    } else if (formData.category === "Catering") {
+      baseNumber = 60001;
+    } else if (formData.category === "Logistics") {
+      baseNumber = 70001;
     } else {
       baseNumber = 1;
     }
@@ -138,13 +142,15 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
 
               <div className="space-y-2">
                 <Label htmlFor="category">Categorie</Label>
-                <Select value={formData.category} onValueChange={(value: "ICT" | "Facilitair") => setFormData({ ...formData, category: value })}>
+                <Select value={formData.category} onValueChange={(value: Asset["category"]) => setFormData({ ...formData, category: value })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ICT">ICT</SelectItem>
                     <SelectItem value="Facilitair">Facilitair</SelectItem>
+                    <SelectItem value="Catering">Catering</SelectItem>
+                    <SelectItem value="Logistics">Logistiek</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

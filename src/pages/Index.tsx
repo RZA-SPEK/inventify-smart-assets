@@ -33,7 +33,7 @@ export interface Asset {
   purchaseDate: string;
   status: "In gebruik" | "In voorraad" | "Defect" | "Onderhoud" | "Deleted";
   location: string;
-  category: "ICT" | "Facilitair";
+  category: "ICT" | "Facilitair" | "Catering" | "Logistics";
   assignedTo?: string;
   assignedToLocation?: string;
   image?: string;
@@ -138,6 +138,21 @@ const Index = () => {
         return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getCategoryDisplayName = (category: string) => {
+    switch (category) {
+      case "ICT":
+        return "ICT";
+      case "Facilitair":
+        return "Facilitair";
+      case "Catering":
+        return "Catering";
+      case "Logistics":
+        return "Logistiek";
+      default:
+        return category;
     }
   };
 
@@ -280,6 +295,8 @@ const Index = () => {
                     <SelectItem value="all">Alle categorieën</SelectItem>
                     <SelectItem value="ICT">ICT</SelectItem>
                     <SelectItem value="Facilitair">Facilitair</SelectItem>
+                    <SelectItem value="Catering">Catering</SelectItem>
+                    <SelectItem value="Logistics">Logistiek</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -357,7 +374,7 @@ const Index = () => {
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline">
-                              {asset.category}
+                              {getCategoryDisplayName(asset.category)}
                             </Badge>
                           </TableCell>
                           <TableCell>
