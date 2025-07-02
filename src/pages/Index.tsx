@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PlusCircle, Laptop, Smartphone, Headphones, Cable, Monitor, User, Settings, BarChart3, MapPin, Calendar } from "lucide-react";
 import { AssetForm } from "@/components/AssetForm";
-import { AssetTable } from "@/components/AssetTable";
-import { AssetFilters } from "@/components/AssetFilters";
 import { UserRole } from "@/components/UserRole";
 import { DashboardStats } from "@/components/DashboardStats";
 import { ReservationDialog } from "@/components/ReservationDialog";
-import { User, Settings } from "lucide-react";
 
 export interface Asset {
   id: string;
@@ -89,6 +91,38 @@ const Index = () => {
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [reservationAsset, setReservationAsset] = useState<Asset | null>(null);
 
+  const getAssetIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case "laptop":
+        return <Laptop className="h-4 w-4" />;
+      case "telefoon":
+        return <Smartphone className="h-4 w-4" />;
+      case "headset":
+        return <Headphones className="h-4 w-4" />;
+      case "kabel":
+        return <Cable className="h-4 w-4" />;
+      case "monitor":
+        return <Monitor className="h-4 w-4" />;
+      default:
+        return <Settings className="h-4 w-4" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "In gebruik":
+        return "bg-green-100 text-green-800";
+      case "In voorraad":
+        return "bg-blue-100 text-blue-800";
+      case "Defect":
+        return "bg-red-100 text-red-800";
+      case "Onderhoud":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
   const filteredAssets = assets.filter(asset => {
     const matchesSearch = asset.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          asset.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -98,12 +132,13 @@ const Index = () => {
     const matchesStatus = statusFilter === "all" || asset.status === statusFilter;
     const matchesCategory = categoryFilter === "all" || asset.category === categoryFilter;
     
+    // Role-based filtering
     if (currentRole === "Facilitair Medewerker") {
       return matchesSearch && matchesStatus && matchesCategory && asset.category === "Facilitair";
     }
     
     if (currentRole === "Gebruiker") {
-      return matchesSearch && matchesStatus && matchesCategory && asset.assignedTo === "Jan Janssen";
+      return matchesSearch && matchesStatus && matchesCategory && asset.assignedTo === "Jan Janssen"; // Mock current user
     }
     
     return matchesSearch && matchesStatus && matchesCategory;
@@ -191,16 +226,44 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="assets" className="space-y-6">
-            <AssetFilters
-              searchTerm={searchTerm}
-              statusFilter={statusFilter}
-              categoryFilter={categoryFilter}
-              currentRole={currentRole}
-              onSearchChange={setSearchTerm}
-              onStatusFilterChange={setStatusFilter}
-              onCategoryFilterChange={setCategoryFilter}
-              onAddAsset={() => setShowAssetForm(true)}
-            />
+            <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+              <div className="flex flex-col space-y-2 md:flex-row md:items-center md:space-y-0 md:space-x-4">
+                <Input
+                  placeholder="Zoek assets..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="md:w-64"
+                />
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="md:w-40">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle statussen</SelectItem>
+                    <SelectItem value="In gebruik">In gebruik</SelectItem>
+                    <SelectItem value="In voorraad">In voorraad</SelectItem>
+                    <SelectItem value="Defect">Defect</SelectItem>
+                    <SelectItem value="Onderhoud">Onderhoud</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="md:w-40">
+                    <SelectValue placeholder="Categorie" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle categorieën</SelectItem>
+                    <SelectItem value="ICT">ICT</SelectItem>
+                    <SelectItem value="Facilitair">Facilitair</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {(currentRole === "ICT Admin" || currentRole === "Facilitair Medewerker") && (
+                <Button onClick={() => setShowAssetForm(true)} className="flex items-center space-x-2">
+                  <PlusCircle className="h-4 w-4" />
+                  <span>Asset Toevoegen</span>
+                </Button>
+              )}
+            </div>
 
             <Card>
               <CardHeader>
@@ -210,12 +273,106 @@ const Index = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <AssetTable
-                  assets={filteredAssets}
-                  currentRole={currentRole}
-                  onEditAsset={startEditAsset}
-                  onReserveAsset={setReservationAsset}
-                />
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Foto</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Merk & Model</TableHead>
+                        <TableHead>Serienummer</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Categorie</TableHead>
+                        <TableHead>Toegewezen aan</TableHead>
+                        <TableHead>Locatie</TableHead>
+                        <TableHead>Specifieke Locatie</TableHead>
+                        <TableHead>Acties</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredAssets.map((asset) => (
+                        <TableRow key={asset.id}>
+                          <TableCell>
+                            {asset.image ? (
+                              <img
+                                src={asset.image}
+                                alt={`${asset.brand} ${asset.model}`}
+                                className="w-12 h-12 object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                                {getAssetIcon(asset.type)}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              {getAssetIcon(asset.type)}
+                              <span>{asset.type}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{asset.brand} {asset.model}</TableCell>
+                          <TableCell className="font-mono text-sm">{asset.serialNumber}</TableCell>
+                          <TableCell>
+                            <Badge className={getStatusColor(asset.status)}>
+                              {asset.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {asset.category}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {asset.assignedTo ? (
+                              <div className="flex items-center space-x-1">
+                                <User className="h-3 w-3" />
+                                <span>{asset.assignedTo}</span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">Niet toegewezen</span>
+                            )}
+                          </TableCell>
+                          <TableCell>{asset.location}</TableCell>
+                          <TableCell>
+                            {asset.assignedToLocation ? (
+                              <div className="flex items-center space-x-1">
+                                <MapPin className="h-3 w-3 text-blue-500" />
+                                <span className="text-sm">{asset.assignedToLocation}</span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">Geen specifieke locatie</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              {asset.status === "In voorraad" && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setReservationAsset(asset)}
+                                  className="flex items-center gap-1"
+                                >
+                                  <Calendar className="h-3 w-3" />
+                                  Reserveren
+                                </Button>
+                              )}
+                              {(currentRole === "ICT Admin" || currentRole === "Facilitair Medewerker") && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => startEditAsset(asset)}
+                                >
+                                  Bewerken
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
