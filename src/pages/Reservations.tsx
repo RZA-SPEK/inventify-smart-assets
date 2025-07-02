@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -44,7 +43,7 @@ export default function Reservations() {
         .from("reservations")
         .select(`
           *,
-          assets!inner (
+          assets!reservations_asset_id_fkey (
             type,
             brand,
             model,
