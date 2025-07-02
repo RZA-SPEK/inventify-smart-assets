@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { AssetForm } from "@/components/AssetForm";
 import { ReservationDialog } from "@/components/ReservationDialog";
@@ -25,17 +24,19 @@ export default function Index() {
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   
   const { toast } = useToast();
-  const { currentRole, setCurrentRole } = useUserRole();
+  const { currentRole, actualRole, setCurrentRole } = useUserRole();
   const { assets, refetch, handleAssetSave, handleDelete } = useAssetManagement(
     searchTerm,
     categoryFilter,
     statusFilter,
     typeFilter,
-    scannedBarcode
+    scannedBarcode,
+    currentRole // Pass the current role to the hook
   );
 
   console.log("Index component - assets:", assets);
   console.log("Index component - currentRole:", currentRole);
+  console.log("Index component - actualRole:", actualRole);
 
   const handleAssetSaveWrapper = async (assetData: Omit<Asset, "id">) => {
     await handleAssetSave(assetData, editingAsset);

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +9,8 @@ export const useAssetManagement = (
   categoryFilter: string,
   statusFilter: string,
   typeFilter: string,
-  scannedBarcode: string | null
+  scannedBarcode: string | null,
+  currentRole?: "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker"
 ) => {
   const { toast } = useToast();
 
@@ -22,9 +22,17 @@ export const useAssetManagement = (
       statusFilter,
       typeFilter,
       scannedBarcode,
+      currentRole, // Add currentRole to the query key so it refetches when role changes
     ],
     queryFn: async () => {
-      console.log("Fetching assets with filters:", { searchTerm, categoryFilter, statusFilter, typeFilter, scannedBarcode });
+      console.log("Fetching assets with filters:", { 
+        searchTerm, 
+        categoryFilter, 
+        statusFilter, 
+        typeFilter, 
+        scannedBarcode,
+        currentRole 
+      });
       
       let query = supabase
         .from("assets")
@@ -67,7 +75,7 @@ export const useAssetManagement = (
       }
 
       // Transform the data to match our Asset interface
-      const transformedAssets = data?.map((item: any) => ({
+      let transformedAssets = data?.map((item: any) => ({
         id: item.id,
         type: item.type,
         brand: item.brand,
@@ -88,7 +96,30 @@ export const useAssetManagement = (
         createdBy: item.created_by,
       })) || [];
 
-      console.log("Transformed assets:", transformedAssets);
+      // Apply client-side filtering based on simulated role
+      // This simulates what the RLS policies would do
+      if (currentRole) {
+        console.log("Applying role-based filtering for role:", currentRole);
+        
+        if (currentRole === "ICT Admin") {
+          // ICT Admin can see all assets
+          console.log("ICT Admin - showing all assets");
+        } else if (currentRole === "Facilitair Admin") {
+          // Facilitair Admin can see all assets (similar to ICT Admin)
+          console.log("Facilitair Admin - showing all assets");
+        } else if (currentRole === "Facilitair Medewerker") {
+          // Facilitair Medewerker can only see Facilitair category assets
+          transformedAssets = transformedAssets.filter(asset => asset.category === "Facilitair");
+          console.log("Facilitair Medewerker - filtered to Facilitair assets only");
+        } else if (currentRole === "Gebruiker") {
+          // Regular users can only see assets assigned to them
+          // For demo purposes, we'll show a limited set or empty array
+          transformedAssets = transformedAssets.filter(asset => asset.assignedTo === "current.user@example.com");
+          console.log("Gebruiker - filtered to assigned assets only");
+        }
+      }
+
+      console.log("Final transformed assets:", transformedAssets);
       return transformedAssets;
     },
   });
