@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Asset } from "@/types/asset";
+import { Asset } from "@/pages/Index";
 import { AssetFormFields } from "./AssetFormFields";
 import { BarcodeScanner } from "./BarcodeScanner";
 
@@ -26,9 +26,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     category: "ICT" as Asset["category"],
     assignedTo: "",
     assignedToLocation: "",
-    image: "",
-    purchasePrice: "",
-    penaltyAmount: ""
+    image: ""
   });
 
   useEffect(() => {
@@ -45,9 +43,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
         category: asset.category,
         assignedTo: asset.assignedTo || "",
         assignedToLocation: asset.assignedToLocation || "",
-        image: asset.image || "",
-        purchasePrice: asset.purchasePrice?.toString() || "",
-        penaltyAmount: asset.penaltyAmount?.toString() || ""
+        image: asset.image || ""
       });
     }
   }, [asset]);
@@ -59,9 +55,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
       assignedTo: formData.assignedTo === "unassigned" ? "" : formData.assignedTo,
       assignedToLocation: formData.assignedToLocation === "unassigned" ? "" : formData.assignedToLocation,
       image: formData.image || undefined,
-      assetTag: formData.assetTag || undefined,
-      purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
-      penaltyAmount: formData.penaltyAmount ? parseFloat(formData.penaltyAmount) : undefined
+      assetTag: formData.assetTag || undefined
     };
     onSave(submitData);
   };

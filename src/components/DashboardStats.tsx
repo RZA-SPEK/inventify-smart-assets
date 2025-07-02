@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, Package, Users, AlertTriangle } from "lucide-react";
-import { Asset } from "@/types/asset";
+import { Asset } from "@/pages/Index";
 
 interface DashboardStatsProps {
   assets: Asset[];
@@ -25,8 +25,6 @@ export const DashboardStats = ({ assets }: DashboardStatsProps) => {
   const topAssetTypes = Object.entries(assetTypes)
     .sort(([, a], [, b]) => b - a)
     .slice(0, 5);
-
-  const assignmentPercentage = totalAssets > 0 ? Math.round((assignedAssets / totalAssets) * 100) : 0;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -52,7 +50,7 @@ export const DashboardStats = ({ assets }: DashboardStatsProps) => {
         <CardContent>
           <div className="text-2xl font-bold">{assignedAssets}</div>
           <p className="text-xs text-muted-foreground">
-            {assignmentPercentage}% van totaal
+            {Math.round((assignedAssets / totalAssets) * 100)}% van totaal
           </p>
         </CardContent>
       </Card>

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Camera, Tag } from "lucide-react";
-import { Asset } from "@/types/asset";
+import { Asset } from "@/pages/Index";
 import { AssetTypeSelector } from "./AssetTypeSelector";
 import { LocationSelector } from "./LocationSelector";
 import { AssignmentSelector } from "./AssignmentSelector";
@@ -24,8 +24,6 @@ interface AssetFormFieldsProps {
     assignedTo: string;
     assignedToLocation: string;
     image: string;
-    purchasePrice: string;
-    penaltyAmount: string;
   };
   onFormDataChange: (data: any) => void;
   onShowScanner: () => void;
@@ -169,37 +167,6 @@ export const AssetFormFields = ({
               <SelectItem value="Onderhoud">Onderhoud</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="purchasePrice">Aankoopprijs (€)</Label>
-          <Input
-            id="purchasePrice"
-            type="number"
-            step="0.01"
-            min="0"
-            value={formData.purchasePrice}
-            onChange={(e) => onFormDataChange({ ...formData, purchasePrice: e.target.value })}
-            placeholder="0.00"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="penaltyAmount">Boete bij verlies/schade (€)</Label>
-          <Input
-            id="penaltyAmount"
-            type="number"
-            step="0.01"
-            min="0"
-            value={formData.penaltyAmount}
-            onChange={(e) => onFormDataChange({ ...formData, penaltyAmount: e.target.value })}
-            placeholder="0.00"
-          />
-          <p className="text-xs text-gray-500">
-            Bedrag dat gebruiker moet betalen bij verlies of schade
-          </p>
         </div>
       </div>
 

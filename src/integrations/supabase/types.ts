@@ -46,11 +46,24 @@ export type Database = {
             referencedRelation: "assets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_asset_relationships_child"
+            columns: ["child_asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_asset_relationships_parent"
+            columns: ["parent_asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
         ]
       }
       assets: {
         Row: {
-          asset_tag: string | null
           assigned_to: string | null
           assigned_to_location: string | null
           brand: string | null
@@ -65,7 +78,6 @@ export type Database = {
           location: string
           model: string | null
           next_maintenance: string | null
-          penalty_amount: number | null
           purchase_date: string
           purchase_price: number | null
           serial_number: string
@@ -75,7 +87,6 @@ export type Database = {
           warranty_expiry: string | null
         }
         Insert: {
-          asset_tag?: string | null
           assigned_to?: string | null
           assigned_to_location?: string | null
           brand?: string | null
@@ -90,7 +101,6 @@ export type Database = {
           location: string
           model?: string | null
           next_maintenance?: string | null
-          penalty_amount?: number | null
           purchase_date: string
           purchase_price?: number | null
           serial_number: string
@@ -100,7 +110,6 @@ export type Database = {
           warranty_expiry?: string | null
         }
         Update: {
-          asset_tag?: string | null
           assigned_to?: string | null
           assigned_to_location?: string | null
           brand?: string | null
@@ -115,7 +124,6 @@ export type Database = {
           location?: string
           model?: string | null
           next_maintenance?: string | null
-          penalty_amount?: number | null
           purchase_date?: string
           purchase_price?: number | null
           serial_number?: string
@@ -165,6 +173,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_maintenance_history_asset"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "maintenance_history_asset_id_fkey"
             columns: ["asset_id"]
             isOneToOne: false
@@ -208,6 +223,20 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_notifications_asset"
+            columns: ["related_asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_notifications_reservation"
+            columns: ["related_reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notifications_related_asset_id_fkey"
             columns: ["related_asset_id"]
@@ -296,6 +325,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_reservations_asset"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reservations_asset_id_fkey"
             columns: ["asset_id"]
             isOneToOne: false
@@ -366,6 +402,27 @@ export type Database = {
           record_id?: string | null
           table_name?: string
           user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          full_name: string | null
+          id: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          full_name?: string | null
+          id?: never
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string | null
+          id?: never
           user_id?: string | null
         }
         Relationships: []

@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { User, MapPin, Calendar, Trash2 } from "lucide-react";
-import { Asset } from "@/types/asset";
+import { Asset } from "@/pages/Index";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import {

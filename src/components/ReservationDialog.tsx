@@ -5,10 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Asset } from "@/types/asset";
+import { Asset } from "@/pages/Index";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useMutation } from "@tanstack/react-query";
 
 interface ReservationDialogProps {
   asset: Asset;
@@ -24,48 +22,22 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
     purpose: ""
   });
 
-  const createReservationMutation = useMutation({
-    mutationFn: async (reservationData: any) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      const { error } = await supabase
-        .from("reservations")
-        .insert({
-          asset_id: asset.id,
-          requester_id: user.id,
-          requester_name: reservationData.requesterName,
-          requested_date: reservationData.requestedDate,
-          return_date: reservationData.returnDate,
-          purpose: reservationData.purpose,
-          status: "pending"
-        });
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Reservering Aangevraagd",
-        description: `Uw reservering voor ${asset.brand} ${asset.model} is aangevraagd en wordt beoordeeld.`,
-      });
-      onClose();
-    },
-    onError: (error) => {
-      toast({
-        title: "Fout",
-        description: "Er is een fout opgetreden bij het aanvragen van de reservering.",
-        variant: "destructive",
-      });
-      console.error("Error creating reservation:", error);
-    },
-  });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createReservationMutation.mutate(formData);
+    
+    // In a real application, this would send the reservation request to a backend
+    console.log("Reservation request:", {
+      assetId: asset.id,
+      assetName: `${asset.brand} ${asset.model}`,
+      ...formData
+    });
+
+    toast({
+      title: "Reservering Aangevraagd",
+      description: `Uw reservering voor ${asset.brand} ${asset.model} is aangevraagd en wordt beoordeeld.`,
+    });
+
+    onClose();
   };
 
   return (
@@ -128,8 +100,8 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
             <Button type="button" variant="outline" onClick={onClose}>
               Annuleren
             </Button>
-            <Button type="submit" disabled={createReservationMutation.isPending}>
-              {createReservationMutation.isPending ? "Bezig..." : "Reservering Aanvragen"}
+            <Button type="submit">
+              Reservering Aanvragen
             </Button>
           </DialogFooter>
         </form>
