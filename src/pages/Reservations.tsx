@@ -23,7 +23,7 @@ export default function Reservations() {
         .from("reservations")
         .select(`
           *,
-          assets (
+          assets:asset_id (
             type,
             brand,
             model,
