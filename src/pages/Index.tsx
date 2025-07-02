@@ -7,11 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PlusCircle, Laptop, Smartphone, Headphones, Cable, Monitor, User, Settings, BarChart3, MapPin, Calendar, Tag } from "lucide-react";
+import { PlusCircle, Laptop, Smartphone, Headphones, Cable, Monitor, User, Settings, BarChart3, MapPin, Calendar, Tag, Trash2 } from "lucide-react";
 import { AssetForm } from "@/components/AssetForm";
 import { UserRole } from "@/components/UserRole";
 import { DashboardStats } from "@/components/DashboardStats";
 import { ReservationDialog } from "@/components/ReservationDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export interface Asset {
   id: string;
@@ -21,7 +32,7 @@ export interface Asset {
   serialNumber: string;
   assetTag?: string;
   purchaseDate: string;
-  status: "In gebruik" | "In voorraad" | "Defect" | "Onderhoud";
+  status: "In gebruik" | "In voorraad" | "Defect" | "Onderhoud" | "Deleted";
   location: string;
   category: "ICT" | "Facilitair";
   assignedTo?: string;
@@ -124,6 +135,8 @@ const Index = () => {
         return "bg-red-100 text-red-800";
       case "Onderhoud":
         return "bg-yellow-100 text-yellow-800";
+      case "Deleted":
+        return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -168,6 +181,12 @@ const Index = () => {
       setEditingAsset(null);
       setShowAssetForm(false);
     }
+  };
+
+  const handleDeleteAsset = (assetId: string) => {
+    setAssets(assets.map(asset => 
+      asset.id === assetId ? { ...asset, status: "Deleted" as const } : asset
+    ));
   };
 
   const startEditAsset = (asset: Asset) => {
@@ -251,6 +270,7 @@ const Index = () => {
                     <SelectItem value="In voorraad">In voorraad</SelectItem>
                     <SelectItem value="Defect">Defect</SelectItem>
                     <SelectItem value="Onderhoud">Onderhoud</SelectItem>
+                    <SelectItem value="Deleted">Deleted</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -375,7 +395,7 @@ const Index = () => {
                                   Reserveren
                                 </Button>
                               )}
-                              {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && (
+                              {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && asset.status !== "Deleted" && (
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -383,6 +403,36 @@ const Index = () => {
                                 >
                                   Bewerken
                                 </Button>
+                              )}
+                              {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin") && asset.status !== "Deleted" && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Asset verwijderen</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Weet je zeker dat je dit asset wilt verwijderen? Het asset wordt gemarkeerd als "Deleted" en kan later worden hersteld.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDeleteAsset(asset.id)}
+                                        className="bg-red-600 hover:bg-red-700"
+                                      >
+                                        Verwijderen
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
                               )}
                             </div>
                           </TableCell>
