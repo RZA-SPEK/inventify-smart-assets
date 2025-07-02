@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -84,11 +83,31 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
   };
 
   const generateAssetTag = () => {
-    // Generate a simple asset tag based on category and current timestamp
+    // Generate asset tag based on category with specific starting numbers
     const prefix = "MVDS-";
-    const categoryCode = formData.category === "ICT" ? "ICT" : "FAC";
-    const timestamp = Date.now().toString().slice(-4);
-    const generatedTag = `${prefix}${categoryCode}${timestamp}`;
+    let baseNumber: number;
+    
+    if (formData.category === "ICT") {
+      baseNumber = 50001;
+    } else if (formData.category === "Facilitair") {
+      baseNumber = 1;
+    } else {
+      baseNumber = 1;
+    }
+    
+    // Add some randomness to avoid duplicates in this demo
+    const randomOffset = Math.floor(Math.random() * 100);
+    const finalNumber = baseNumber + randomOffset;
+    
+    // Format number with leading zeros based on category
+    let formattedNumber: string;
+    if (formData.category === "ICT") {
+      formattedNumber = finalNumber.toString();
+    } else {
+      formattedNumber = finalNumber.toString().padStart(5, '0');
+    }
+    
+    const generatedTag = `${prefix}${formattedNumber}`;
     setFormData({ ...formData, assetTag: generatedTag });
   };
 
