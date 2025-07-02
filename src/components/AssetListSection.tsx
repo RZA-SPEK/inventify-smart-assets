@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { AssetTableRow } from "@/components/AssetTableRow";
 import { AssetMobileCard } from "@/components/AssetMobileCard";
 import { Asset } from "@/types/asset";
