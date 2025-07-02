@@ -1,441 +1,415 @@
-
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PlusCircle, Laptop, Smartphone, Headphones, Cable, Monitor, User, Settings, BarChart3 } from "lucide-react";
-import { AssetForm } from "@/components/AssetForm";
-import { AssetFilters } from "@/components/AssetFilters";
-import { AssetTableRow } from "@/components/AssetTableRow";
-import { AssetMobileCard } from "@/components/AssetMobileCard";
-import { UserRole } from "@/components/UserRole";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Search, Filter, Activity } from "lucide-react";
 import { DashboardStats } from "@/components/DashboardStats";
+import { AssetFilters } from "@/components/AssetFilters";
+import { AssetForm } from "@/components/AssetForm";
+import { AssetMobileCard } from "@/components/AssetMobileCard";
+import { AssetTableRow } from "@/components/AssetTableRow";
 import { ReservationDialog } from "@/components/ReservationDialog";
+import { UserRole } from "@/components/UserRole";
+import { BarcodeScanner } from "@/components/BarcodeScanner";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
-export interface Asset {
-  id: string;
-  type: string;
-  brand?: string;
-  model?: string;
-  serialNumber: string;
-  assetTag?: string;
-  purchaseDate: string;
-  status: "In gebruik" | "In voorraad" | "Defect" | "Onderhoud" | "Deleted";
-  location: string;
-  category: "ICT" | "Facilitair" | "Catering" | "Logistics";
-  assignedTo?: string;
-  assignedToLocation?: string;
-  image?: string;
-  purchasePrice?: number;
-  penaltyAmount?: number;
-}
-
-const mockAssets: Asset[] = [
-  {
-    id: "1",
-    type: "Laptop",
-    brand: "Dell",
-    model: "Latitude 7420",
-    serialNumber: "DL7420001",
-    assetTag: "MVDS-LAP001",
-    purchaseDate: "2023-01-15",
-    status: "In gebruik",
-    location: "Kantoor Amsterdam",
-    category: "ICT",
-    assignedTo: "Jan Janssen",
-    assignedToLocation: "Werkplek A-101",
-    purchasePrice: 1299.99,
-    penaltyAmount: 500.00
-  },
-  {
-    id: "2",
-    type: "Telefoon",
-    brand: "Apple",
-    model: "iPhone 14",
-    serialNumber: "IP14002",
-    assetTag: "MVDS-PHN002",
-    purchaseDate: "2023-03-20",
-    status: "In voorraad",
-    location: "ICT Magazijn",
-    category: "ICT",
-    assignedToLocation: "Magazijn Rek B-3",
-    purchasePrice: 899.99,
-    penaltyAmount: 400.00
-  },
-  {
-    id: "3",
-    type: "Headset",
-    brand: "Jabra",
-    model: "Evolve2 65",
-    serialNumber: "JB65003",
-    assetTag: "MVDS-HDS003",
-    purchaseDate: "2023-02-10",
-    status: "In gebruik",
-    location: "Kantoor Utrecht",
-    category: "ICT",
-    assignedTo: "Marie Peeters",
-    assignedToLocation: "Werkplek U-205",
-    purchasePrice: 199.99,
-    penaltyAmount: 100.00
-  },
-  {
-    id: "4",
-    type: "Bureau",
-    brand: "IKEA",
-    model: "Bekant",
-    serialNumber: "IK-BK004",
-    assetTag: "MVDS-DSK004",
-    purchaseDate: "2022-11-01",
-    status: "In gebruik",
-    location: "Kantoor Amsterdam",
-    category: "Facilitair",
-    assignedTo: "Tom de Vries",
-    assignedToLocation: "Werkplek A-150",
-    purchasePrice: 150.00,
-    penaltyAmount: 75.00
-  }
-];
-
-const Index = () => {
-  const [assets, setAssets] = useState<Asset[]>(mockAssets);
-  const [currentRole, setCurrentRole] = useState<"ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker">("ICT Admin");
+export default function Index() {
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isReservationDialogOpen, setIsReservationDialogOpen] = useState(false);
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [assetToDelete, setAssetToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [showAssetForm, setShowAssetForm] = useState(false);
-  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
-  const [reservationAsset, setReservationAsset] = useState<Asset | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
+  const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const getAssetIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case "laptop":
-        return <Laptop className="h-4 w-4" />;
-      case "telefoon":
-        return <Smartphone className="h-4 w-4" />;
-      case "headset":
-        return <Headphones className="h-4 w-4" />;
-      case "kabel":
-        return <Cable className="h-4 w-4" />;
-      case "monitor":
-        return <Monitor className="h-4 w-4" />;
-      default:
-        return <Settings className="h-4 w-4" />;
-    }
-  };
+  const { data: assets, refetch } = useQuery({
+    queryKey: [
+      "assets",
+      searchTerm,
+      categoryFilter,
+      locationFilter,
+      statusFilter,
+    ],
+    queryFn: async () => {
+      let query = supabase
+        .from("assets")
+        .select("*")
+        .ilike("type", `%${searchTerm}%`)
+        .order("created_at", { ascending: false });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "In gebruik":
-        return "bg-green-100 text-green-800";
-      case "In voorraad":
-        return "bg-blue-100 text-blue-800";
-      case "Defect":
-        return "bg-red-100 text-red-800";
-      case "Onderhoud":
-        return "bg-yellow-100 text-yellow-800";
-      case "Deleted":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+      if (categoryFilter !== "all") {
+        query = query.eq("category", categoryFilter);
+      }
 
-  const getCategoryDisplayName = (category: string) => {
-    switch (category) {
-      case "ICT":
-        return "ICT";
-      case "Facilitair":
-        return "Facilitair";
-      case "Catering":
-        return "Catering";
-      case "Logistics":
-        return "Logistiek";
-      default:
-        return category;
-    }
-  };
+      if (locationFilter !== "all") {
+        query = query.eq("location", locationFilter);
+      }
 
-  const filteredAssets = assets.filter(asset => {
-    // Enhanced search - check all fields
-    const searchLower = searchTerm.toLowerCase();
-    const matchesSearch = !searchTerm || (
-      asset.type.toLowerCase().includes(searchLower) ||
-      asset.brand?.toLowerCase().includes(searchLower) ||
-      asset.model?.toLowerCase().includes(searchLower) ||
-      asset.serialNumber.toLowerCase().includes(searchLower) ||
-      asset.assetTag?.toLowerCase().includes(searchLower) ||
-      asset.location.toLowerCase().includes(searchLower) ||
-      asset.assignedTo?.toLowerCase().includes(searchLower) ||
-      asset.assignedToLocation?.toLowerCase().includes(searchLower) ||
-      asset.category.toLowerCase().includes(searchLower) ||
-      asset.status.toLowerCase().includes(searchLower) ||
-      asset.purchasePrice?.toString().includes(searchTerm) ||
-      asset.penaltyAmount?.toString().includes(searchTerm)
-    );
-    
-    const matchesStatus = statusFilter === "all" || asset.status === statusFilter;
-    const matchesCategory = categoryFilter === "all" || asset.category === categoryFilter;
-    const matchesType = typeFilter === "all" || asset.type === typeFilter;
-    
-    if (currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") {
-      return matchesSearch && matchesStatus && matchesCategory && matchesType && asset.category === "Facilitair";
-    }
-    
-    if (currentRole === "Gebruiker") {
-      return matchesSearch && matchesStatus && matchesCategory && matchesType && asset.assignedTo === "Jan Janssen";
-    }
-    
-    return matchesSearch && matchesStatus && matchesCategory && matchesType;
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter);
+      }
+
+      if (scannedBarcode) {
+        query = query.eq("asset_tag", scannedBarcode);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        toast({
+          title: "Error!",
+          description: "Failed to fetch assets",
+          variant: "destructive",
+        });
+      }
+      return data;
+    },
   });
 
-  const handleAddAsset = (assetData: Omit<Asset, "id">) => {
-    const newAsset: Asset = {
-      ...assetData,
-      id: Date.now().toString()
-    };
-    setAssets([...assets, newAsset]);
-    setShowAssetForm(false);
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("assets")
+        .select("category")
+        .distinct();
+      if (error) {
+        toast({
+          title: "Error!",
+          description: "Failed to fetch categories",
+          variant: "destructive",
+        });
+      }
+      return data?.map((item) => item.category);
+    },
+  });
+
+  const { data: locations } = useQuery({
+    queryKey: ["locations"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("assets")
+        .select("location")
+        .distinct();
+      if (error) {
+        toast({
+          title: "Error!",
+          description: "Failed to fetch locations",
+          variant: "destructive",
+        });
+      }
+      return data?.map((item) => item.location);
+    },
+  });
+
+  const { data: statuses } = useQuery({
+    queryKey: ["statuses"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("assets")
+        .select("status")
+        .distinct();
+      if (error) {
+        toast({
+          title: "Error!",
+          description: "Failed to fetch statuses",
+          variant: "destructive",
+        });
+      }
+      return data?.map((item) => item.status);
+    },
+  });
+
+  const handleAssetCreated = () => {
+    refetch();
   };
 
-  const handleEditAsset = (assetData: Omit<Asset, "id">) => {
-    if (editingAsset) {
-      setAssets(assets.map(asset => 
-        asset.id === editingAsset.id ? { ...assetData, id: editingAsset.id } : asset
-      ));
-      setEditingAsset(null);
-      setShowAssetForm(false);
+  const handleAssetUpdated = () => {
+    refetch();
+  };
+
+  const openReservationDialog = (assetId: string) => {
+    setSelectedAssetId(assetId);
+    setIsReservationDialogOpen(true);
+  };
+
+  const closeReservationDialog = () => {
+    setSelectedAssetId(null);
+    setIsReservationDialogOpen(false);
+  };
+
+  const confirmDeleteAsset = (assetId: string) => {
+    setAssetToDelete(assetId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const cancelDeleteAsset = () => {
+    setAssetToDelete(null);
+    setIsDeleteDialogOpen(false);
+  };
+
+  const deleteAsset = async () => {
+    if (assetToDelete) {
+      const { error } = await supabase
+        .from("assets")
+        .delete()
+        .eq("id", assetToDelete);
+
+      if (error) {
+        toast({
+          title: "Error!",
+          description: "Failed to delete asset",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success!",
+          description: "Asset deleted successfully.",
+        });
+        refetch();
+      }
+
+      setIsDeleteDialogOpen(false);
+      setAssetToDelete(null);
     }
   };
 
-  const handleDeleteAsset = (assetId: string, reason: string) => {
-    console.log(`Deleting asset ${assetId} with reason: ${reason}`);
-    setAssets(assets.map(asset => 
-      asset.id === assetId ? { ...asset, status: "Deleted" as const } : asset
-    ));
+  const handleBarcodeScan = (result: string) => {
+    setScannedBarcode(result);
+    setIsBarcodeScannerOpen(false);
+    toast({
+      title: "Barcode Scanned!",
+      description: `Asset Tag: ${result}`,
+    });
   };
 
-  const startEditAsset = (asset: Asset) => {
-    setEditingAsset(asset);
-    setShowAssetForm(true);
-  };
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error getting session:", error);
+        return;
+      }
+
+      const userId = data.session?.user.id;
+
+      if (userId) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", userId)
+          .single();
+
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          return;
+        }
+
+        setUserRole(profileData?.role || "Gebruiker");
+      }
+    };
+
+    fetchUserRole();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="border-b bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Asset Management Tool</h1>
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <UserRole currentRole={currentRole} onRoleChange={setCurrentRole} />
-            </div>
+      <div className="container mx-auto py-8 space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Asset Management</h1>
+            <p className="text-gray-600 mt-2">Manage and track your organization's assets</p>
+          </div>
+          <div className="flex gap-2">
+            <UserRole />
+            {userRole === 'ICT Admin' && (
+              <Button 
+                onClick={() => window.location.href = '/activity-log'}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Activity className="h-4 w-4" />
+                Activity Log
+              </Button>
+            )}
+            <Button 
+              onClick={() => setIsFormOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Add Asset
+            </Button>
           </div>
         </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-6">
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:w-[400px]">
-            <TabsTrigger value="dashboard" className="text-xs sm:text-sm">Dashboard</TabsTrigger>
-            <TabsTrigger value="assets" className="text-xs sm:text-sm">Assets</TabsTrigger>
-            <TabsTrigger value="users" className="text-xs sm:text-sm">Gebruikers</TabsTrigger>
-            <TabsTrigger value="settings" disabled={currentRole !== "ICT Admin"} className="text-xs sm:text-sm">
-              Instellingen
-            </TabsTrigger>
-          </TabsList>
+        <DashboardStats assets={assets || []} />
 
-          <TabsContent value="dashboard" className="space-y-6">
-            <DashboardStats assets={filteredAssets} />
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Recente Activiteiten</CardTitle>
-                <CardDescription>Laatste wijzigingen in het asset beheer</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-sm">
-                    <div className="flex items-center space-x-3">
-                      <div className="h-2 w-2 bg-green-500 rounded-full flex-shrink-0"></div>
-                      <span className="text-gray-600">Jan Janssen heeft Dell Latitude 7420 toegewezen gekregen</span>
-                    </div>
-                    <span className="text-gray-400 text-xs sm:text-sm ml-5 sm:ml-0">2 uur geleden</span>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-sm">
-                    <div className="flex items-center space-x-3">
-                      <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                      <span className="text-gray-600">Nieuw asset toegevoegd: iPhone 14</span>
-                    </div>
-                    <span className="text-gray-400 text-xs sm:text-sm ml-5 sm:ml-0">1 dag geleden</span>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-sm">
-                    <div className="flex items-center space-x-3">
-                      <div className="h-2 w-2 bg-yellow-500 rounded-full flex-shrink-0"></div>
-                      <span className="text-gray-600">Jabra Headset naar onderhoud</span>
-                    </div>
-                    <span className="text-gray-400 text-xs sm:text-sm ml-5 sm:ml-0">3 dagen geleden</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="assets" className="space-y-6">
-            <div className="flex flex-col space-y-4">
-              <AssetFilters
-                searchTerm={searchTerm}
-                statusFilter={statusFilter}
-                categoryFilter={categoryFilter}
-                typeFilter={typeFilter}
-                onSearchChange={setSearchTerm}
-                onStatusFilterChange={setStatusFilter}
-                onCategoryFilterChange={setCategoryFilter}
-                onTypeFilterChange={setTypeFilter}
+        <Card>
+          <CardHeader>
+            <CardTitle>Asset Filters</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-4">
+              <Input
+                placeholder="Search assets..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="col-span-2"
               />
-              {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && (
-                <div className="flex justify-end">
-                  <Button onClick={() => setShowAssetForm(true)} className="flex items-center space-x-2 w-full sm:w-auto">
-                    <PlusCircle className="h-4 w-4" />
-                    <span>Asset Toevoegen</span>
-                  </Button>
-                </div>
-              )}
+              <AssetFilters
+                categories={categories || []}
+                locations={locations || []}
+                statuses={statuses || []}
+                categoryFilter={categoryFilter}
+                locationFilter={locationFilter}
+                statusFilter={statusFilter}
+                setCategoryFilter={setCategoryFilter}
+                setLocationFilter={setLocationFilter}
+                setStatusFilter={setStatusFilter}
+              />
+              <Button
+                variant="outline"
+                onClick={() => setIsBarcodeScannerOpen(true)}
+              >
+                <Search className="mr-2 h-4 w-4" />
+                Scan Barcode
+              </Button>
             </div>
+          </CardContent>
+        </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Asset Overzicht</CardTitle>
-                <CardDescription>
-                  {filteredAssets.length} van {assets.length} assets weergegeven
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Mobile Card View */}
-                <div className="block sm:hidden space-y-4">
-                  {filteredAssets.map((asset) => (
-                    <AssetMobileCard
+        <Card>
+          <CardHeader>
+            <CardTitle>Asset List</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="hidden sm:block rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Brand</TableHead>
+                    <TableHead>Model</TableHead>
+                    <TableHead>Serial Number</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {assets?.map((asset) => (
+                    <AssetTableRow
                       key={asset.id}
                       asset={asset}
-                      currentRole={currentRole}
-                      onEdit={startEditAsset}
-                      onDelete={handleDeleteAsset}
-                      onReserve={setReservationAsset}
-                      getAssetIcon={getAssetIcon}
-                      getStatusColor={getStatusColor}
-                      getCategoryDisplayName={getCategoryDisplayName}
+                      openReservationDialog={openReservationDialog}
+                      confirmDeleteAsset={confirmDeleteAsset}
+                      refetch={refetch}
+                      handleAssetUpdated={handleAssetUpdated}
                     />
                   ))}
-                </div>
-
-                {/* Desktop Table View */}
-                <div className="hidden sm:block overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-16">Foto</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead className="hidden md:table-cell">Merk & Model</TableHead>
-                        <TableHead className="hidden lg:table-cell">Serienummer</TableHead>
-                        <TableHead className="hidden lg:table-cell">Asset Tag</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="hidden md:table-cell">Categorie</TableHead>
-                        <TableHead className="hidden lg:table-cell">Toegewezen aan</TableHead>
-                        <TableHead className="hidden xl:table-cell">Locatie</TableHead>
-                        <TableHead className="hidden xl:table-cell">Specifieke Locatie</TableHead>
-                        <TableHead>Acties</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredAssets.map((asset) => (
-                        <AssetTableRow
-                          key={asset.id}
-                          asset={asset}
-                          currentRole={currentRole}
-                          onEdit={startEditAsset}
-                          onDelete={handleDeleteAsset}
-                          onReserve={setReservationAsset}
-                          getAssetIcon={getAssetIcon}
-                          getStatusColor={getStatusColor}
-                          getCategoryDisplayName={getCategoryDisplayName}
-                        />
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="users" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Active Directory Gebruikers</CardTitle>
-                <CardDescription>
-                  Gebruikers gesynchroniseerd vanuit Microsoft Entra ID
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">AD Integratie Required</h3>
-                  <p className="text-gray-600 mb-4">
-                    Voor volledige AD-integratie moet backend functionaliteit worden toegevoegd.
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Mock gebruikers: Jan Janssen, Marie Peeters, Tom de Vries
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Systeem Instellingen</CardTitle>
-                <CardDescription>Configuratie opties voor ICT Administrators</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center py-8">
-                    <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Instellingen</h3>
-                    <p className="text-gray-600">
-                      Systeem configuratie en AD synchronisatie instellingen komen hier.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                </TableBody>
+              </Table>
+            </div>
+            <div className="sm:hidden grid gap-4">
+              {assets?.map((asset) => (
+                <AssetMobileCard
+                  key={asset.id}
+                  asset={asset}
+                  openReservationDialog={openReservationDialog}
+                  confirmDeleteAsset={confirmDeleteAsset}
+                  refetch={refetch}
+                  handleAssetUpdated={handleAssetUpdated}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {showAssetForm && (
-        <AssetForm
-          asset={editingAsset}
-          onSave={editingAsset ? handleEditAsset : handleAddAsset}
-          onCancel={() => {
-            setShowAssetForm(false);
-            setEditingAsset(null);
-          }}
-        />
-      )}
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add New Asset</DialogTitle>
+            <DialogDescription>
+              Make sure to fill in all the required fields.
+            </DialogDescription>
+          </DialogHeader>
+          <AssetForm
+            onAssetCreated={handleAssetCreated}
+            onClose={() => setIsFormOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
-      {reservationAsset && (
-        <ReservationDialog
-          asset={reservationAsset}
-          onClose={() => setReservationAsset(null)}
-        />
-      )}
+      <ReservationDialog
+        isOpen={isReservationDialogOpen}
+        onClose={closeReservationDialog}
+        assetId={selectedAssetId}
+      />
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              asset from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDeleteAsset}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={deleteAsset}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={isBarcodeScannerOpen} onOpenChange={setIsBarcodeScannerOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Scan Barcode</DialogTitle>
+            <DialogDescription>
+              Point your camera at the barcode to scan.
+            </DialogDescription>
+          </DialogHeader>
+          <BarcodeScanner onScan={handleBarcodeScan} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
-};
-
-export default Index;
+}
