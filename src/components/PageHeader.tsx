@@ -1,8 +1,7 @@
 
 import { Button } from "@/components/ui/button";
-import { Plus, Activity, Calendar } from "lucide-react";
+import { Plus, Activity } from "lucide-react";
 import { UserRole } from "@/components/UserRole";
-import { useNavigate } from "react-router-dom";
 
 interface PageHeaderProps {
   currentRole: "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker";

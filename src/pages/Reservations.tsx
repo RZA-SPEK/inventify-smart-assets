@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -9,27 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, CheckCircle, XCircle, Clock, User, Calendar, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-interface ReservationWithAsset {
-  id: string;
-  asset_id: string;
-  requester_id: string;
-  requester_name: string;
-  purpose: string;
-  requested_date: string;
-  return_date: string;
-  status: string;
-  approved_by: string | null;
-  approved_at: string | null;
-  created_at: string;
-  updated_at: string;
-  assets: {
-    type: string;
-    brand: string | null;
-    model: string | null;
-    serial_number: string;
-  } | null;
-}
-
 export default function Reservations() {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -38,12 +18,12 @@ export default function Reservations() {
 
   const { data: reservations, isLoading } = useQuery({
     queryKey: ["reservations"],
-    queryFn: async (): Promise<ReservationWithAsset[]> => {
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("reservations")
         .select(`
           *,
-          assets!reservations_asset_id_fkey (
+          assets (
             type,
             brand,
             model,
@@ -53,7 +33,7 @@ export default function Reservations() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return data;
     },
   });
 
@@ -203,7 +183,7 @@ export default function Reservations() {
                           </div>
                           <div className="text-sm text-gray-500">
                             SN: {reservation.assets?.serial_number}
-                          </div>  
+                          </div>
                         </div>
                       </div>
                     </TableCell>
