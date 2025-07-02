@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -212,25 +213,27 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="border-b bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <BarChart3 className="h-8 w-8 text-blue-600" />
-                <h1 className="text-2xl font-bold text-gray-900">Asset Management Tool</h1>
+                <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Asset Management Tool</h1>
               </div>
             </div>
-            <UserRole currentRole={currentRole} onRoleChange={setCurrentRole} />
+            <div className="flex justify-end">
+              <UserRole currentRole={currentRole} onRoleChange={setCurrentRole} />
+            </div>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-6">
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="assets">Assets</TabsTrigger>
-            <TabsTrigger value="users">Gebruikers</TabsTrigger>
-            <TabsTrigger value="settings" disabled={currentRole !== "ICT Admin"}>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:w-[400px]">
+            <TabsTrigger value="dashboard" className="text-xs sm:text-sm">Dashboard</TabsTrigger>
+            <TabsTrigger value="assets" className="text-xs sm:text-sm">Assets</TabsTrigger>
+            <TabsTrigger value="users" className="text-xs sm:text-sm">Gebruikers</TabsTrigger>
+            <TabsTrigger value="settings" disabled={currentRole !== "ICT Admin"} className="text-xs sm:text-sm">
               Instellingen
             </TabsTrigger>
           </TabsList>
@@ -245,20 +248,26 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-center space-x-3 text-sm">
-                    <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                    <span className="text-gray-600">Jan Janssen heeft Dell Latitude 7420 toegewezen gekregen</span>
-                    <span className="text-gray-400">2 uur geleden</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-sm">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-2 w-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                      <span className="text-gray-600">Jan Janssen heeft Dell Latitude 7420 toegewezen gekregen</span>
+                    </div>
+                    <span className="text-gray-400 text-xs sm:text-sm ml-5 sm:ml-0">2 uur geleden</span>
                   </div>
-                  <div className="flex items-center space-x-3 text-sm">
-                    <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-gray-600">Nieuw asset toegevoegd: iPhone 14</span>
-                    <span className="text-gray-400">1 dag geleden</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-sm">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                      <span className="text-gray-600">Nieuw asset toegevoegd: iPhone 14</span>
+                    </div>
+                    <span className="text-gray-400 text-xs sm:text-sm ml-5 sm:ml-0">1 dag geleden</span>
                   </div>
-                  <div className="flex items-center space-x-3 text-sm">
-                    <div className="h-2 w-2 bg-yellow-500 rounded-full"></div>
-                    <span className="text-gray-600">Jabra Headset naar onderhoud</span>
-                    <span className="text-gray-400">3 dagen geleden</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-sm">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-2 w-2 bg-yellow-500 rounded-full flex-shrink-0"></div>
+                      <span className="text-gray-600">Jabra Headset naar onderhoud</span>
+                    </div>
+                    <span className="text-gray-400 text-xs sm:text-sm ml-5 sm:ml-0">3 dagen geleden</span>
                   </div>
                 </div>
               </CardContent>
@@ -266,45 +275,49 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="assets" className="space-y-6">
-            <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-              <div className="flex flex-col space-y-2 md:flex-row md:items-center md:space-y-0 md:space-x-4">
+            <div className="flex flex-col space-y-4">
+              <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
                 <Input
                   placeholder="Zoek assets..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="md:w-64"
+                  className="w-full sm:w-64"
                 />
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="md:w-40">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle statussen</SelectItem>
-                    <SelectItem value="In gebruik">In gebruik</SelectItem>
-                    <SelectItem value="In voorraad">In voorraad</SelectItem>
-                    <SelectItem value="Defect">Defect</SelectItem>
-                    <SelectItem value="Onderhoud">Onderhoud</SelectItem>
-                    <SelectItem value="Deleted">Verwijderd</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="md:w-40">
-                    <SelectValue placeholder="Categorie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle categorieën</SelectItem>
-                    <SelectItem value="ICT">ICT</SelectItem>
-                    <SelectItem value="Facilitair">Facilitair</SelectItem>
-                    <SelectItem value="Catering">Catering</SelectItem>
-                    <SelectItem value="Logistics">Logistiek</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Alle statussen</SelectItem>
+                      <SelectItem value="In gebruik">In gebruik</SelectItem>
+                      <SelectItem value="In voorraad">In voorraad</SelectItem>
+                      <SelectItem value="Defect">Defect</SelectItem>
+                      <SelectItem value="Onderhoud">Onderhoud</SelectItem>
+                      <SelectItem value="Deleted">Verwijderd</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Categorie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Alle categorieën</SelectItem>
+                      <SelectItem value="ICT">ICT</SelectItem>
+                      <SelectItem value="Facilitair">Facilitair</SelectItem>
+                      <SelectItem value="Catering">Catering</SelectItem>
+                      <SelectItem value="Logistics">Logistiek</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && (
-                <Button onClick={() => setShowAssetForm(true)} className="flex items-center space-x-2">
-                  <PlusCircle className="h-4 w-4" />
-                  <span>Asset Toevoegen</span>
-                </Button>
+                <div className="flex justify-end">
+                  <Button onClick={() => setShowAssetForm(true)} className="flex items-center space-x-2 w-full sm:w-auto">
+                    <PlusCircle className="h-4 w-4" />
+                    <span>Asset Toevoegen</span>
+                  </Button>
+                </div>
               )}
             </div>
 
@@ -316,20 +329,128 @@ const Index = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
+                {/* Mobile Card View */}
+                <div className="block sm:hidden space-y-4">
+                  {filteredAssets.map((asset) => (
+                    <Card key={asset.id} className="p-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0">
+                          {asset.image ? (
+                            <img
+                              src={asset.image}
+                              alt={`${asset.brand} ${asset.model}`}
+                              className="w-16 h-16 object-cover rounded-lg"
+                            />
+                          ) : (
+                            <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                              {getAssetIcon(asset.type)}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2 mb-2">
+                            {getAssetIcon(asset.type)}
+                            <h3 className="font-medium text-lg truncate">{asset.type}</h3>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-1">{asset.brand} {asset.model}</p>
+                          <p className="text-xs text-gray-500 font-mono mb-2">{asset.serialNumber}</p>
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            <Badge className={getStatusColor(asset.status)}>
+                              {asset.status === "Deleted" ? "Verwijderd" : asset.status}
+                            </Badge>
+                            <Badge variant="outline">
+                              {getCategoryDisplayName(asset.category)}
+                            </Badge>
+                          </div>
+                          {asset.assignedTo && (
+                            <div className="flex items-center space-x-1 mb-2">
+                              <User className="h-3 w-3" />
+                              <span className="text-sm">{asset.assignedTo}</span>
+                            </div>
+                          )}
+                          <div className="flex flex-col space-y-1 text-sm text-gray-600">
+                            <span>{asset.location}</span>
+                            {asset.assignedToLocation && (
+                              <div className="flex items-center space-x-1">
+                                <MapPin className="h-3 w-3 text-blue-500" />
+                                <span className="text-xs">{asset.assignedToLocation}</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {asset.status === "In voorraad" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setReservationAsset(asset)}
+                                className="flex items-center gap-1 text-xs"
+                              >
+                                <Calendar className="h-3 w-3" />
+                                Reserveren
+                              </Button>
+                            )}
+                            {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && asset.status !== "Deleted" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => startEditAsset(asset)}
+                                className="text-xs"
+                              >
+                                Bewerken
+                              </Button>
+                            )}
+                            {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin") && asset.status !== "Deleted" && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Asset verwijderen</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Weet je zeker dat je dit asset wilt verwijderen? Het asset wordt gemarkeerd als "Deleted" en kan later worden hersteld.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDeleteAsset(asset.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Verwijderen
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden sm:block overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Foto</TableHead>
+                        <TableHead className="w-16">Foto</TableHead>
                         <TableHead>Type</TableHead>
-                        <TableHead>Merk & Model</TableHead>
-                        <TableHead>Serienummer</TableHead>
-                        <TableHead>Asset Tag</TableHead>
+                        <TableHead className="hidden md:table-cell">Merk & Model</TableHead>
+                        <TableHead className="hidden lg:table-cell">Serienummer</TableHead>
+                        <TableHead className="hidden lg:table-cell">Asset Tag</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Categorie</TableHead>
-                        <TableHead>Toegewezen aan</TableHead>
-                        <TableHead>Locatie</TableHead>
-                        <TableHead>Specifieke Locatie</TableHead>
+                        <TableHead className="hidden md:table-cell">Categorie</TableHead>
+                        <TableHead className="hidden lg:table-cell">Toegewezen aan</TableHead>
+                        <TableHead className="hidden xl:table-cell">Locatie</TableHead>
+                        <TableHead className="hidden xl:table-cell">Specifieke Locatie</TableHead>
                         <TableHead>Acties</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -352,12 +473,17 @@ const Index = () => {
                           <TableCell>
                             <div className="flex items-center space-x-2">
                               {getAssetIcon(asset.type)}
-                              <span>{asset.type}</span>
+                              <div>
+                                <span className="font-medium">{asset.type}</span>
+                                <div className="block md:hidden text-xs text-gray-500">
+                                  {asset.brand} {asset.model}
+                                </div>
+                              </div>
                             </div>
                           </TableCell>
-                          <TableCell>{asset.brand} {asset.model}</TableCell>
-                          <TableCell className="font-mono text-sm">{asset.serialNumber}</TableCell>
-                          <TableCell>
+                          <TableCell className="hidden md:table-cell">{asset.brand} {asset.model}</TableCell>
+                          <TableCell className="hidden lg:table-cell font-mono text-sm">{asset.serialNumber}</TableCell>
+                          <TableCell className="hidden lg:table-cell">
                             {asset.assetTag ? (
                               <div className="flex items-center space-x-1">
                                 <Tag className="h-3 w-3 text-blue-500" />
@@ -372,12 +498,12 @@ const Index = () => {
                               {asset.status === "Deleted" ? "Verwijderd" : asset.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden md:table-cell">
                             <Badge variant="outline">
                               {getCategoryDisplayName(asset.category)}
                             </Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden lg:table-cell">
                             {asset.assignedTo ? (
                               <div className="flex items-center space-x-1">
                                 <User className="h-3 w-3" />
@@ -387,8 +513,8 @@ const Index = () => {
                               <span className="text-gray-400">Niet toegewezen</span>
                             )}
                           </TableCell>
-                          <TableCell>{asset.location}</TableCell>
-                          <TableCell>
+                          <TableCell className="hidden xl:table-cell">{asset.location}</TableCell>
+                          <TableCell className="hidden xl:table-cell">
                             {asset.assignedToLocation ? (
                               <div className="flex items-center space-x-1">
                                 <MapPin className="h-3 w-3 text-blue-500" />
@@ -399,16 +525,16 @@ const Index = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex space-x-2">
+                            <div className="flex space-x-1">
                               {asset.status === "In voorraad" && (
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => setReservationAsset(asset)}
-                                  className="flex items-center gap-1"
+                                  className="flex items-center gap-1 text-xs"
                                 >
                                   <Calendar className="h-3 w-3" />
-                                  Reserveren
+                                  <span className="hidden sm:inline">Reserveren</span>
                                 </Button>
                               )}
                               {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && asset.status !== "Deleted" && (
@@ -416,8 +542,10 @@ const Index = () => {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => startEditAsset(asset)}
+                                  className="text-xs"
                                 >
-                                  Bewerken
+                                  <span className="hidden sm:inline">Bewerken</span>
+                                  <span className="sm:hidden">Edit</span>
                                 </Button>
                               )}
                               {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin") && asset.status !== "Deleted" && (

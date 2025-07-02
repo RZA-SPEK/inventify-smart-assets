@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -118,7 +119,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
   return (
     <>
       <Dialog open={true} onOpenChange={onCancel}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
           <DialogHeader>
             <DialogTitle>
               {asset ? "Asset Bewerken" : "Nieuw Asset Toevoegen"}
@@ -134,7 +135,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
               onImageChange={(imageUrl) => setFormData({ ...formData, image: imageUrl || "" })}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <AssetTypeSelector
                 value={formData.type}
                 onChange={(value) => setFormData({ ...formData, type: value })}
@@ -156,7 +157,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="brand">Merk (optioneel)</Label>
                 <Input
@@ -178,44 +179,46 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
 
             <div className="space-y-2">
               <Label htmlFor="serialNumber">Serienummer</Label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   id="serialNumber"
                   value={formData.serialNumber}
                   onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
                   required
+                  className="flex-1"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setShowScanner(true)}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 w-full sm:w-auto"
                 >
                   <Camera className="h-4 w-4" />
-                  Scan
+                  <span>Scan</span>
                 </Button>
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="assetTag">Asset Tag (optioneel)</Label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   id="assetTag"
                   value={formData.assetTag}
                   onChange={(e) => handleAssetTagChange(e.target.value)}
                   placeholder="MVDS-XXX123 of laat leeg"
+                  className="flex-1"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={generateAssetTag}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 w-full sm:w-auto"
                 >
                   <Tag className="h-4 w-4" />
-                  Genereer
+                  <span>Genereer</span>
                 </Button>
               </div>
               <p className="text-xs text-gray-500">
@@ -223,7 +226,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="purchaseDate">Aankoopdatum</Label>
                 <Input
@@ -263,11 +266,11 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
               onAssignedToChange={(value) => setFormData({ ...formData, assignedTo: value })}
             />
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onCancel}>
+            <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+              <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">
                 Annuleren
               </Button>
-              <Button type="submit">
+              <Button type="submit" className="w-full sm:w-auto">
                 {asset ? "Bijwerken" : "Toevoegen"}
               </Button>
             </DialogFooter>

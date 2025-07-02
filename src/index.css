@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -99,5 +100,61 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Ensure dialogs work well on mobile */
+  .dialog-content {
+    @apply max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)];
+  }
+
+  /* Improve table responsiveness */
+  .table-container {
+    @apply overflow-x-auto;
+  }
+
+  /* Better mobile touch targets */
+  @media (max-width: 640px) {
+    button {
+      @apply min-h-[44px];
+    }
+    
+    .table-cell {
+      @apply px-2 py-3;
+    }
+  }
+
+  /* Improve select dropdown visibility on mobile */
+  .select-content {
+    @apply bg-white border shadow-lg z-50;
+  }
+}
+
+@layer utilities {
+  /* Mobile-specific utilities */
+  .mobile-only {
+    @apply block sm:hidden;
+  }
+  
+  .desktop-only {
+    @apply hidden sm:block;
+  }
+  
+  /* Responsive text sizes */
+  .text-responsive {
+    @apply text-sm sm:text-base;
+  }
+  
+  .text-responsive-lg {
+    @apply text-base sm:text-lg;
+  }
+  
+  /* Better mobile spacing */
+  .mobile-spacing {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Improved mobile cards */
+  .mobile-card {
+    @apply bg-white rounded-lg shadow-sm border p-4 mb-4;
   }
 }
