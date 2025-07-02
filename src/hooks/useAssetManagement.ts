@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,8 +10,7 @@ export const useAssetManagement = (
   categoryFilter: string,
   statusFilter: string,
   typeFilter: string,
-  scannedBarcode: string | null,
-  currentRole?: "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker"
+  scannedBarcode: string | null
 ) => {
   const { toast } = useToast();
 
@@ -22,18 +22,8 @@ export const useAssetManagement = (
       statusFilter,
       typeFilter,
       scannedBarcode,
-      currentRole,
     ],
     queryFn: async () => {
-      console.log("Fetching assets with filters:", { 
-        searchTerm, 
-        categoryFilter, 
-        statusFilter, 
-        typeFilter, 
-        scannedBarcode,
-        currentRole 
-      });
-      
       let query = supabase
         .from("assets")
         .select("*")
@@ -62,20 +52,17 @@ export const useAssetManagement = (
 
       const { data, error } = await query;
 
-      console.log("Assets query result:", { data, error });
-
       if (error) {
-        console.error("Error fetching assets:", error);
         toast({
           title: "Error!",
-          description: "Failed to fetch assets: " + error.message,
+          description: "Failed to fetch assets",
           variant: "destructive",
         });
         return [];
       }
 
       // Transform the data to match our Asset interface
-      let transformedAssets = data?.map((item: any) => ({
+      return data?.map((item: any) => ({
         id: item.id,
         type: item.type,
         brand: item.brand,
@@ -95,44 +82,10 @@ export const useAssetManagement = (
         updatedAt: item.updated_at,
         createdBy: item.created_by,
       })) || [];
-
-      console.log("Transformed assets before role filtering:", transformedAssets.length);
-
-      // Apply client-side filtering based on role (for demo purposes)
-      if (currentRole) {
-        console.log("Applying role-based filtering for role:", currentRole);
-        const beforeFilter = transformedAssets.length;
-        
-        if (currentRole === "ICT Admin") {
-          // ICT Admin can see all assets
-          console.log("ICT Admin - showing all assets:", transformedAssets.length);
-        } else if (currentRole === "Facilitair Admin") {
-          // Facilitair Admin can see all assets (similar to ICT Admin)
-          console.log("Facilitair Admin - showing all assets:", transformedAssets.length);
-        } else if (currentRole === "Facilitair Medewerker") {
-          // Facilitair Medewerker can only see Facilitair category assets
-          transformedAssets = transformedAssets.filter(asset => asset.category === "Facilitair");
-          console.log(`Facilitair Medewerker - filtered from ${beforeFilter} to ${transformedAssets.length} Facilitair assets`);
-        } else if (currentRole === "Gebruiker") {
-          // Regular users can see assets assigned to them or unassigned assets
-          // For demo purposes, we'll show some assets
-          transformedAssets = transformedAssets.filter(asset => 
-            !asset.assignedTo || asset.assignedTo.includes("demo") // Demo filter
-          );
-          console.log(`Gebruiker - filtered from ${beforeFilter} to ${transformedAssets.length} available assets`);
-        }
-      } else {
-        console.log("No role specified, showing all assets");
-      }
-
-      console.log("Final assets after role filtering:", transformedAssets.length);
-      return transformedAssets;
     },
   });
 
   const handleAssetSave = async (assetData: Omit<Asset, "id">, editingAsset: Asset | null) => {
-    console.log("Saving asset:", { assetData, editingAsset });
-    
     try {
       const dbData = {
         type: assetData.type,
@@ -151,8 +104,6 @@ export const useAssetManagement = (
         penalty_amount: assetData.penaltyAmount,
       };
 
-      console.log("Database data to save:", dbData);
-
       let result;
       if (editingAsset) {
         result = await supabase
@@ -165,13 +116,10 @@ export const useAssetManagement = (
           .insert([dbData]);
       }
 
-      console.log("Save result:", result);
-
       if (result.error) {
-        console.error("Database save error:", result.error);
         toast({
           title: "Error!",
-          description: `Failed to ${editingAsset ? 'update' : 'create'} asset: ${result.error.message}`,
+          description: `Failed to ${editingAsset ? 'update' : 'create'} asset`,
           variant: "destructive",
         });
       } else {
@@ -192,8 +140,6 @@ export const useAssetManagement = (
   };
 
   const handleDelete = async (assetId: string, reason: string) => {
-    console.log("Deleting asset:", { assetId, reason });
-    
     try {
       const { error } = await supabase
         .from("assets")
@@ -201,10 +147,9 @@ export const useAssetManagement = (
         .eq("id", assetId);
 
       if (error) {
-        console.error("Delete error:", error);
         toast({
           title: "Error!",
-          description: "Failed to delete asset: " + error.message,
+          description: "Failed to delete asset",
           variant: "destructive",
         });
       } else {

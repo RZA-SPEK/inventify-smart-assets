@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { AssetForm } from "@/components/AssetForm";
 import { ReservationDialog } from "@/components/ReservationDialog";
@@ -24,19 +25,14 @@ export default function Index() {
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   
   const { toast } = useToast();
-  const { currentRole, actualRole, setCurrentRole } = useUserRole();
+  const { currentRole, setCurrentRole } = useUserRole();
   const { assets, refetch, handleAssetSave, handleDelete } = useAssetManagement(
     searchTerm,
     categoryFilter,
     statusFilter,
     typeFilter,
-    scannedBarcode,
-    currentRole // Pass the current role to the hook
+    scannedBarcode
   );
-
-  console.log("Index component - assets:", assets);
-  console.log("Index component - currentRole:", currentRole);
-  console.log("Index component - actualRole:", actualRole);
 
   const handleAssetSaveWrapper = async (assetData: Omit<Asset, "id">) => {
     await handleAssetSave(assetData, editingAsset);
@@ -45,19 +41,16 @@ export default function Index() {
   };
 
   const handleEdit = (asset: Asset) => {
-    console.log("Editing asset:", asset);
     setEditingAsset(asset);
     setIsFormOpen(true);
   };
 
   const handleReserve = (asset: Asset) => {
-    console.log("Reserving asset:", asset);
     setSelectedAsset(asset);
     setIsReservationDialogOpen(true);
   };
 
   const handleBarcodeScan = (result: string) => {
-    console.log("Barcode scanned:", result);
     setScannedBarcode(result);
     setIsBarcodeScannerOpen(false);
     toast({
@@ -73,7 +66,6 @@ export default function Index() {
           currentRole={currentRole}
           onRoleChange={setCurrentRole}
           onAddAsset={() => {
-            console.log("Add asset clicked");
             setEditingAsset(null);
             setIsFormOpen(true);
           }}
@@ -107,7 +99,6 @@ export default function Index() {
           asset={editingAsset}
           onSave={handleAssetSaveWrapper}
           onCancel={() => {
-            console.log("Asset form canceled");
             setIsFormOpen(false);
             setEditingAsset(null);
           }}

@@ -1,7 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AssetTableRow } from "@/components/AssetTableRow";
 import { AssetMobileCard } from "@/components/AssetMobileCard";
 import { Asset } from "@/types/asset";
@@ -31,6 +30,7 @@ export const AssetListSection = ({
       "Tablet": <Smartphone className="h-4 w-4" />,
       "Headset": <Headphones className="h-4 w-4" />,
       "Printer": <Printer className="h-4 w-4" />,
+      "Scanner": <Camera className="h-4 w-4" />,
       "Router": <Wifi className="h-4 w-4" />,
       "Switch": <Wifi className="h-4 w-4" />,
       "Camera": <Camera className="h-4 w-4" />,
@@ -64,64 +64,31 @@ export const AssetListSection = ({
     return displayMap[category] || category;
   };
 
-  // Show loading state
-  if (assets === undefined) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Asset List</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-gray-500">
-            Assets laden...
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Show empty state
-  if (assets.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Asset List</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-gray-500">
-            Geen assets gevonden.
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Asset List ({assets.length})</CardTitle>
+        <CardTitle>Asset List</CardTitle>
       </CardHeader>
-      <CardContent className="p-0 sm:p-6">
-        {/* Desktop Table View */}
-        <div className="hidden lg:block rounded-md border">
+      <CardContent>
+        <div className="hidden sm:block rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Image</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Brand/Model</TableHead>
-                <TableHead>Serial Number</TableHead>
-                <TableHead>Asset Tag</TableHead>
+                <TableHead className="hidden md:table-cell">Brand/Model</TableHead>
+                <TableHead className="hidden lg:table-cell">Serial Number</TableHead>
+                <TableHead className="hidden lg:table-cell">Asset Tag</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Assigned To</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Specific Location</TableHead>
+                <TableHead className="hidden md:table-cell">Category</TableHead>
+                <TableHead className="hidden lg:table-cell">Assigned To</TableHead>
+                <TableHead className="hidden xl:table-cell">Location</TableHead>
+                <TableHead className="hidden xl:table-cell">Specific Location</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {assets.map((asset) => (
+              {assets?.map((asset) => (
                 <AssetTableRow
                   key={asset.id}
                   asset={asset}
@@ -137,54 +104,20 @@ export const AssetListSection = ({
             </TableBody>
           </Table>
         </div>
-
-        {/* Tablet Table View */}
-        <div className="hidden sm:block lg:hidden rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Asset</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Assigned To</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {assets.map((asset) => (
-                <AssetTableRow
-                  key={asset.id}
-                  asset={asset}
-                  currentRole={currentRole}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  onReserve={onReserve}
-                  getAssetIcon={getAssetIcon}
-                  getStatusColor={getStatusColor}
-                  getCategoryDisplayName={getCategoryDisplayName}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Mobile Card View */}
-        <div className="sm:hidden">
-          <div className="divide-y">
-            {assets.map((asset) => (
-              <AssetMobileCard
-                key={asset.id}
-                asset={asset}
-                currentRole={currentRole}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onReserve={onReserve}
-                getAssetIcon={getAssetIcon}
-                getStatusColor={getStatusColor}
-                getCategoryDisplayName={getCategoryDisplayName}
-              />
-            ))}
-          </div>
+        <div className="sm:hidden grid gap-4">
+          {assets?.map((asset) => (
+            <AssetMobileCard
+              key={asset.id}
+              asset={asset}
+              currentRole={currentRole}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onReserve={onReserve}
+              getAssetIcon={getAssetIcon}
+              getStatusColor={getStatusColor}
+              getCategoryDisplayName={getCategoryDisplayName}
+            />
+          ))}
         </div>
       </CardContent>
     </Card>

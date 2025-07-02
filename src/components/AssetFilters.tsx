@@ -26,9 +26,9 @@ export const AssetFilters = ({
 }: AssetFiltersProps) => {
   const assetTypes = [
     "Laptop", "Desktop", "Monitor", "Telefoon", "Tablet", "Headset", "Muis", "Toetsenbord",
-    "Kabel", "Printer", "Router", "Switch", "Beamer", "Camera", "Bureau", "Stoel",
+    "Kabel", "Printer", "Scanner", "Router", "Switch", "Beamer", "Camera", "Bureau", "Stoel",
     "Kast", "Koffiezetapparaat", "Magnetron", "Koelkast", "Vaatwasser", "Vorkheftruck",
-    "Trolley", "Weegschaal", "Barcode Scanner"
+    "Trolley", "Weegschaal", "Scanner"
   ];
 
   return (
