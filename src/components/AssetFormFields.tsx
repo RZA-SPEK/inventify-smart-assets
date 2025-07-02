@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Camera, Tag } from "lucide-react";
-import { Asset } from "@/pages/Index";
+import { Asset } from "@/types/asset";
 import { AssetTypeSelector } from "./AssetTypeSelector";
 import { LocationSelector } from "./LocationSelector";
 import { AssignmentSelector } from "./AssignmentSelector";

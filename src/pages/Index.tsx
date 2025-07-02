@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Filter, Activity } from "lucide-react";
+import { Plus, Search, Filter, Activity, Laptop, Monitor, Smartphone, Headphones, Printer, HardDrive, Wifi, Camera, Coffee, Utensils, Truck, Package, User, MapPin, Calendar, Tag, Trash2 } from "lucide-react";
 import { DashboardStats } from "@/components/DashboardStats";
 import { AssetFilters } from "@/components/AssetFilters";
 import { AssetForm } from "@/components/AssetForm";
@@ -13,6 +14,7 @@ import { ReservationDialog } from "@/components/ReservationDialog";
 import { UserRole } from "@/components/UserRole";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { useToast } from "@/hooks/use-toast";
+import { Asset } from "@/types/asset";
 import {
   Dialog,
   DialogContent,
@@ -39,19 +41,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 
 export default function Index() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isReservationDialogOpen, setIsReservationDialogOpen] = useState(false);
-  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [assetToDelete, setAssetToDelete] = useState<string | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [locationFilter, setLocationFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [currentRole, setCurrentRole] = useState<string>("Gebruiker");
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const { toast } = useToast();
@@ -61,26 +61,31 @@ export default function Index() {
       "assets",
       searchTerm,
       categoryFilter,
-      locationFilter,
       statusFilter,
+      typeFilter,
+      scannedBarcode,
     ],
     queryFn: async () => {
       let query = supabase
         .from("assets")
         .select("*")
-        .ilike("type", `%${searchTerm}%`)
         .order("created_at", { ascending: false });
+
+      // Enhanced search across all fields
+      if (searchTerm) {
+        query = query.or(`type.ilike.%${searchTerm}%,brand.ilike.%${searchTerm}%,model.ilike.%${searchTerm}%,serial_number.ilike.%${searchTerm}%,asset_tag.ilike.%${searchTerm}%,location.ilike.%${searchTerm}%,assigned_to.ilike.%${searchTerm}%,assigned_to_location.ilike.%${searchTerm}%`);
+      }
 
       if (categoryFilter !== "all") {
         query = query.eq("category", categoryFilter);
       }
 
-      if (locationFilter !== "all") {
-        query = query.eq("location", locationFilter);
-      }
-
       if (statusFilter !== "all") {
         query = query.eq("status", statusFilter);
+      }
+
+      if (typeFilter !== "all") {
+        query = query.eq("type", typeFilter);
       }
 
       if (scannedBarcode) {
@@ -95,99 +100,105 @@ export default function Index() {
           description: "Failed to fetch assets",
           variant: "destructive",
         });
+        return [];
       }
-      return data;
+
+      // Transform the data to match our Asset interface
+      return data?.map((item: any) => ({
+        id: item.id,
+        type: item.type,
+        brand: item.brand,
+        model: item.model,
+        serialNumber: item.serial_number,
+        assetTag: item.asset_tag,
+        purchaseDate: item.purchase_date,
+        status: item.status,
+        location: item.location,
+        category: item.category,
+        assignedTo: item.assigned_to,
+        assignedToLocation: item.assigned_to_location,
+        image: item.image_url,
+        purchasePrice: item.purchase_price,
+        penaltyAmount: item.penalty_amount,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+        createdBy: item.created_by,
+      })) || [];
     },
   });
 
-  const { data: categories } = useQuery({
-    queryKey: ["categories"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("assets")
-        .select("category")
-        .distinct();
-      if (error) {
+  const handleAssetSave = async (assetData: Omit<Asset, "id">) => {
+    try {
+      const dbData = {
+        type: assetData.type,
+        brand: assetData.brand,
+        model: assetData.model,
+        serial_number: assetData.serialNumber,
+        asset_tag: assetData.assetTag,
+        purchase_date: assetData.purchaseDate,
+        status: assetData.status,
+        location: assetData.location,
+        category: assetData.category,
+        assigned_to: assetData.assignedTo,
+        assigned_to_location: assetData.assignedToLocation,
+        image_url: assetData.image,
+        purchase_price: assetData.purchasePrice,
+        penalty_amount: assetData.penaltyAmount,
+      };
+
+      let result;
+      if (editingAsset) {
+        result = await supabase
+          .from("assets")
+          .update(dbData)
+          .eq("id", editingAsset.id);
+      } else {
+        result = await supabase
+          .from("assets")
+          .insert([dbData]);
+      }
+
+      if (result.error) {
         toast({
           title: "Error!",
-          description: "Failed to fetch categories",
+          description: `Failed to ${editingAsset ? 'update' : 'create'} asset`,
           variant: "destructive",
         });
-      }
-      return data?.map((item) => item.category);
-    },
-  });
-
-  const { data: locations } = useQuery({
-    queryKey: ["locations"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("assets")
-        .select("location")
-        .distinct();
-      if (error) {
+      } else {
         toast({
-          title: "Error!",
-          description: "Failed to fetch locations",
-          variant: "destructive",
+          title: "Success!",
+          description: `Asset ${editingAsset ? 'updated' : 'created'} successfully.`,
         });
+        refetch();
+        setIsFormOpen(false);
+        setEditingAsset(null);
       }
-      return data?.map((item) => item.location);
-    },
-  });
-
-  const { data: statuses } = useQuery({
-    queryKey: ["statuses"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("assets")
-        .select("status")
-        .distinct();
-      if (error) {
-        toast({
-          title: "Error!",
-          description: "Failed to fetch statuses",
-          variant: "destructive",
-        });
-      }
-      return data?.map((item) => item.status);
-    },
-  });
-
-  const handleAssetCreated = () => {
-    refetch();
+    } catch (error) {
+      console.error("Error saving asset:", error);
+      toast({
+        title: "Error!",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleAssetUpdated = () => {
-    refetch();
+  const handleEdit = (asset: Asset) => {
+    setEditingAsset(asset);
+    setIsFormOpen(true);
   };
 
-  const openReservationDialog = (assetId: string) => {
-    setSelectedAssetId(assetId);
+  const handleReserve = (asset: Asset) => {
+    setSelectedAsset(asset);
     setIsReservationDialogOpen(true);
   };
 
-  const closeReservationDialog = () => {
-    setSelectedAssetId(null);
-    setIsReservationDialogOpen(false);
-  };
-
-  const confirmDeleteAsset = (assetId: string) => {
-    setAssetToDelete(assetId);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const cancelDeleteAsset = () => {
-    setAssetToDelete(null);
-    setIsDeleteDialogOpen(false);
-  };
-
-  const deleteAsset = async () => {
-    if (assetToDelete) {
+  const handleDelete = async (assetId: string, reason: string) => {
+    try {
       const { error } = await supabase
         .from("assets")
-        .delete()
-        .eq("id", assetToDelete);
+        .update({ status: "Deleted" })
+        .eq("id", assetId);
 
       if (error) {
         toast({
@@ -198,13 +209,17 @@ export default function Index() {
       } else {
         toast({
           title: "Success!",
-          description: "Asset deleted successfully.",
+          description: "Asset marked as deleted successfully.",
         });
         refetch();
       }
-
-      setIsDeleteDialogOpen(false);
-      setAssetToDelete(null);
+    } catch (error) {
+      console.error("Error deleting asset:", error);
+      toast({
+        title: "Error!",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
     }
   };
 
@@ -215,6 +230,49 @@ export default function Index() {
       title: "Barcode Scanned!",
       description: `Asset Tag: ${result}`,
     });
+  };
+
+  const getAssetIcon = (type: string) => {
+    const iconMap: { [key: string]: React.ReactNode } = {
+      "Laptop": <Laptop className="h-4 w-4" />,
+      "Desktop": <Monitor className="h-4 w-4" />,
+      "Monitor": <Monitor className="h-4 w-4" />,
+      "Telefoon": <Smartphone className="h-4 w-4" />,
+      "Tablet": <Smartphone className="h-4 w-4" />,
+      "Headset": <Headphones className="h-4 w-4" />,
+      "Printer": <Printer className="h-4 w-4" />,
+      "Scanner": <Camera className="h-4 w-4" />,
+      "Router": <Wifi className="h-4 w-4" />,
+      "Switch": <Wifi className="h-4 w-4" />,
+      "Camera": <Camera className="h-4 w-4" />,
+      "Koffiezetapparaat": <Coffee className="h-4 w-4" />,
+      "Magnetron": <Utensils className="h-4 w-4" />,
+      "Koelkast": <Package className="h-4 w-4" />,
+      "Vorkheftruck": <Truck className="h-4 w-4" />,
+      "Trolley": <Truck className="h-4 w-4" />,
+    };
+    return iconMap[type] || <Package className="h-4 w-4" />;
+  };
+
+  const getStatusColor = (status: string) => {
+    const colorMap: { [key: string]: string } = {
+      "In voorraad": "bg-green-100 text-green-800",
+      "In gebruik": "bg-blue-100 text-blue-800",
+      "Defect": "bg-red-100 text-red-800",
+      "Onderhoud": "bg-yellow-100 text-yellow-800",
+      "Deleted": "bg-gray-100 text-gray-800",
+    };
+    return colorMap[status] || "bg-gray-100 text-gray-800";
+  };
+
+  const getCategoryDisplayName = (category: string) => {
+    const displayMap: { [key: string]: string } = {
+      "ICT": "ICT",
+      "Facilitair": "Facilitair",
+      "Catering": "Catering",
+      "Logistics": "Logistiek",
+    };
+    return displayMap[category] || category;
   };
 
   useEffect(() => {
@@ -239,7 +297,7 @@ export default function Index() {
           return;
         }
 
-        setUserRole(profileData?.role || "Gebruiker");
+        setCurrentRole(profileData?.role || "Gebruiker");
       }
     };
 
@@ -256,7 +314,7 @@ export default function Index() {
           </div>
           <div className="flex gap-2">
             <UserRole />
-            {userRole === 'ICT Admin' && (
+            {currentRole === 'ICT Admin' && (
               <Button 
                 onClick={() => window.location.href = '/activity-log'}
                 variant="outline"
@@ -267,7 +325,10 @@ export default function Index() {
               </Button>
             )}
             <Button 
-              onClick={() => setIsFormOpen(true)}
+              onClick={() => {
+                setEditingAsset(null);
+                setIsFormOpen(true);
+              }}
               className="flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
@@ -284,22 +345,15 @@ export default function Index() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-4">
-              <Input
-                placeholder="Search assets..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="col-span-2"
-              />
               <AssetFilters
-                categories={categories || []}
-                locations={locations || []}
-                statuses={statuses || []}
-                categoryFilter={categoryFilter}
-                locationFilter={locationFilter}
+                searchTerm={searchTerm}
                 statusFilter={statusFilter}
-                setCategoryFilter={setCategoryFilter}
-                setLocationFilter={setLocationFilter}
-                setStatusFilter={setStatusFilter}
+                categoryFilter={categoryFilter}
+                typeFilter={typeFilter}
+                onSearchChange={setSearchTerm}
+                onStatusFilterChange={setStatusFilter}
+                onCategoryFilterChange={setCategoryFilter}
+                onTypeFilterChange={setTypeFilter}
               />
               <Button
                 variant="outline"
@@ -321,13 +375,17 @@ export default function Index() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Image</TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead>Brand</TableHead>
-                    <TableHead>Model</TableHead>
-                    <TableHead>Serial Number</TableHead>
+                    <TableHead className="hidden md:table-cell">Brand/Model</TableHead>
+                    <TableHead className="hidden lg:table-cell">Serial Number</TableHead>
+                    <TableHead className="hidden lg:table-cell">Asset Tag</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="hidden md:table-cell">Category</TableHead>
+                    <TableHead className="hidden lg:table-cell">Assigned To</TableHead>
+                    <TableHead className="hidden xl:table-cell">Location</TableHead>
+                    <TableHead className="hidden xl:table-cell">Specific Location</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -335,10 +393,13 @@ export default function Index() {
                     <AssetTableRow
                       key={asset.id}
                       asset={asset}
-                      openReservationDialog={openReservationDialog}
-                      confirmDeleteAsset={confirmDeleteAsset}
-                      refetch={refetch}
-                      handleAssetUpdated={handleAssetUpdated}
+                      currentRole={currentRole}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onReserve={handleReserve}
+                      getAssetIcon={getAssetIcon}
+                      getStatusColor={getStatusColor}
+                      getCategoryDisplayName={getCategoryDisplayName}
                     />
                   ))}
                 </TableBody>
@@ -349,10 +410,13 @@ export default function Index() {
                 <AssetMobileCard
                   key={asset.id}
                   asset={asset}
-                  openReservationDialog={openReservationDialog}
-                  confirmDeleteAsset={confirmDeleteAsset}
-                  refetch={refetch}
-                  handleAssetUpdated={handleAssetUpdated}
+                  currentRole={currentRole}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onReserve={handleReserve}
+                  getAssetIcon={getAssetIcon}
+                  getStatusColor={getStatusColor}
+                  getCategoryDisplayName={getCategoryDisplayName}
                 />
               ))}
             </div>
@@ -360,56 +424,33 @@ export default function Index() {
         </Card>
       </div>
 
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add New Asset</DialogTitle>
-            <DialogDescription>
-              Make sure to fill in all the required fields.
-            </DialogDescription>
-          </DialogHeader>
-          <AssetForm
-            onAssetCreated={handleAssetCreated}
-            onClose={() => setIsFormOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      {isFormOpen && (
+        <AssetForm
+          asset={editingAsset}
+          onSave={handleAssetSave}
+          onCancel={() => {
+            setIsFormOpen(false);
+            setEditingAsset(null);
+          }}
+        />
+      )}
 
-      <ReservationDialog
-        isOpen={isReservationDialogOpen}
-        onClose={closeReservationDialog}
-        assetId={selectedAssetId}
-      />
+      {isReservationDialogOpen && selectedAsset && (
+        <ReservationDialog
+          asset={selectedAsset}
+          onClose={() => {
+            setIsReservationDialogOpen(false);
+            setSelectedAsset(null);
+          }}
+        />
+      )}
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              asset from our servers.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={cancelDeleteAsset}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={deleteAsset}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <Dialog open={isBarcodeScannerOpen} onOpenChange={setIsBarcodeScannerOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Scan Barcode</DialogTitle>
-            <DialogDescription>
-              Point your camera at the barcode to scan.
-            </DialogDescription>
-          </DialogHeader>
-          <BarcodeScanner onScan={handleBarcodeScan} />
-        </DialogContent>
-      </Dialog>
+      {isBarcodeScannerOpen && (
+        <BarcodeScanner
+          onScan={handleBarcodeScan}
+          onClose={() => setIsBarcodeScannerOpen(false)}
+        />
+      )}
     </div>
   );
 }
