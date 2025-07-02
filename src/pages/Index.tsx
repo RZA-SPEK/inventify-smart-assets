@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,6 +27,8 @@ export interface Asset {
   assignedTo?: string;
   assignedToLocation?: string;
   image?: string;
+  purchasePrice?: number;
+  penaltyAmount?: number;
 }
 
 const mockAssets: Asset[] = [
@@ -41,7 +44,9 @@ const mockAssets: Asset[] = [
     location: "Kantoor Amsterdam",
     category: "ICT",
     assignedTo: "Jan Janssen",
-    assignedToLocation: "Werkplek A-101"
+    assignedToLocation: "Werkplek A-101",
+    purchasePrice: 1299.99,
+    penaltyAmount: 500.00
   },
   {
     id: "2",
@@ -54,7 +59,9 @@ const mockAssets: Asset[] = [
     status: "In voorraad",
     location: "ICT Magazijn",
     category: "ICT",
-    assignedToLocation: "Magazijn Rek B-3"
+    assignedToLocation: "Magazijn Rek B-3",
+    purchasePrice: 899.99,
+    penaltyAmount: 400.00
   },
   {
     id: "3",
@@ -68,7 +75,9 @@ const mockAssets: Asset[] = [
     location: "Kantoor Utrecht",
     category: "ICT",
     assignedTo: "Marie Peeters",
-    assignedToLocation: "Werkplek U-205"
+    assignedToLocation: "Werkplek U-205",
+    purchasePrice: 199.99,
+    penaltyAmount: 100.00
   },
   {
     id: "4",
@@ -82,7 +91,9 @@ const mockAssets: Asset[] = [
     location: "Kantoor Amsterdam",
     category: "Facilitair",
     assignedTo: "Tom de Vries",
-    assignedToLocation: "Werkplek A-150"
+    assignedToLocation: "Werkplek A-150",
+    purchasePrice: 150.00,
+    penaltyAmount: 75.00
   }
 ];
 
@@ -92,6 +103,7 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [showAssetForm, setShowAssetForm] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [reservationAsset, setReservationAsset] = useState<Asset | null>(null);
@@ -146,24 +158,36 @@ const Index = () => {
   };
 
   const filteredAssets = assets.filter(asset => {
-    const matchesSearch = asset.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         asset.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         asset.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         asset.assetTag?.toLowerCase().includes(searchTerm.toLowerCase());
+    // Enhanced search - check all fields
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = !searchTerm || (
+      asset.type.toLowerCase().includes(searchLower) ||
+      asset.brand?.toLowerCase().includes(searchLower) ||
+      asset.model?.toLowerCase().includes(searchLower) ||
+      asset.serialNumber.toLowerCase().includes(searchLower) ||
+      asset.assetTag?.toLowerCase().includes(searchLower) ||
+      asset.location.toLowerCase().includes(searchLower) ||
+      asset.assignedTo?.toLowerCase().includes(searchLower) ||
+      asset.assignedToLocation?.toLowerCase().includes(searchLower) ||
+      asset.category.toLowerCase().includes(searchLower) ||
+      asset.status.toLowerCase().includes(searchLower) ||
+      asset.purchasePrice?.toString().includes(searchTerm) ||
+      asset.penaltyAmount?.toString().includes(searchTerm)
+    );
     
     const matchesStatus = statusFilter === "all" || asset.status === statusFilter;
     const matchesCategory = categoryFilter === "all" || asset.category === categoryFilter;
+    const matchesType = typeFilter === "all" || asset.type === typeFilter;
     
     if (currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") {
-      return matchesSearch && matchesStatus && matchesCategory && asset.category === "Facilitair";
+      return matchesSearch && matchesStatus && matchesCategory && matchesType && asset.category === "Facilitair";
     }
     
     if (currentRole === "Gebruiker") {
-      return matchesSearch && matchesStatus && matchesCategory && asset.assignedTo === "Jan Janssen";
+      return matchesSearch && matchesStatus && matchesCategory && matchesType && asset.assignedTo === "Jan Janssen";
     }
     
-    return matchesSearch && matchesStatus && matchesCategory;
+    return matchesSearch && matchesStatus && matchesCategory && matchesType;
   });
 
   const handleAddAsset = (assetData: Omit<Asset, "id">) => {
@@ -268,9 +292,11 @@ const Index = () => {
                 searchTerm={searchTerm}
                 statusFilter={statusFilter}
                 categoryFilter={categoryFilter}
+                typeFilter={typeFilter}
                 onSearchChange={setSearchTerm}
                 onStatusFilterChange={setStatusFilter}
                 onCategoryFilterChange={setCategoryFilter}
+                onTypeFilterChange={setTypeFilter}
               />
               {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && (
                 <div className="flex justify-end">

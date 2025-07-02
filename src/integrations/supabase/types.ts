@@ -64,6 +64,7 @@ export type Database = {
       }
       assets: {
         Row: {
+          asset_tag: string | null
           assigned_to: string | null
           assigned_to_location: string | null
           brand: string | null
@@ -78,6 +79,7 @@ export type Database = {
           location: string
           model: string | null
           next_maintenance: string | null
+          penalty_amount: number | null
           purchase_date: string
           purchase_price: number | null
           serial_number: string
@@ -87,6 +89,7 @@ export type Database = {
           warranty_expiry: string | null
         }
         Insert: {
+          asset_tag?: string | null
           assigned_to?: string | null
           assigned_to_location?: string | null
           brand?: string | null
@@ -101,6 +104,7 @@ export type Database = {
           location: string
           model?: string | null
           next_maintenance?: string | null
+          penalty_amount?: number | null
           purchase_date: string
           purchase_price?: number | null
           serial_number: string
@@ -110,6 +114,7 @@ export type Database = {
           warranty_expiry?: string | null
         }
         Update: {
+          asset_tag?: string | null
           assigned_to?: string | null
           assigned_to_location?: string | null
           brand?: string | null
@@ -124,6 +129,7 @@ export type Database = {
           location?: string
           model?: string | null
           next_maintenance?: string | null
+          penalty_amount?: number | null
           purchase_date?: string
           purchase_price?: number | null
           serial_number?: string

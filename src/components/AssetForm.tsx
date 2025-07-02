@@ -26,7 +26,9 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     category: "ICT" as Asset["category"],
     assignedTo: "",
     assignedToLocation: "",
-    image: ""
+    image: "",
+    purchasePrice: "",
+    penaltyAmount: ""
   });
 
   useEffect(() => {
@@ -43,7 +45,9 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
         category: asset.category,
         assignedTo: asset.assignedTo || "",
         assignedToLocation: asset.assignedToLocation || "",
-        image: asset.image || ""
+        image: asset.image || "",
+        purchasePrice: asset.purchasePrice?.toString() || "",
+        penaltyAmount: asset.penaltyAmount?.toString() || ""
       });
     }
   }, [asset]);
@@ -55,7 +59,9 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
       assignedTo: formData.assignedTo === "unassigned" ? "" : formData.assignedTo,
       assignedToLocation: formData.assignedToLocation === "unassigned" ? "" : formData.assignedToLocation,
       image: formData.image || undefined,
-      assetTag: formData.assetTag || undefined
+      assetTag: formData.assetTag || undefined,
+      purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
+      penaltyAmount: formData.penaltyAmount ? parseFloat(formData.penaltyAmount) : undefined
     };
     onSave(submitData);
   };
