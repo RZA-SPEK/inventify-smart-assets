@@ -34,6 +34,9 @@ export default function Index() {
     scannedBarcode
   );
 
+  console.log("Index component - assets:", assets);
+  console.log("Index component - currentRole:", currentRole);
+
   const handleAssetSaveWrapper = async (assetData: Omit<Asset, "id">) => {
     await handleAssetSave(assetData, editingAsset);
     setIsFormOpen(false);
@@ -41,16 +44,19 @@ export default function Index() {
   };
 
   const handleEdit = (asset: Asset) => {
+    console.log("Editing asset:", asset);
     setEditingAsset(asset);
     setIsFormOpen(true);
   };
 
   const handleReserve = (asset: Asset) => {
+    console.log("Reserving asset:", asset);
     setSelectedAsset(asset);
     setIsReservationDialogOpen(true);
   };
 
   const handleBarcodeScan = (result: string) => {
+    console.log("Barcode scanned:", result);
     setScannedBarcode(result);
     setIsBarcodeScannerOpen(false);
     toast({
@@ -66,6 +72,7 @@ export default function Index() {
           currentRole={currentRole}
           onRoleChange={setCurrentRole}
           onAddAsset={() => {
+            console.log("Add asset clicked");
             setEditingAsset(null);
             setIsFormOpen(true);
           }}
@@ -99,6 +106,7 @@ export default function Index() {
           asset={editingAsset}
           onSave={handleAssetSaveWrapper}
           onCancel={() => {
+            console.log("Asset form canceled");
             setIsFormOpen(false);
             setEditingAsset(null);
           }}

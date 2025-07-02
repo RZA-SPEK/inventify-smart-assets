@@ -24,6 +24,8 @@ export const useAssetManagement = (
       scannedBarcode,
     ],
     queryFn: async () => {
+      console.log("Fetching assets with filters:", { searchTerm, categoryFilter, statusFilter, typeFilter, scannedBarcode });
+      
       let query = supabase
         .from("assets")
         .select("*")
@@ -52,17 +54,20 @@ export const useAssetManagement = (
 
       const { data, error } = await query;
 
+      console.log("Assets query result:", { data, error });
+
       if (error) {
+        console.error("Error fetching assets:", error);
         toast({
           title: "Error!",
-          description: "Failed to fetch assets",
+          description: "Failed to fetch assets: " + error.message,
           variant: "destructive",
         });
         return [];
       }
 
       // Transform the data to match our Asset interface
-      return data?.map((item: any) => ({
+      const transformedAssets = data?.map((item: any) => ({
         id: item.id,
         type: item.type,
         brand: item.brand,
@@ -82,10 +87,15 @@ export const useAssetManagement = (
         updatedAt: item.updated_at,
         createdBy: item.created_by,
       })) || [];
+
+      console.log("Transformed assets:", transformedAssets);
+      return transformedAssets;
     },
   });
 
   const handleAssetSave = async (assetData: Omit<Asset, "id">, editingAsset: Asset | null) => {
+    console.log("Saving asset:", { assetData, editingAsset });
+    
     try {
       const dbData = {
         type: assetData.type,
@@ -104,6 +114,8 @@ export const useAssetManagement = (
         penalty_amount: assetData.penaltyAmount,
       };
 
+      console.log("Database data to save:", dbData);
+
       let result;
       if (editingAsset) {
         result = await supabase
@@ -116,10 +128,13 @@ export const useAssetManagement = (
           .insert([dbData]);
       }
 
+      console.log("Save result:", result);
+
       if (result.error) {
+        console.error("Database save error:", result.error);
         toast({
           title: "Error!",
-          description: `Failed to ${editingAsset ? 'update' : 'create'} asset`,
+          description: `Failed to ${editingAsset ? 'update' : 'create'} asset: ${result.error.message}`,
           variant: "destructive",
         });
       } else {
@@ -140,6 +155,8 @@ export const useAssetManagement = (
   };
 
   const handleDelete = async (assetId: string, reason: string) => {
+    console.log("Deleting asset:", { assetId, reason });
+    
     try {
       const { error } = await supabase
         .from("assets")
@@ -147,9 +164,10 @@ export const useAssetManagement = (
         .eq("id", assetId);
 
       if (error) {
+        console.error("Delete error:", error);
         toast({
           title: "Error!",
-          description: "Failed to delete asset",
+          description: "Failed to delete asset: " + error.message,
           variant: "destructive",
         });
       } else {
