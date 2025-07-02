@@ -14,6 +14,10 @@ export const PageHeader = ({ currentRole, onRoleChange, onAddAsset }: PageHeader
     window.location.href = path;
   };
 
+  console.log("PageHeader - Current role:", currentRole);
+  console.log("PageHeader - Should show admin buttons:", currentRole === "ICT Admin" || currentRole === "Facilitair Admin");
+  console.log("PageHeader - Should show Facilitair buttons:", currentRole === "Facilitair Medewerker");
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
@@ -37,7 +41,8 @@ export const PageHeader = ({ currentRole, onRoleChange, onAddAsset }: PageHeader
               <span>Activity Log</span>
             </Button>
             
-            {(currentRole === "ICT Admin" || currentRole === "Facilitair Medewerker") && (
+            {/* Only ICT Admin and Facilitair Admin should see these buttons */}
+            {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin") && (
               <>
                 <Button
                   variant="outline"
@@ -56,6 +61,18 @@ export const PageHeader = ({ currentRole, onRoleChange, onAddAsset }: PageHeader
                   <span>Asset Toevoegen</span>
                 </Button>
               </>
+            )}
+
+            {/* Facilitair Medewerker should only see reservations button, not add asset */}
+            {currentRole === "Facilitair Medewerker" && (
+              <Button
+                variant="outline"
+                onClick={() => handleNavigation("/reservations")}
+                className="flex items-center space-x-2"
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Reserveringen</span>
+              </Button>
             )}
           </div>
         </div>
