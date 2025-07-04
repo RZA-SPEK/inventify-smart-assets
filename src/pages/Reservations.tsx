@@ -1,166 +1,155 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, Edit3, Calendar, User, FileText, ArrowLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { UserReservations } from "@/components/UserReservations";
-import { UserRole } from "@/components/UserRole";
-import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar, Search, Clock, CheckCircle, XCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 
 interface Reservation {
   id: string;
-  assetId: string;
-  assetName: string;
-  requesterName: string;
-  requestedDate: string;
-  returnDate: string;
+  asset_id: string;
+  requester_id: string;
+  requester_name: string;
   purpose: string;
-  status: "pending" | "approved" | "rejected";
-  createdAt: string;
+  requested_date: string;
+  return_date: string;
+  status: string;
+  created_at: string;
+  approved_at: string | null;
+  approved_by: string | null;
+  assets?: {
+    type: string;
+    serial_number: string;
+  };
 }
 
-const mockReservations: Reservation[] = [
-  {
-    id: "1",
-    assetId: "1",
-    assetName: "Dell Latitude 7420",
-    requesterName: "Jan Janssen",
-    requestedDate: "2024-01-15",
-    returnDate: "2024-01-20",
-    purpose: "Zakelijke reis naar client meeting",
-    status: "pending",
-    createdAt: "2024-01-10"
-  },
-  {
-    id: "2",
-    assetId: "2",
-    assetName: "iPhone 14",
-    requesterName: "Marie Peeters",
-    requestedDate: "2024-01-18",
-    returnDate: "2024-01-25",
-    purpose: "Thuiswerken tijdens vakantie",
-    status: "approved",
-    createdAt: "2024-01-12"
-  },
-  {
-    id: "3",
-    assetId: "3",
-    assetName: "Jabra Evolve2 65",
-    requesterName: "Tom de Vries",
-    requestedDate: "2024-01-20",
-    returnDate: "2024-01-22",
-    purpose: "Externe vergaderingen",
-    status: "rejected",
-    createdAt: "2024-01-13"
-  }
-];
-
 const Reservations = () => {
-  const { toast } = useToast();
-  const [reservations, setReservations] = useState<Reservation[]>(mockReservations);
-  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
-  const [actionType, setActionType] = useState<"approve" | "reject" | "edit" | null>(null);
-  const [rejectReason, setRejectReason] = useState("");
-  const [showUserView, setShowUserView] = useState(false);
-  const { currentRole, canManageUsers, canViewSettings } = useUserRole();
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const { canManageAssets, loading: roleLoading } = useUserRole();
+
+  useEffect(() => {
+    // Only fetch if role is loaded
+    if (!roleLoading) {
+      fetchReservations();
+    }
+  }, [roleLoading]);
+
+  const fetchReservations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('reservations')
+        .select(`
+          *,
+          assets (
+            type,
+            serial_number
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching reservations:', error);
+        return;
+      }
+
+      setReservations(data || []);
+    } catch (error) {
+      console.error('Error fetching reservations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async (reservationId: string, newStatus: string) => {
+    try {
+      const updates: any = {
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (newStatus === 'approved') {
+        updates.approved_at = new Date().toISOString();
+        // In a real app, you'd get the current user's ID
+        // updates.approved_by = currentUserId;
+      }
+
+      const { error } = await supabase
+        .from('reservations')
+        .update(updates)
+        .eq('id', reservationId);
+
+      if (error) {
+        console.error('Error updating reservation:', error);
+        return;
+      }
+
+      // Refresh the list
+      fetchReservations();
+    } catch (error) {
+      console.error('Error updating reservation:', error);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "approved":
-        return "bg-green-100 text-green-800";
-      case "rejected":
-        return "bg-red-100 text-red-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'approved':
+        return 'bg-green-100 text-green-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800';
       default:
-        return "bg-gray-100 text-gray-800";
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
-      case "approved":
-        return "Goedgekeurd";
-      case "rejected":
-        return "Afgewezen";
-      case "pending":
-        return "In behandeling";
+      case 'pending':
+        return <Clock className="h-4 w-4" />;
+      case 'approved':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'rejected':
+        return <XCircle className="h-4 w-4" />;
+      case 'completed':
+        return <CheckCircle className="h-4 w-4" />;
       default:
-        return status;
+        return <Clock className="h-4 w-4" />;
     }
   };
 
-  const handleAction = (reservation: Reservation, action: "approve" | "reject" | "edit") => {
-    setSelectedReservation(reservation);
-    setActionType(action);
-    setRejectReason("");
-  };
-
-  const confirmAction = () => {
-    if (!selectedReservation || !actionType) return;
-
-    const updatedReservations = reservations.map(reservation => {
-      if (reservation.id === selectedReservation.id) {
-        return {
-          ...reservation,
-          status: actionType === "approve" ? "approved" as const : 
-                  actionType === "reject" ? "rejected" as const : 
-                  reservation.status
-        };
-      }
-      return reservation;
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('nl-NL', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
     });
-
-    setReservations(updatedReservations);
-
-    toast({
-      title: `Reservering ${actionType === "approve" ? "goedgekeurd" : actionType === "reject" ? "afgewezen" : "bewerkt"}`,
-      description: `Reservering voor ${selectedReservation.assetName} is ${actionType === "approve" ? "goedgekeurd" : actionType === "reject" ? "afgewezen" : "bewerkt"}`,
-      variant: actionType === "reject" ? "destructive" : "default"
-    });
-
-    setSelectedReservation(null);
-    setActionType(null);
-    setRejectReason("");
   };
 
-  const closeDialog = () => {
-    setSelectedReservation(null);
-    setActionType(null);
-    setRejectReason("");
-  };
+  const filteredReservations = reservations.filter(reservation => {
+    const matchesSearch = reservation.requester_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         reservation.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (reservation.assets?.type.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesStatus = selectedStatus === "all" || reservation.status === selectedStatus;
+    return matchesSearch && matchesStatus;
+  });
 
-  // Show user view if requested or if user is not admin
-  if (showUserView || currentRole === "Gebruiker") {
+  // Show loading state
+  if (roleLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-6">
-          <div className="mb-6 flex items-center gap-4">
-            <Link to="/">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Terug naar Assets
-              </Button>
-            </Link>
-            <UserRole />
-            {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin") && (
-              <Button 
-                onClick={() => setShowUserView(false)}
-                variant="outline"
-                size="sm"
-              >
-                Admin View
-              </Button>
-            )}
-          </div>
-          <UserReservations />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Laden...</p>
         </div>
       </div>
     );
@@ -168,187 +157,117 @@ const Reservations = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
         <div className="mb-6">
-          <UserRole />
-        </div>
-        
-        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-4">
-            <Link to="/">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Terug naar Assets
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Reserveringsbeheer</h1>
-              <p className="text-gray-600">Beheer alle asset reserveringsaanvragen</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => setShowUserView(true)}
-              variant="outline"
-              size="sm"
-            >
-              Gebruiker View
-            </Button>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Reserveringen</h1>
+          <p className="text-gray-600 mt-1">Overzicht van alle asset reserveringen</p>
         </div>
 
-        <Card>
+        <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Reserveringsaanvragen</CardTitle>
-            <CardDescription>
-              {reservations.filter(r => r.status === "pending").length} van {reservations.length} aanvragen wachten op goedkeuring
-            </CardDescription>
+            <CardTitle>Filters</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Asset</TableHead>
-                    <TableHead>Aanvrager</TableHead>
-                    <TableHead>Periode</TableHead>
-                    <TableHead>Doel</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Aangemaakt</TableHead>
-                    <TableHead>Acties</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {reservations.map((reservation) => (
-                    <TableRow key={reservation.id}>
-                      <TableCell className="font-medium">{reservation.assetName}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <User className="h-4 w-4 text-gray-400" />
-                          <span>{reservation.requesterName}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm">
-                            {new Date(reservation.requestedDate).toLocaleDateString()} - {new Date(reservation.returnDate).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <FileText className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm truncate max-w-[200px]" title={reservation.purpose}>
-                            {reservation.purpose}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(reservation.status)}>
-                          {getStatusText(reservation.status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-500">
-                        {new Date(reservation.createdAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          {reservation.status === "pending" && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleAction(reservation, "approve")}
-                                className="text-green-600 hover:text-green-700"
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleAction(reservation, "reject")}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <XCircle className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleAction(reservation, "edit")}
-                          >
-                            <Edit3 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Zoeken</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Zoek op naam, doel of asset..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Status</label>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecteer status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle statussen</SelectItem>
+                    <SelectItem value="pending">In afwachting</SelectItem>
+                    <SelectItem value="approved">Goedgekeurd</SelectItem>
+                    <SelectItem value="rejected">Afgewezen</SelectItem>
+                    <SelectItem value="completed">Voltooid</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Action Dialog */}
-        {selectedReservation && actionType && (
-          <Dialog open={true} onOpenChange={closeDialog}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {actionType === "approve" && "Reservering Goedkeuren"}
-                  {actionType === "reject" && "Reservering Afwijzen"}
-                  {actionType === "edit" && "Reservering Bewerken"}
-                </DialogTitle>
-                <DialogDescription>
-                  Asset: {selectedReservation.assetName} voor {selectedReservation.requesterName}
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4">
-                <div>
-                  <Label>Periode</Label>
-                  <p className="text-sm text-gray-600">
-                    {new Date(selectedReservation.requestedDate).toLocaleDateString()} - {new Date(selectedReservation.returnDate).toLocaleDateString()}
-                  </p>
-                </div>
-                
-                <div>
-                  <Label>Doel</Label>
-                  <p className="text-sm text-gray-600">{selectedReservation.purpose}</p>
-                </div>
-
-                {actionType === "reject" && (
-                  <div>
-                    <Label htmlFor="rejectReason">Reden voor afwijzing</Label>
-                    <Textarea
-                      id="rejectReason"
-                      value={rejectReason}
-                      onChange={(e) => setRejectReason(e.target.value)}
-                      placeholder="Geef een reden op waarom deze reservering wordt afgewezen..."
-                      className="mt-1"
-                    />
-                  </div>
-                )}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Calendar className="h-5 w-5" />
+              <span>Reserveringen</span>
+            </CardTitle>
+            <CardDescription>
+              {filteredReservations.length} reservering{filteredReservations.length !== 1 ? 'en' : ''} gevonden
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {filteredReservations.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                Geen reserveringen gevonden
               </div>
-
-              <DialogFooter>
-                <Button variant="outline" onClick={closeDialog}>
-                  Annuleren
-                </Button>
-                <Button 
-                  onClick={confirmAction}
-                  variant={actionType === "reject" ? "destructive" : "default"}
-                >
-                  {actionType === "approve" && "Goedkeuren"}
-                  {actionType === "reject" && "Afwijzen"}
-                  {actionType === "edit" && "Opslaan"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
+            ) : (
+              <div className="space-y-4">
+                {filteredReservations.map((reservation) => (
+                  <div
+                    key={reservation.id}
+                    className="flex flex-col lg:flex-row lg:items-center justify-between p-4 bg-gray-50 rounded-lg space-y-4 lg:space-y-0"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <Badge className={`flex items-center space-x-1 ${getStatusColor(reservation.status)}`}>
+                          {getStatusIcon(reservation.status)}
+                          <span className="capitalize">{reservation.status}</span>
+                        </Badge>
+                        <span className="font-medium">{reservation.requester_name}</span>
+                      </div>
+                      
+                      <div className="space-y-1 text-sm text-gray-600">
+                        <div><strong>Asset:</strong> {reservation.assets?.type} ({reservation.assets?.serial_number})</div>
+                        <div><strong>Doel:</strong> {reservation.purpose}</div>
+                        <div><strong>Periode:</strong> {formatDate(reservation.requested_date)} - {formatDate(reservation.return_date)}</div>
+                        <div><strong>Aangevraagd:</strong> {formatDate(reservation.created_at)}</div>
+                        {reservation.approved_at && (
+                          <div><strong>Goedgekeurd:</strong> {formatDate(reservation.approved_at)}</div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {canManageAssets && reservation.status === 'pending' && (
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleStatusUpdate(reservation.id, 'approved')}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          Goedkeuren
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleStatusUpdate(reservation.id, 'rejected')}
+                          className="border-red-300 text-red-600 hover:bg-red-50"
+                        >
+                          Afwijzen
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

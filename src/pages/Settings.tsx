@@ -1,16 +1,29 @@
 
 import { SettingsForm } from "@/components/SettingsForm";
-import { useUserRole } from "@/hooks/useUserRole";
-import { useSettings } from "@/hooks/useSettings";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { SystemConfiguration } from "@/components/SystemConfiguration";
 import { SettingsHeader } from "@/components/settings/SettingsHeader";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const Settings = () => {
-  const { currentRole, canViewSettings, loading } = useUserRole();
-  const { settings, saveSettings } = useSettings();
+  const { canViewSettings, loading: roleLoading } = useUserRole();
+  const navigate = useNavigate();
 
-  if (loading) {
+  useEffect(() => {
+    // Redirect if user doesn't have permission
+    if (!roleLoading && !canViewSettings) {
+      navigate("/dashboard");
+    }
+  }, [canViewSettings, roleLoading, navigate]);
+
+  // Don't render if user doesn't have permission
+  if (!roleLoading && !canViewSettings) {
+    return null;
+  }
+
+  // Show loading state
+  if (roleLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -21,33 +34,15 @@ const Settings = () => {
     );
   }
 
-  if (!canViewSettings) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-6 max-w-7xl">
-          <Alert className="border-red-200 bg-red-50">
-            <AlertTriangle className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-800">
-              U heeft geen toegang tot de instellingen pagina. Alleen ICT Admin en Facilitair Admin kunnen instellingen beheren.
-            </AlertDescription>
-          </Alert>
-        </div>
-      </div>
-    );
-  }
-
-  const handleSaveSettings = async (newSettings: typeof settings) => {
-    const result = await saveSettings(newSettings);
-    if (!result.success) {
-      console.error("Failed to save settings:", result.error);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <SettingsHeader currentRole={currentRole} />
-        <SettingsForm onSave={handleSaveSettings} initialSettings={settings} />
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
+        <SettingsHeader />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SettingsForm />
+          <SystemConfiguration />
+        </div>
       </div>
     </div>
   );
