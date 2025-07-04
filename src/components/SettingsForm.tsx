@@ -6,33 +6,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Save } from "lucide-react";
+import { Plus, X, Save, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface SettingsData {
-  categories: string[];
-  statuses: string[];
-  assetTypes: string[];
-  locations: string[];
-  brands: string[];
-  maintenanceTypes: string[];
-}
+import { SystemSettings } from "@/hooks/useSettings";
 
 interface SettingsFormProps {
-  onSave: (settings: SettingsData) => void;
+  onSave: (settings: SystemSettings) => void;
+  initialSettings?: SystemSettings;
 }
 
-export const SettingsForm = ({ onSave }: SettingsFormProps) => {
+export const SettingsForm = ({ onSave, initialSettings }: SettingsFormProps) => {
   const { toast } = useToast();
   
-  const [settings, setSettings] = useState<SettingsData>({
+  const defaultSettings: SystemSettings = {
     categories: ["ICT", "Facilitair", "Catering", "Logistics"],
     statuses: ["In gebruik", "In voorraad", "Defect", "Onderhoud", "Deleted"],
     assetTypes: ["Laptop", "Telefoon", "Headset", "Bureau", "Monitor", "Printer", "Kabel", "Toetsenbord", "Muis"],
     locations: ["Kantoor Amsterdam", "Kantoor Utrecht", "ICT Magazijn", "Facilitair Magazijn", "Hoofdkantoor"],
     brands: ["Dell", "Apple", "HP", "Lenovo", "Samsung", "IKEA", "Jabra", "Logitech", "Microsoft"],
     maintenanceTypes: ["Preventief", "Correctief", "Noodonderhoud", "Kalibratie", "Schoonmaak", "Software Update"]
-  });
+  };
+
+  const [settings, setSettings] = useState<SystemSettings>(initialSettings || defaultSettings);
+  const [hasChanges, setHasChanges] = useState(false);
 
   const [newValues, setNewValues] = useState({
     category: "",
@@ -43,7 +39,7 @@ export const SettingsForm = ({ onSave }: SettingsFormProps) => {
     maintenanceType: ""
   });
 
-  const addItem = (field: keyof SettingsData, newItem: string) => {
+  const addItem = (field: keyof SystemSettings, newItem: string) => {
     if (!newItem.trim()) return;
     
     if (settings[field].includes(newItem.trim())) {
@@ -64,26 +60,39 @@ export const SettingsForm = ({ onSave }: SettingsFormProps) => {
       ...prev,
       [field.replace(/s$/, '') as keyof typeof newValues]: ""
     }));
+
+    setHasChanges(true);
   };
 
-  const removeItem = (field: keyof SettingsData, item: string) => {
+  const removeItem = (field: keyof SystemSettings, item: string) => {
     setSettings(prev => ({
       ...prev,
       [field]: prev[field].filter(i => i !== item)
     }));
+    setHasChanges(true);
   };
 
   const handleSave = () => {
     onSave(settings);
+    setHasChanges(false);
     toast({
       title: "Instellingen opgeslagen",
       description: "Alle wijzigingen zijn succesvol opgeslagen"
     });
   };
 
+  const handleReset = () => {
+    setSettings(defaultSettings);
+    setHasChanges(true);
+    toast({
+      title: "Instellingen gereset",
+      description: "Alle instellingen zijn teruggezet naar de standaardwaarden"
+    });
+  };
+
   const renderSettingsSection = (
     title: string,
-    field: keyof SettingsData,
+    field: keyof SystemSettings,
     newValueField: keyof typeof newValues,
     description: string
   ) => (
@@ -142,11 +151,33 @@ export const SettingsForm = ({ onSave }: SettingsFormProps) => {
           <h2 className="text-2xl font-bold">Systeem Instellingen</h2>
           <p className="text-muted-foreground">Beheer alle configureerbare opties voor het asset management systeem</p>
         </div>
-        <Button onClick={handleSave} className="flex items-center gap-2">
-          <Save className="h-4 w-4" />
-          Opslaan
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleReset} 
+            variant="outline" 
+            className="flex items-center gap-2"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Reset
+          </Button>
+          <Button 
+            onClick={handleSave} 
+            className="flex items-center gap-2"
+            disabled={!hasChanges}
+          >
+            <Save className="h-4 w-4" />
+            Opslaan
+          </Button>
+        </div>
       </div>
+
+      {hasChanges && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-yellow-800 text-sm">
+            Je hebt niet-opgeslagen wijzigingen. Vergeet niet om op "Opslaan" te klikken.
+          </p>
+        </div>
+      )}
 
       <Tabs defaultValue="categories" className="space-y-4">
         <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">

@@ -12,12 +12,13 @@ import { mockAssets } from "@/data/mockAssets";
 import { Asset } from "@/types/asset";
 import { useAssetFilters } from "@/hooks/useAssetFilters";
 import { useAssetManagement } from "@/hooks/useAssetManagement";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const Assets = () => {
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [showReservationDialog, setShowReservationDialog] = useState(false);
   const [showUserReservations, setShowUserReservations] = useState(false);
-  const [currentRole, setCurrentRole] = useState<"ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker">("ICT Admin");
+  const { currentRole } = useUserRole();
 
   const {
     assets,
@@ -58,7 +59,7 @@ const Assets = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <div className="mb-6">
-          <UserRole currentRole={currentRole} onRoleChange={setCurrentRole} />
+          <UserRole />
         </div>
         
         <AssetHeader

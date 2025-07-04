@@ -2,16 +2,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { DashboardStats } from "@/components/DashboardStats";
 import { UserRole } from "@/components/UserRole";
 import { mockAssets } from "@/data/mockAssets";
-import { useState } from "react";
 
 const Dashboard = () => {
-  const [currentRole, setCurrentRole] = useState<"ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker">("ICT Admin");
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <div className="mb-6">
-          <UserRole currentRole={currentRole} onRoleChange={setCurrentRole} />
+          <UserRole />
         </div>
         
         <div className="mb-6">

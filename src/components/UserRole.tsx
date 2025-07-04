@@ -2,13 +2,20 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Shield, User, Wrench, Settings } from "lucide-react";
+import { useUserRole, UserRole as UserRoleType } from "@/hooks/useUserRole";
 
 interface UserRoleProps {
-  currentRole: "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker";
-  onRoleChange: (role: "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker") => void;
+  currentRole?: UserRoleType;
+  onRoleChange?: (role: UserRoleType) => void;
 }
 
-export const UserRole = ({ currentRole, onRoleChange }: UserRoleProps) => {
+export const UserRole = ({ currentRole: propCurrentRole, onRoleChange: propOnRoleChange }: UserRoleProps) => {
+  const { currentRole: hookCurrentRole, changeRole } = useUserRole();
+  
+  // Use props if provided, otherwise use hook
+  const currentRole = propCurrentRole || hookCurrentRole;
+  const onRoleChange = propOnRoleChange || changeRole;
+
   const getRoleIcon = (role: string) => {
     switch (role) {
       case "ICT Admin":
@@ -39,10 +46,25 @@ export const UserRole = ({ currentRole, onRoleChange }: UserRoleProps) => {
     }
   };
 
+  const getRolePermissions = (role: string) => {
+    switch (role) {
+      case "ICT Admin":
+        return "Volledige toegang tot alle functies";
+      case "Facilitair Admin":
+        return "Beheer van facilitaire assets en instellingen";
+      case "Facilitair Medewerker":
+        return "Beheer van facilitaire assets";
+      case "Gebruiker":
+        return "Basis toegang en eigen reserveringen";
+      default:
+        return "";
+    }
+  };
+
   return (
     <div className="flex items-center space-x-4">
       <div className="flex items-center space-x-2">
-        <span className="text-sm font-medium text-gray-600">Rol:</span>
+        <span className="text-sm font-medium text-gray-600">Huidige rol:</span>
         <Badge className={`flex items-center space-x-1 ${getRoleColor(currentRole)}`}>
           {getRoleIcon(currentRole)}
           <span>{currentRole}</span>
@@ -82,6 +104,10 @@ export const UserRole = ({ currentRole, onRoleChange }: UserRoleProps) => {
             </SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="hidden md:block text-xs text-gray-500 max-w-xs">
+        {getRolePermissions(currentRole)}
       </div>
     </div>
   );

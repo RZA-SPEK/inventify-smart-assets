@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Edit3, Trash2, UserCheck, UserX } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Plus, Search, Edit3, Trash2, UserCheck, UserX, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { UserRole } from "@/components/UserRole";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface User {
   id: string;
@@ -63,13 +64,32 @@ const mockUsers: User[] = [
 
 const Users = () => {
   const { toast } = useToast();
+  const { currentRole, canManageUsers } = useUserRole();
   const [users, setUsers] = useState<User[]>(mockUsers);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [currentUserRole, setCurrentUserRole] = useState<"ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker">("ICT Admin");
+
+  if (!canManageUsers) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-6 max-w-7xl">
+          <div className="mb-6">
+            <UserRole />
+          </div>
+          
+          <Alert className="border-red-200 bg-red-50">
+            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-800">
+              U heeft geen toegang tot gebruikersbeheer. Alleen ICT Admin kan gebruikers beheren.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    );
+  }
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -129,7 +149,7 @@ const Users = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <div className="mb-6">
-          <UserRole currentRole={currentUserRole} onRoleChange={setCurrentUserRole} />
+          <UserRole />
         </div>
         
         <div className="mb-6">
