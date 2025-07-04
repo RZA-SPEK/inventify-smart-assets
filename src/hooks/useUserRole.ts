@@ -4,20 +4,30 @@ import { useState, useEffect } from "react";
 export type UserRole = "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker";
 
 export const useUserRole = () => {
-  const [currentRole, setCurrentRole] = useState<UserRole>("ICT Admin");
+  const [currentRole, setCurrentRole] = useState<UserRole>("Gebruiker");
 
-  // In a real app, this would fetch the user's role from the backend
+  // In production, this would fetch the actual user's role from Supabase
   useEffect(() => {
-    // For now, we'll use localStorage to persist the selected role during simulation
-    const savedRole = localStorage.getItem("simulatedUserRole") as UserRole;
-    if (savedRole) {
-      setCurrentRole(savedRole);
-    }
+    // TODO: Implement real user role fetching from Supabase
+    // const fetchUserRole = async () => {
+    //   const { data: { user } } = await supabase.auth.getUser();
+    //   if (user) {
+    //     const { data: profile } = await supabase
+    //       .from('profiles')
+    //       .select('role')
+    //       .eq('id', user.id)
+    //       .single();
+    //     if (profile) {
+    //       setCurrentRole(profile.role);
+    //     }
+    //   }
+    // };
+    // fetchUserRole();
   }, []);
 
   const changeRole = (newRole: UserRole) => {
-    setCurrentRole(newRole);
-    localStorage.setItem("simulatedUserRole", newRole);
+    // This function should be removed in production as roles should be managed by admins
+    console.warn("Role changing is disabled in production");
   };
 
   return {

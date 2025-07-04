@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,50 +8,30 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Edit3, Clock, Plus } from "lucide-react";
+import { Calendar, Edit3, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Reservation {
   id: string;
-  assetId: string;
-  assetName: string;
-  requesterName: string;
-  requestedDate: string;
-  returnDate: string;
+  asset_id: string;
+  requester_name: string;
+  requested_date: string;
+  return_date: string;
   purpose: string;
   status: "pending" | "approved" | "rejected";
-  createdAt: string;
+  created_at: string;
+  assets?: {
+    type: string;
+    brand: string;
+    model: string;
+  };
 }
-
-// Mock data for current user's reservations
-const mockUserReservations: Reservation[] = [
-  {
-    id: "1",
-    assetId: "1",
-    assetName: "Dell Latitude 7420",
-    requesterName: "Current User",
-    requestedDate: "2024-01-15",
-    returnDate: "2024-01-20",
-    purpose: "Zakelijke reis naar client meeting",
-    status: "approved",
-    createdAt: "2024-01-10"
-  },
-  {
-    id: "4",
-    assetId: "4",
-    assetName: "MacBook Pro 16",
-    requesterName: "Current User",
-    requestedDate: "2024-01-25",
-    returnDate: "2024-01-30",
-    purpose: "Thuiswerken project",
-    status: "pending",
-    createdAt: "2024-01-20"
-  }
-];
 
 export const UserReservations = () => {
   const { toast } = useToast();
-  const [reservations, setReservations] = useState<Reservation[]>(mockUserReservations);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [actionType, setActionType] = useState<"edit" | "extend" | null>(null);
   const [editData, setEditData] = useState({
@@ -61,6 +41,41 @@ export const UserReservations = () => {
     extensionDays: "",
     extensionReason: ""
   });
+
+  useEffect(() => {
+    fetchReservations();
+  }, []);
+
+  const fetchReservations = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('reservations')
+        .select(`
+          *,
+          assets (
+            type,
+            brand,
+            model
+          )
+        `)
+        .eq('requester_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching reservations:', error);
+        return;
+      }
+
+      setReservations(data || []);
+    } catch (error) {
+      console.error('Error fetching reservations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -92,62 +107,67 @@ export const UserReservations = () => {
     setSelectedReservation(reservation);
     setActionType(action);
     setEditData({
-      requestedDate: reservation.requestedDate,
-      returnDate: reservation.returnDate,
+      requestedDate: reservation.requested_date,
+      returnDate: reservation.return_date,
       purpose: reservation.purpose,
       extensionDays: "",
       extensionReason: ""
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedReservation || !actionType) return;
 
-    if (actionType === "edit") {
-      const updatedReservations = reservations.map(reservation => {
-        if (reservation.id === selectedReservation.id) {
-          return {
-            ...reservation,
-            requestedDate: editData.requestedDate,
-            returnDate: editData.returnDate,
+    try {
+      if (actionType === "edit") {
+        const { error } = await supabase
+          .from('reservations')
+          .update({
+            requested_date: editData.requestedDate,
+            return_date: editData.returnDate,
             purpose: editData.purpose,
-            status: "pending" as const // Reset to pending when edited
-          };
-        }
-        return reservation;
-      });
-      setReservations(updatedReservations);
+            status: "pending" // Reset to pending when edited
+          })
+          .eq('id', selectedReservation.id);
 
+        if (error) throw error;
+
+        toast({
+          title: "Reservering bijgewerkt",
+          description: "Uw reservering is bijgewerkt en wordt opnieuw beoordeeld door een administrator.",
+        });
+      } else if (actionType === "extend") {
+        const currentReturnDate = new Date(selectedReservation.return_date);
+        const extensionDays = parseInt(editData.extensionDays);
+        const newReturnDate = new Date(currentReturnDate);
+        newReturnDate.setDate(newReturnDate.getDate() + extensionDays);
+
+        const { error } = await supabase
+          .from('reservations')
+          .update({
+            return_date: newReturnDate.toISOString().split('T')[0],
+            status: "pending" // Reset to pending for extension request
+          })
+          .eq('id', selectedReservation.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Verlenging aangevraagd",
+          description: `Uw aanvraag voor ${extensionDays} extra dagen is ingediend en wordt beoordeeld door een administrator.`,
+        });
+      }
+
+      await fetchReservations(); // Refresh the list
+      closeDialog();
+    } catch (error) {
+      console.error('Error updating reservation:', error);
       toast({
-        title: "Reservering bijgewerkt",
-        description: "Uw reservering is bijgewerkt en wordt opnieuw beoordeeld door een administrator.",
-      });
-    } else if (actionType === "extend") {
-      // Calculate new return date
-      const currentReturnDate = new Date(selectedReservation.returnDate);
-      const extensionDays = parseInt(editData.extensionDays);
-      const newReturnDate = new Date(currentReturnDate);
-      newReturnDate.setDate(newReturnDate.getDate() + extensionDays);
-
-      const updatedReservations = reservations.map(reservation => {
-        if (reservation.id === selectedReservation.id) {
-          return {
-            ...reservation,
-            returnDate: newReturnDate.toISOString().split('T')[0],
-            status: "pending" as const // Reset to pending for extension request
-          };
-        }
-        return reservation;
-      });
-      setReservations(updatedReservations);
-
-      toast({
-        title: "Verlenging aangevraagd",
-        description: `Uw aanvraag voor ${extensionDays} extra dagen is ingediend en wordt beoordeeld door een administrator.`,
+        title: "Fout",
+        description: "Er is een fout opgetreden bij het bijwerken van uw reservering.",
+        variant: "destructive"
       });
     }
-
-    closeDialog();
   };
 
   const closeDialog = () => {
@@ -170,6 +190,21 @@ export const UserReservations = () => {
     return reservation.status === "approved";
   };
 
+  const getAssetName = (reservation: Reservation) => {
+    if (reservation.assets) {
+      return `${reservation.assets.brand} ${reservation.assets.model} (${reservation.assets.type})`;
+    }
+    return `Asset ID: ${reservation.asset_id}`;
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <div className="text-center">Laden...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="mb-6">
@@ -185,72 +220,78 @@ export const UserReservations = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Asset</TableHead>
-                  <TableHead>Periode</TableHead>
-                  <TableHead>Doel</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Aangemaakt</TableHead>
-                  <TableHead>Acties</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {reservations.map((reservation) => (
-                  <TableRow key={reservation.id}>
-                    <TableCell className="font-medium">{reservation.assetName}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm">
-                          {new Date(reservation.requestedDate).toLocaleDateString()} - {new Date(reservation.returnDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm truncate max-w-[200px]" title={reservation.purpose}>
-                        {reservation.purpose}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(reservation.status)}>
-                        {getStatusText(reservation.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-500">
-                      {new Date(reservation.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        {canEdit(reservation) && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleAction(reservation, "edit")}
-                            className="text-blue-600 hover:text-blue-700"
-                          >
-                            <Edit3 className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {canExtend(reservation) && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleAction(reservation, "extend")}
-                            className="text-green-600 hover:text-green-700"
-                          >
-                            <Clock className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
+          {reservations.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              U heeft nog geen reserveringen aangevraagd.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Asset</TableHead>
+                    <TableHead>Periode</TableHead>
+                    <TableHead>Doel</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Aangemaakt</TableHead>
+                    <TableHead>Acties</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {reservations.map((reservation) => (
+                    <TableRow key={reservation.id}>
+                      <TableCell className="font-medium">{getAssetName(reservation)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm">
+                            {new Date(reservation.requested_date).toLocaleDateString()} - {new Date(reservation.return_date).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm truncate max-w-[200px]" title={reservation.purpose}>
+                          {reservation.purpose}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(reservation.status)}>
+                          {getStatusText(reservation.status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {new Date(reservation.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          {canEdit(reservation) && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleAction(reservation, "edit")}
+                              className="text-blue-600 hover:text-blue-700"
+                            >
+                              <Edit3 className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {canExtend(reservation) && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleAction(reservation, "extend")}
+                              className="text-green-600 hover:text-green-700"
+                            >
+                              <Clock className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -264,7 +305,7 @@ export const UserReservations = () => {
                 {actionType === "extend" && "Reservering Verlengen"}
               </DialogTitle>
               <DialogDescription>
-                Asset: {selectedReservation.assetName}
+                Asset: {getAssetName(selectedReservation)}
               </DialogDescription>
             </DialogHeader>
 
@@ -308,7 +349,7 @@ export const UserReservations = () => {
                   <div>
                     <Label>Huidige periode</Label>
                     <p className="text-sm text-gray-600">
-                      {new Date(selectedReservation.requestedDate).toLocaleDateString()} - {new Date(selectedReservation.returnDate).toLocaleDateString()}
+                      {new Date(selectedReservation.requested_date).toLocaleDateString()} - {new Date(selectedReservation.return_date).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="space-y-2">

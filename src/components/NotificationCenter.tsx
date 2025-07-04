@@ -1,79 +1,108 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Notification {
   id: string;
   title: string;
   message: string;
   type: "info" | "warning" | "destructive";
-  read: boolean;
-  createdAt: string;
-  relatedAssetId?: string;
-  relatedReservationId?: string;
+  read_at: string | null;
+  created_at: string;
+  related_asset_id?: string;
+  related_reservation_id?: string;
 }
 
-const mockNotifications: Notification[] = [
-  {
-    id: "1",
-    title: "Nieuwe reserveringsaanvraag",
-    message: "Een nieuwe reserveringsaanvraag is ingediend door Jan Janssen voor asset ID: 1",
-    type: "warning",
-    read: false,
-    createdAt: "2024-01-10T10:30:00Z",
-    relatedReservationId: "1"
-  },
-  {
-    id: "2",
-    title: "Onderhoud vereist",
-    message: "Asset Laptop (DL7420001) heeft onderhoud nodig.",
-    type: "warning",
-    read: false,
-    createdAt: "2024-01-09T14:20:00Z",
-    relatedAssetId: "1"
-  },
-  {
-    id: "3",
-    title: "Garantie verloopt binnenkort",
-    message: "De garantie van iPhone 14 (IP14002) verloopt op 2024-02-01.",
-    type: "info",
-    read: true,
-    createdAt: "2024-01-08T09:15:00Z",
-    relatedAssetId: "2"
-  }
-];
-
 export const NotificationCenter = () => {
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
-  const markAsRead = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === notificationId 
-          ? { ...notification, read: true }
-          : notification
-      )
-    );
+  const fetchNotifications = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        return;
+      }
+
+      setNotifications(data || []);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    );
+  const unreadCount = notifications.filter(n => !n.read_at).length;
+
+  const markAsRead = async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read_at: new Date().toISOString() })
+        .eq('id', notificationId);
+
+      if (error) {
+        console.error('Error marking notification as read:', error);
+        return;
+      }
+
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification.id === notificationId 
+            ? { ...notification, read_at: new Date().toISOString() }
+            : notification
+        )
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
-  const deleteNotification = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.filter(notification => notification.id !== notificationId)
-    );
+  const markAllAsRead = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read_at: new Date().toISOString() })
+        .eq('user_id', user.id)
+        .is('read_at', null);
+
+      if (error) {
+        console.error('Error marking all notifications as read:', error);
+        return;
+      }
+
+      setNotifications(prev => 
+        prev.map(notification => ({ 
+          ...notification, 
+          read_at: notification.read_at || new Date().toISOString() 
+        }))
+      );
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
   };
 
   const getNotificationIcon = (type: string) => {
@@ -137,7 +166,11 @@ export const NotificationCenter = () => {
           
           <CardContent className="p-0">
             <ScrollArea className="h-64">
-              {notifications.length === 0 ? (
+              {loading ? (
+                <div className="p-4 text-center text-gray-500">
+                  Laden...
+                </div>
+              ) : notifications.length === 0 ? (
                 <div className="p-4 text-center text-gray-500">
                   Geen meldingen
                 </div>
@@ -147,7 +180,7 @@ export const NotificationCenter = () => {
                     <div
                       key={notification.id}
                       className={`p-3 border-b border-gray-100 hover:bg-gray-50 ${
-                        !notification.read ? "bg-blue-50" : ""
+                        !notification.read_at ? "bg-blue-50" : ""
                       }`}
                     >
                       <div className="flex items-start justify-between">
@@ -157,7 +190,7 @@ export const NotificationCenter = () => {
                             <h4 className="text-sm font-medium text-gray-900 truncate">
                               {notification.title}
                             </h4>
-                            {!notification.read && (
+                            {!notification.read_at && (
                               <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0" />
                             )}
                           </div>
@@ -165,12 +198,12 @@ export const NotificationCenter = () => {
                             {notification.message}
                           </p>
                           <p className="text-xs text-gray-400 mt-1">
-                            {formatTimeAgo(notification.createdAt)}
+                            {formatTimeAgo(notification.created_at)}
                           </p>
                         </div>
                         
                         <div className="flex items-center space-x-1 ml-2">
-                          {!notification.read && (
+                          {!notification.read_at && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -180,14 +213,6 @@ export const NotificationCenter = () => {
                               <Check className="h-3 w-3" />
                             </Button>
                           )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteNotification(notification.id)}
-                            className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
                         </div>
                       </div>
                     </div>
