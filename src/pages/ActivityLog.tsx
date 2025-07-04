@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { UserRole } from "@/components/UserRole";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface ActivityLogEntry {
   id: string;
@@ -32,7 +34,7 @@ const ActivityLog = () => {
   const [tableFilter, setTableFilter] = useState("all");
   const [actionFilter, setActionFilter] = useState("all");
   const [loading, setLoading] = useState(true);
-  const [currentRole, setCurrentRole] = useState<"ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker">("ICT Admin");
+  const { currentRole } = useUserRole();
 
   // Mock data for demonstration
   useEffect(() => {
@@ -187,7 +189,7 @@ const ActivityLog = () => {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="container mx-auto space-y-6">
         <div className="mb-6">
-          <UserRole currentRole={currentRole} onRoleChange={setCurrentRole} />
+          <UserRole />
         </div>
         
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
