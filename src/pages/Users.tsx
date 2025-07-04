@@ -12,6 +12,7 @@ import { Plus, Search, Edit3, Trash2, UserCheck, UserX, AlertTriangle } from "lu
 import { useToast } from "@/hooks/use-toast";
 import { UserRole } from "@/components/UserRole";
 import { useUserRole } from "@/hooks/useUserRole";
+import { supabase } from "@/integrations/supabase/client";
 
 interface User {
   id: string;
@@ -71,6 +72,14 @@ const Users = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newUser, setNewUser] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "Gebruiker" as "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker"
+  });
+  const [addUserLoading, setAddUserLoading] = useState(false);
 
   if (!canManageUsers) {
     return (
@@ -121,6 +130,68 @@ const Users = () => {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
+  const handleAddUser = async () => {
+    if (!newUser.name || !newUser.email || !newUser.password) {
+      toast({
+        title: "Velden vereist",
+        description: "Vul alle velden in",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setAddUserLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: newUser.email,
+        password: newUser.password,
+        options: {
+          data: {
+            full_name: newUser.name,
+            role: newUser.role
+          }
+        }
+      });
+
+      if (error) {
+        toast({
+          title: "Fout bij aanmaken gebruiker",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Gebruiker aangemaakt",
+          description: `${newUser.name} is succesvol aangemaakt`
+        });
+        
+        // Add to local state for demo purposes
+        const newUserData: User = {
+          id: Math.random().toString(),
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role,
+          status: "active",
+          lastLogin: new Date().toISOString(),
+          createdAt: new Date().toISOString().split('T')[0]
+        };
+        
+        setUsers(prev => [...prev, newUserData]);
+        setShowAddDialog(false);
+        setNewUser({ name: "", email: "", password: "", role: "Gebruiker" });
+      }
+    } catch (error) {
+      toast({
+        title: "Er is een fout opgetreden",
+        description: "Probeer het later opnieuw.",
+        variant: "destructive"
+      });
+    } finally {
+      setAddUserLoading(false);
+    }
+  };
+
   const handleToggleStatus = (userId: string) => {
     setUsers(prev => prev.map(user => 
       user.id === userId 
@@ -166,7 +237,10 @@ const Users = () => {
                   {filteredUsers.length} van {users.length} gebruikers
                 </CardDescription>
               </div>
-              <Button className="flex items-center gap-2">
+              <Button 
+                className="flex items-center gap-2"
+                onClick={() => setShowAddDialog(true)}
+              >
                 <Plus className="h-4 w-4" />
                 Gebruiker Toevoegen
               </Button>
@@ -276,6 +350,77 @@ const Users = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Add User Dialog */}
+        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nieuwe Gebruiker Toevoegen</DialogTitle>
+              <DialogDescription>
+                Voeg een nieuwe gebruiker toe aan het systeem
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="newName">Naam</Label>
+                <Input 
+                  id="newName" 
+                  value={newUser.name}
+                  onChange={(e) => setNewUser(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Volledige naam"
+                />
+              </div>
+              <div>
+                <Label htmlFor="newEmail">Email</Label>
+                <Input 
+                  id="newEmail" 
+                  type="email" 
+                  value={newUser.email}
+                  onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="email@bedrijf.nl"
+                />
+              </div>
+              <div>
+                <Label htmlFor="newPassword">Wachtwoord</Label>
+                <Input 
+                  id="newPassword" 
+                  type="password" 
+                  value={newUser.password}
+                  onChange={(e) => setNewUser(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="••••••••"
+                  minLength={6}
+                />
+              </div>
+              <div>
+                <Label htmlFor="newRole">Rol</Label>
+                <Select 
+                  value={newUser.role} 
+                  onValueChange={(value: "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker") => 
+                    setNewUser(prev => ({ ...prev, role: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ICT Admin">ICT Admin</SelectItem>
+                    <SelectItem value="Facilitair Admin">Facilitair Admin</SelectItem>
+                    <SelectItem value="Facilitair Medewerker">Facilitair Medewerker</SelectItem>
+                    <SelectItem value="Gebruiker">Gebruiker</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+                Annuleren
+              </Button>
+              <Button onClick={handleAddUser} disabled={addUserLoading}>
+                {addUserLoading ? "Toevoegen..." : "Gebruiker Toevoegen"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Edit User Dialog */}
         {selectedUser && (

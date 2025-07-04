@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,51 +26,28 @@ const Auth = () => {
     checkUser();
   }, [navigate]);
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (error) {
-          toast({
-            title: "Login mislukt",
-            description: error.message,
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Welkom terug!",
-            description: "Je bent succesvol ingelogd.",
-          });
-          navigate("/dashboard");
-        }
+      if (error) {
+        toast({
+          title: "Login mislukt",
+          description: error.message,
+          variant: "destructive",
+        });
       } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`
-          }
+        toast({
+          title: "Welkom terug!",
+          description: "Je bent succesvol ingelogd.",
         });
-
-        if (error) {
-          toast({
-            title: "Registratie mislukt",
-            description: error.message,
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Registratie succesvol!",
-            description: "Controleer je email voor de bevestigingslink.",
-          });
-        }
+        navigate("/dashboard");
       }
     } catch (error) {
       toast({
@@ -88,18 +64,13 @@ const Auth = () => {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">
-            {isLogin ? "Inloggen" : "Registreren"}
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold">Inloggen</CardTitle>
           <CardDescription>
-            {isLogin 
-              ? "Log in op je account om verder te gaan" 
-              : "Maak een nieuw account aan"
-            }
+            Log in op je account om verder te gaan
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleAuth} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -130,24 +101,12 @@ const Auth = () => {
               className="w-full" 
               disabled={loading}
             >
-              {loading 
-                ? (isLogin ? "Inloggen..." : "Registreren...") 
-                : (isLogin ? "Inloggen" : "Registreren")
-              }
+              {loading ? "Inloggen..." : "Inloggen"}
             </Button>
           </form>
 
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-blue-600 hover:underline"
-            >
-              {isLogin 
-                ? "Nog geen account? Registreer hier" 
-                : "Al een account? Log hier in"
-              }
-            </button>
+          <div className="mt-4 text-center text-sm text-gray-600">
+            Geen account? Neem contact op met de beheerder.
           </div>
         </CardContent>
       </Card>
