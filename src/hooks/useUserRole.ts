@@ -26,6 +26,17 @@ export const useUserRole = () => {
       try {
         console.log("Fetching role for user:", user.id);
         
+        // Try a simple query first to see if we can access the profiles table at all
+        console.log("Attempting simple profiles query...");
+        
+        const { data: testData, error: testError } = await supabase
+          .from('profiles')
+          .select('*')
+          .limit(1);
+        
+        console.log("Test query result:", { testData, testError });
+        
+        // Now try to get the specific user profile
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('role')
@@ -36,7 +47,29 @@ export const useUserRole = () => {
 
         if (error) {
           console.error("Error fetching user role:", error);
-          setCurrentRole("Gebruiker");
+          // Check if this user exists in profiles table
+          console.log("Checking if user exists in profiles table...");
+          
+          // Try to create a profile for this user if it doesn't exist
+          const { data: insertData, error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              email: user.email || '',
+              role: 'ICT Admin' // Default to ICT Admin for now
+            })
+            .select()
+            .single();
+          
+          console.log("Profile creation result:", { insertData, insertError });
+          
+          if (insertError) {
+            console.error("Failed to create profile:", insertError);
+            setCurrentRole("Gebruiker");
+          } else {
+            console.log("Profile created successfully, setting role to ICT Admin");
+            setCurrentRole("ICT Admin");
+          }
         } else if (profile) {
           console.log("User role fetched:", profile.role);
           setCurrentRole(profile.role as UserRole);
