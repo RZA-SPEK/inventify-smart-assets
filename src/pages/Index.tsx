@@ -1,10 +1,11 @@
+
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Calendar, History, Bell } from "lucide-react";
+import { Plus, Search, Calendar, History, Bell, Laptop, Smartphone, Headphones, Monitor, Desk, Coffee, Printer, Camera, Tablet, Router } from "lucide-react";
 import { AssetForm } from "@/components/AssetForm";
 import { AssetFilters } from "@/components/AssetFilters";
 import { ReservationDialog } from "@/components/ReservationDialog";
@@ -21,15 +22,17 @@ export interface Asset {
   brand: string;
   model: string;
   serialNumber: string;
-  status: "Beschikbaar" | "In gebruik" | "Onderhoud" | "Buiten gebruik";
+  assetTag?: string;
+  status: "In voorraad" | "In gebruik" | "Defect" | "Onderhoud" | "Deleted";
   location: string;
   assignedTo?: string;
+  assignedToLocation?: string;
   purchaseDate: string;
   warrantyExpiry?: string;
   purchasePrice?: number;
   penaltyAmount?: number;
-  category: string;
-  imageUrl?: string;
+  category: "ICT" | "Facilitair" | "Catering" | "Logistics";
+  image?: string;
 }
 
 const mockAssets: Asset[] = [
@@ -39,14 +42,14 @@ const mockAssets: Asset[] = [
     brand: "Dell",
     model: "Latitude 7420",
     serialNumber: "DL7420001",
-    status: "Beschikbaar",
+    status: "In voorraad",
     location: "Amsterdam HQ",
     purchaseDate: "2023-01-15",
     warrantyExpiry: "2026-01-15",
     purchasePrice: 1299.99,
     penaltyAmount: 500.00,
     category: "ICT",
-    imageUrl: "/placeholder.svg"
+    image: "/placeholder.svg"
   },
   {
     id: "2",
@@ -69,7 +72,7 @@ const mockAssets: Asset[] = [
     brand: "Jabra",
     model: "Evolve2 65",
     serialNumber: "JB65003",
-    status: "Beschikbaar",
+    status: "In voorraad",
     location: "Rotterdam Office",
     purchaseDate: "2023-05-10",
     warrantyExpiry: "2025-05-10",
@@ -98,7 +101,7 @@ const mockAssets: Asset[] = [
     brand: "IKEA",
     model: "Bekant",
     serialNumber: "IK005",
-    status: "Beschikbaar",
+    status: "In voorraad",
     location: "Rotterdam Office",
     purchaseDate: "2023-01-10",
     purchasePrice: 149.99,
@@ -123,6 +126,46 @@ const Index = () => {
   });
   const [showUserReservations, setShowUserReservations] = useState(false);
 
+  // Mock current user role - in a real app, this would come from authentication
+  const currentRole = "ICT Admin";
+
+  const getAssetIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'laptop': return <Laptop className="h-4 w-4" />;
+      case 'smartphone': return <Smartphone className="h-4 w-4" />;
+      case 'headset': return <Headphones className="h-4 w-4" />;
+      case 'monitor': return <Monitor className="h-4 w-4" />;
+      case 'desk': return <Desk className="h-4 w-4" />;
+      case 'coffee machine': return <Coffee className="h-4 w-4" />;
+      case 'printer': return <Printer className="h-4 w-4" />;
+      case 'camera': return <Camera className="h-4 w-4" />;
+      case 'tablet': return <Tablet className="h-4 w-4" />;
+      case 'router': return <Router className="h-4 w-4" />;
+      default: return <Laptop className="h-4 w-4" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'In voorraad': return 'bg-green-100 text-green-800 hover:bg-green-200';
+      case 'In gebruik': return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+      case 'Defect': return 'bg-red-100 text-red-800 hover:bg-red-200';
+      case 'Onderhoud': return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
+      case 'Deleted': return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+      default: return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+    }
+  };
+
+  const getCategoryDisplayName = (category: string) => {
+    switch (category) {
+      case 'ICT': return 'ICT';
+      case 'Facilitair': return 'Facilitair';
+      case 'Catering': return 'Catering';
+      case 'Logistics': return 'Logistiek';
+      default: return category;
+    }
+  };
+
   const filteredAssets = useMemo(() => {
     return assets.filter(asset => {
       const matchesSearch = searchTerm === "" || 
@@ -131,7 +174,8 @@ const Index = () => {
         asset.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (asset.assignedTo && asset.assignedTo.toLowerCase().includes(searchTerm.toLowerCase()));
+        (asset.assignedTo && asset.assignedTo.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (asset.assetTag && asset.assetTag.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const matchesStatus = filters.status === "" || asset.status === filters.status;
       const matchesLocation = filters.location === "" || asset.location === filters.location;
@@ -167,12 +211,14 @@ const Index = () => {
     });
   };
 
-  const handleDeleteAsset = (id: string) => {
+  const handleDeleteAsset = (id: string, reason: string) => {
     const asset = assets.find(a => a.id === id);
-    setAssets(assets.filter(asset => asset.id !== id));
+    setAssets(assets.map(a => 
+      a.id === id ? { ...a, status: "Deleted" as const } : a
+    ));
     toast({
       title: "Asset verwijderd",
-      description: `${asset?.brand} ${asset?.model} is verwijderd.`,
+      description: `${asset?.brand} ${asset?.model} is gemarkeerd als verwijderd. Reden: ${reason}`,
       variant: "destructive",
     });
   };
@@ -230,7 +276,7 @@ const Index = () => {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="Zoek assets op type, merk, model, serienummer, locatie of toegewezen aan..."
+                    placeholder="Zoek assets op type, merk, model, serienummer, locatie, asset tag of toegewezen aan..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -259,12 +305,16 @@ const Index = () => {
                 <AssetMobileCard
                   key={asset.id}
                   asset={asset}
+                  currentRole={currentRole}
                   onEdit={(asset) => {
                     setEditingAsset(asset);
                     setShowForm(true);
                   }}
                   onDelete={handleDeleteAsset}
                   onReserve={handleReserveAsset}
+                  getAssetIcon={getAssetIcon}
+                  getStatusColor={getStatusColor}
+                  getCategoryDisplayName={getCategoryDisplayName}
                 />
               ))}
             </div>
@@ -273,13 +323,18 @@ const Index = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Afbeelding</TableHead>
                     <TableHead>Asset</TableHead>
+                    <TableHead>Merk/Model</TableHead>
+                    <TableHead>Serienummer</TableHead>
+                    <TableHead>Asset Tag</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Locatie</TableHead>
-                    <TableHead>Toegewezen aan</TableHead>
+                    <TableHead>Categorie</TableHead>
                     <TableHead>Prijs</TableHead>
                     <TableHead>Boete</TableHead>
-                    <TableHead>Garantie</TableHead>
+                    <TableHead>Toegewezen aan</TableHead>
+                    <TableHead>Locatie</TableHead>
+                    <TableHead>Specifieke locatie</TableHead>
                     <TableHead>Acties</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -288,12 +343,16 @@ const Index = () => {
                     <AssetTableRow
                       key={asset.id}
                       asset={asset}
+                      currentRole={currentRole}
                       onEdit={(asset) => {
                         setEditingAsset(asset);
                         setShowForm(true);
                       }}
                       onDelete={handleDeleteAsset}
                       onReserve={handleReserveAsset}
+                      getAssetIcon={getAssetIcon}
+                      getStatusColor={getStatusColor}
+                      getCategoryDisplayName={getCategoryDisplayName}
                     />
                   ))}
                 </TableBody>
