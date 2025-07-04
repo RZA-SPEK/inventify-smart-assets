@@ -1,39 +1,35 @@
-
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PlusCircle, Laptop, Smartphone, Headphones, Cable, Monitor, User, Settings, BarChart3, Activity } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Plus, Search, Calendar, History, Bell } from "lucide-react";
 import { AssetForm } from "@/components/AssetForm";
 import { AssetFilters } from "@/components/AssetFilters";
+import { ReservationDialog } from "@/components/ReservationDialog";
+import { NotificationCenter } from "@/components/NotificationCenter";
+import { UserReservations } from "@/components/UserReservations";
 import { AssetTableRow } from "@/components/AssetTableRow";
 import { AssetMobileCard } from "@/components/AssetMobileCard";
-import { UserRole } from "@/components/UserRole";
-import { DashboardStats } from "@/components/DashboardStats";
-import { ReservationDialog } from "@/components/ReservationDialog";
-import { SettingsForm } from "@/components/SettingsForm";
-import { SystemConfiguration } from "@/components/SystemConfiguration";
-import { NotificationCenter } from "@/components/NotificationCenter";
-import Reservations from "./Reservations";
-import ActivityLog from "./ActivityLog";
+import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 export interface Asset {
   id: string;
   type: string;
-  brand?: string;
-  model?: string;
+  brand: string;
+  model: string;
   serialNumber: string;
-  assetTag?: string;
-  purchaseDate: string;
-  status: "In gebruik" | "In voorraad" | "Defect" | "Onderhoud" | "Deleted";
+  status: "Beschikbaar" | "In gebruik" | "Onderhoud" | "Buiten gebruik";
   location: string;
-  category: "ICT" | "Facilitair" | "Catering" | "Logistics";
   assignedTo?: string;
-  assignedToLocation?: string;
-  image?: string;
+  purchaseDate: string;
+  warrantyExpiry?: string;
   purchasePrice?: number;
   penaltyAmount?: number;
+  category: string;
+  imageUrl?: string;
 }
 
 const mockAssets: Asset[] = [
@@ -43,30 +39,29 @@ const mockAssets: Asset[] = [
     brand: "Dell",
     model: "Latitude 7420",
     serialNumber: "DL7420001",
-    assetTag: "MVDS-LAP001",
+    status: "Beschikbaar",
+    location: "Amsterdam HQ",
     purchaseDate: "2023-01-15",
-    status: "In gebruik",
-    location: "Kantoor Amsterdam",
-    category: "ICT",
-    assignedTo: "Jan Janssen",
-    assignedToLocation: "Werkplek A-101",
+    warrantyExpiry: "2026-01-15",
     purchasePrice: 1299.99,
-    penaltyAmount: 500.00
+    penaltyAmount: 500.00,
+    category: "ICT",
+    imageUrl: "/placeholder.svg"
   },
   {
     id: "2",
-    type: "Telefoon",
+    type: "Smartphone",
     brand: "Apple",
     model: "iPhone 14",
     serialNumber: "IP14002",
-    assetTag: "MVDS-PHN002",
+    status: "In gebruik",
+    location: "Amsterdam HQ",
+    assignedTo: "jan.janssen@company.com",
     purchaseDate: "2023-03-20",
-    status: "In voorraad",
-    location: "ICT Magazijn",
-    category: "ICT",
-    assignedToLocation: "Magazijn Rek B-3",
+    warrantyExpiry: "2024-03-20",
     purchasePrice: 899.99,
-    penaltyAmount: 400.00
+    penaltyAmount: 400.00,
+    category: "ICT"
   },
   {
     id: "3",
@@ -74,399 +69,266 @@ const mockAssets: Asset[] = [
     brand: "Jabra",
     model: "Evolve2 65",
     serialNumber: "JB65003",
-    assetTag: "MVDS-HDS003",
-    purchaseDate: "2023-02-10",
-    status: "In gebruik",
-    location: "Kantoor Utrecht",
-    category: "ICT",
-    assignedTo: "Marie Peeters",
-    assignedToLocation: "Werkplek U-205",
-    purchasePrice: 299.99,
-    penaltyAmount: 150.00
+    status: "Beschikbaar",
+    location: "Rotterdam Office",
+    purchaseDate: "2023-05-10",
+    warrantyExpiry: "2025-05-10",
+    purchasePrice: 229.99,
+    penaltyAmount: 100.00,
+    category: "ICT"
   },
   {
     id: "4",
-    type: "Bureau",
+    type: "Monitor",
+    brand: "LG",
+    model: "UltraWide 34\"",
+    serialNumber: "LG34004",
+    status: "In gebruik",
+    location: "Amsterdam HQ",
+    assignedTo: "marie.peeters@company.com",
+    purchaseDate: "2023-02-28",
+    warrantyExpiry: "2026-02-28",
+    purchasePrice: 449.99,
+    penaltyAmount: 200.00,
+    category: "ICT"
+  },
+  {
+    id: "5",
+    type: "Desk",
     brand: "IKEA",
     model: "Bekant",
-    serialNumber: "IK-BK004",
-    assetTag: "MVDS-DSK004",
-    purchaseDate: "2022-11-01",
-    status: "In gebruik",
-    location: "Kantoor Amsterdam",
-    category: "Facilitair",
-    assignedTo: "Tom de Vries",
-    assignedToLocation: "Werkplek A-150",
+    serialNumber: "IK005",
+    status: "Beschikbaar",
+    location: "Rotterdam Office",
+    purchaseDate: "2023-01-10",
     purchasePrice: 149.99,
-    penaltyAmount: 75.00
+    penaltyAmount: 75.00,
+    category: "Facilitair"
   }
 ];
 
 const Index = () => {
+  const { toast } = useToast();
   const [assets, setAssets] = useState<Asset[]>(mockAssets);
-  const [currentRole, setCurrentRole] = useState<"ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker">("ICT Admin");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [showAssetForm, setShowAssetForm] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
-  const [reservationAsset, setReservationAsset] = useState<Asset | null>(null);
-
-  const getAssetIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case "laptop":
-        return <Laptop className="h-4 w-4" />;
-      case "telefoon":
-        return <Smartphone className="h-4 w-4" />;
-      case "headset":
-        return <Headphones className="h-4 w-4" />;
-      case "kabel":
-        return <Cable className="h-4 w-4" />;
-      case "monitor":
-        return <Monitor className="h-4 w-4" />;
-      default:
-        return <Settings className="h-4 w-4" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "In gebruik":
-        return "bg-green-100 text-green-800";
-      case "In voorraad":
-        return "bg-blue-100 text-blue-800";
-      case "Defect":
-        return "bg-red-100 text-red-800";
-      case "Onderhoud":
-        return "bg-yellow-100 text-yellow-800";
-      case "Deleted":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getCategoryDisplayName = (category: string) => {
-    switch (category) {
-      case "ICT":
-        return "ICT";
-      case "Facilitair":
-        return "Facilitair";
-      case "Catering":
-        return "Catering";
-      case "Logistics":
-        return "Logistiek";
-      default:
-        return category;
-    }
-  };
-
-  // Enhanced filtering with comprehensive search
-  const filteredAssets = assets.filter(asset => {
-    const searchFields = [
-      asset.type,
-      asset.brand,
-      asset.model,
-      asset.serialNumber,
-      asset.assetTag,
-      asset.location,
-      asset.assignedTo,
-      asset.assignedToLocation
-    ].filter(Boolean).join(' ').toLowerCase();
-    
-    const matchesSearch = searchTerm === "" || searchFields.includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || asset.status === statusFilter;
-    const matchesCategory = categoryFilter === "all" || asset.category === categoryFilter;
-    const matchesType = typeFilter === "all" || asset.type === typeFilter;
-    
-    if (currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") {
-      return matchesSearch && matchesStatus && matchesCategory && matchesType && asset.category === "Facilitair";
-    }
-    
-    if (currentRole === "Gebruiker") {
-      return matchesSearch && matchesStatus && matchesCategory && matchesType && asset.assignedTo === "Jan Janssen";
-    }
-    
-    return matchesSearch && matchesStatus && matchesCategory && matchesType;
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [showReservationDialog, setShowReservationDialog] = useState(false);
+  const [filters, setFilters] = useState({
+    status: "",
+    location: "",
+    category: "",
+    type: ""
   });
+  const [showUserReservations, setShowUserReservations] = useState(false);
 
-  const handleAddAsset = (assetData: Omit<Asset, "id">) => {
-    const newAsset: Asset = {
-      ...assetData,
-      id: Date.now().toString()
+  const filteredAssets = useMemo(() => {
+    return assets.filter(asset => {
+      const matchesSearch = searchTerm === "" || 
+        asset.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (asset.assignedTo && asset.assignedTo.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      const matchesStatus = filters.status === "" || asset.status === filters.status;
+      const matchesLocation = filters.location === "" || asset.location === filters.location;
+      const matchesCategory = filters.category === "" || asset.category === filters.category;
+      const matchesType = filters.type === "" || asset.type === filters.type;
+
+      return matchesSearch && matchesStatus && matchesLocation && matchesCategory && matchesType;
+    });
+  }, [assets, searchTerm, filters]);
+
+  const handleAddAsset = (newAsset: Omit<Asset, "id">) => {
+    const asset: Asset = {
+      ...newAsset,
+      id: Date.now().toString(),
     };
-    setAssets([...assets, newAsset]);
-    setShowAssetForm(false);
+    setAssets([...assets, asset]);
+    setShowForm(false);
+    toast({
+      title: "Asset toegevoegd",
+      description: `${asset.brand} ${asset.model} is succesvol toegevoegd.`,
+    });
   };
 
-  const handleEditAsset = (assetData: Omit<Asset, "id">) => {
-    if (editingAsset) {
-      setAssets(assets.map(asset => 
-        asset.id === editingAsset.id ? { ...assetData, id: editingAsset.id } : asset
-      ));
-      setEditingAsset(null);
-      setShowAssetForm(false);
-    }
-  };
-
-  const handleDeleteAsset = (assetId: string, reason: string) => {
-    console.log(`Deleting asset ${assetId} with reason: ${reason}`);
+  const handleEditAsset = (updatedAsset: Asset) => {
     setAssets(assets.map(asset => 
-      asset.id === assetId ? { ...asset, status: "Deleted" as const } : asset
+      asset.id === updatedAsset.id ? updatedAsset : asset
     ));
+    setEditingAsset(null);
+    setShowForm(false);
+    toast({
+      title: "Asset bijgewerkt",
+      description: `${updatedAsset.brand} ${updatedAsset.model} is succesvol bijgewerkt.`,
+    });
   };
 
-  const startEditAsset = (asset: Asset) => {
-    setEditingAsset(asset);
-    setShowAssetForm(true);
+  const handleDeleteAsset = (id: string) => {
+    const asset = assets.find(a => a.id === id);
+    setAssets(assets.filter(asset => asset.id !== id));
+    toast({
+      title: "Asset verwijderd",
+      description: `${asset?.brand} ${asset?.model} is verwijderd.`,
+      variant: "destructive",
+    });
   };
 
-  const handleSaveSettings = (settings: any) => {
-    console.log('Settings saved:', settings);
+  const handleReserveAsset = (asset: Asset) => {
+    setSelectedAsset(asset);
+    setShowReservationDialog(true);
   };
 
-  const clearAllFilters = () => {
-    setSearchTerm("");
-    setStatusFilter("all");
-    setCategoryFilter("all");
-    setTypeFilter("all");
-  };
-
-  // Get unique asset types for filter dropdown
-  const uniqueAssetTypes = [...new Set(assets.map(asset => asset.type))].sort();
+  if (showUserReservations) {
+    return <UserReservations />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="border-b bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Asset Management Tool</h1>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && (
-                <NotificationCenter />
-              )}
-              <UserRole currentRole={currentRole} onRoleChange={setCurrentRole} />
-            </div>
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Asset Management</h1>
+            <p className="text-gray-600 mt-1">Beheer alle bedrijfsassets op één plek</p>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-2">
+            <NotificationCenter />
+            <Button
+              onClick={() => setShowUserReservations(true)}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Calendar className="h-4 w-4" />
+              <span className="hidden sm:inline">Mijn Reserveringen</span>
+            </Button>
+            <Link to="/activity">
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <History className="h-4 w-4" />
+                <span className="hidden sm:inline">Activiteit</span>
+              </Button>
+            </Link>
+            <Button 
+              onClick={() => setShowForm(true)}
+              className="flex items-center gap-2"
+              size="sm"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Asset Toevoegen</span>
+            </Button>
           </div>
         </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-6">
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 lg:w-[600px]">
-            <TabsTrigger value="dashboard" className="text-xs sm:text-sm">Dashboard</TabsTrigger>
-            <TabsTrigger value="assets" className="text-xs sm:text-sm">Assets</TabsTrigger>
-            <TabsTrigger value="reservations" disabled={currentRole === "Gebruiker"} className="text-xs sm:text-sm">
-              Reserveringen
-            </TabsTrigger>
-            <TabsTrigger value="users" className="text-xs sm:text-sm">Gebruikers</TabsTrigger>
-            <TabsTrigger value="activity" disabled={currentRole !== "ICT Admin"} className="text-xs sm:text-sm">
-              Activiteiten
-            </TabsTrigger>
-            <TabsTrigger value="settings" disabled={currentRole !== "ICT Admin"} className="text-xs sm:text-sm">
-              Instellingen
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="dashboard" className="space-y-6">
-            <DashboardStats assets={filteredAssets} />
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Recente Activiteiten</CardTitle>
-                <CardDescription>Laatste wijzigingen in het asset beheer</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-sm">
-                    <div className="flex items-center space-x-3">
-                      <div className="h-2 w-2 bg-green-500 rounded-full flex-shrink-0"></div>
-                      <span className="text-gray-600">Jan Janssen heeft Dell Latitude 7420 toegewezen gekregen</span>
-                    </div>
-                    <span className="text-gray-400 text-xs sm:text-sm ml-5 sm:ml-0">2 uur geleden</span>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-sm">
-                    <div className="flex items-center space-x-3">
-                      <div className="h-2 w-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                      <span className="text-gray-600">Nieuw asset toegevoegd: iPhone 14</span>
-                    </div>
-                    <span className="text-gray-400 text-xs sm:text-sm ml-5 sm:ml-0">1 dag geleden</span>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-sm">
-                    <div className="flex items-center space-x-3">
-                      <div className="h-2 w-2 bg-yellow-500 rounded-full flex-shrink-0"></div>
-                      <span className="text-gray-600">Jabra Headset naar onderhoud</span>
-                    </div>
-                    <span className="text-gray-400 text-xs sm:text-sm ml-5 sm:ml-0">3 dagen geleden</span>
-                  </div>
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Zoek assets op type, merk, model, serienummer, locatie of toegewezen aan..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="assets" className="space-y-6">
-            <div className="flex flex-col space-y-4">
-              <AssetFilters
-                searchTerm={searchTerm}
-                statusFilter={statusFilter}
-                categoryFilter={categoryFilter}
-                typeFilter={typeFilter}
-                onSearchChange={setSearchTerm}
-                onStatusFilterChange={setStatusFilter}
-                onCategoryFilterChange={setCategoryFilter}
-                onTypeFilterChange={setTypeFilter}
-                onClearFilters={clearAllFilters}
-                assetTypes={uniqueAssetTypes}
+              </div>
+              <AssetFilters 
+                filters={filters} 
+                onFiltersChange={setFilters}
+                assets={assets}
               />
-              {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && (
-                <div className="flex justify-end">
-                  <Button onClick={() => setShowAssetForm(true)} className="flex items-center space-x-2 w-full sm:w-auto">
-                    <PlusCircle className="h-4 w-4" />
-                    <span>Asset Toevoegen</span>
-                  </Button>
-                </div>
-              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Assets ({filteredAssets.length})</CardTitle>
+            <CardDescription>
+              Overzicht van alle bedrijfsassets
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="block lg:hidden space-y-4">
+              {filteredAssets.map((asset) => (
+                <AssetMobileCard
+                  key={asset.id}
+                  asset={asset}
+                  onEdit={(asset) => {
+                    setEditingAsset(asset);
+                    setShowForm(true);
+                  }}
+                  onDelete={handleDeleteAsset}
+                  onReserve={handleReserveAsset}
+                />
+              ))}
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Asset Overzicht</CardTitle>
-                <CardDescription>
-                  {filteredAssets.length} van {assets.length} assets weergegeven
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Mobile Card View */}
-                <div className="block lg:hidden space-y-4">
+            <div className="hidden lg:block overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Asset</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Locatie</TableHead>
+                    <TableHead>Toegewezen aan</TableHead>
+                    <TableHead>Prijs</TableHead>
+                    <TableHead>Boete</TableHead>
+                    <TableHead>Garantie</TableHead>
+                    <TableHead>Acties</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {filteredAssets.map((asset) => (
-                    <AssetMobileCard
+                    <AssetTableRow
                       key={asset.id}
                       asset={asset}
-                      currentRole={currentRole}
-                      onEdit={startEditAsset}
+                      onEdit={(asset) => {
+                        setEditingAsset(asset);
+                        setShowForm(true);
+                      }}
                       onDelete={handleDeleteAsset}
-                      onReserve={setReservationAsset}
-                      getAssetIcon={getAssetIcon}
-                      getStatusColor={getStatusColor}
-                      getCategoryDisplayName={getCategoryDisplayName}
+                      onReserve={handleReserveAsset}
                     />
                   ))}
-                </div>
+                </TableBody>
+              </Table>
+            </div>
 
-                {/* Desktop Table View */}
-                <div className="hidden lg:block overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-16">Foto</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Merk & Model</TableHead>
-                        <TableHead>Serienummer</TableHead>
-                        <TableHead>Asset Tag</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Categorie</TableHead>
-                        <TableHead>Prijs</TableHead>
-                        <TableHead>Boete</TableHead>
-                        <TableHead>Toegewezen aan</TableHead>
-                        <TableHead>Locatie</TableHead>
-                        <TableHead>Specifieke Locatie</TableHead>
-                        <TableHead>Acties</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredAssets.map((asset) => (
-                        <AssetTableRow
-                          key={asset.id}
-                          asset={asset}
-                          currentRole={currentRole}
-                          onEdit={startEditAsset}
-                          onDelete={handleDeleteAsset}
-                          onReserve={setReservationAsset}
-                          getAssetIcon={getAssetIcon}
-                          getStatusColor={getStatusColor}
-                          getCategoryDisplayName={getCategoryDisplayName}
-                        />
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            {filteredAssets.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                Geen assets gevonden die voldoen aan uw zoekcriteria.
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          <TabsContent value="reservations" className="space-y-6">
-            <Reservations />
-          </TabsContent>
+        {showForm && (
+          <AssetForm
+            asset={editingAsset}
+            onSave={editingAsset ? handleEditAsset : handleAddAsset}
+            onCancel={() => {
+              setShowForm(false);
+              setEditingAsset(null);
+            }}
+          />
+        )}
 
-          <TabsContent value="users" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Active Directory Gebruikers</CardTitle>
-                <CardDescription>
-                  Gebruikers gesynchroniseerd vanuit Microsoft Entra ID
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">AD Integratie Required</h3>
-                  <p className="text-gray-600 mb-4">
-                    Voor volledige AD-integratie moet backend functionaliteit worden toegevoegd.
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Mock gebruikers: Jan Janssen, Marie Peeters, Tom de Vries
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="activity" className="space-y-6">
-            <ActivityLog />
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-6">
-            <Tabs defaultValue="fields" className="space-y-4">
-              <TabsList>
-                <TabsTrigger value="fields">Veld Opties</TabsTrigger>
-                <TabsTrigger value="system">Systeem Config</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="fields">
-                <SettingsForm onSave={handleSaveSettings} />
-              </TabsContent>
-              
-              <TabsContent value="system">
-                <SystemConfiguration />
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-        </Tabs>
+        {showReservationDialog && selectedAsset && (
+          <ReservationDialog
+            asset={selectedAsset}
+            onClose={() => {
+              setShowReservationDialog(false);
+              setSelectedAsset(null);
+            }}
+          />
+        )}
       </div>
-
-      {showAssetForm && (
-        <AssetForm
-          asset={editingAsset}
-          onSave={editingAsset ? handleEditAsset : handleAddAsset}
-          onCancel={() => {
-            setShowAssetForm(false);
-            setEditingAsset(null);
-          }}
-        />
-      )}
-
-      {reservationAsset && (
-        <ReservationDialog
-          asset={reservationAsset}
-          onClose={() => setReservationAsset(null)}
-        />
-      )}
     </div>
   );
 };

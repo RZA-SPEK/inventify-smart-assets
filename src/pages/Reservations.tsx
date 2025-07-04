@@ -7,8 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, Edit3, Calendar, User, FileText } from "lucide-react";
+import { CheckCircle, XCircle, Edit3, Calendar, User, FileText, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { UserReservations } from "@/components/UserReservations";
+import { Link } from "react-router-dom";
 
 interface Reservation {
   id: string;
@@ -64,6 +66,8 @@ const Reservations = () => {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [actionType, setActionType] = useState<"approve" | "reject" | "edit" | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [currentUserRole] = useState<"admin" | "user">("admin"); // Mock role - should come from auth
+  const [showUserView, setShowUserView] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -131,165 +135,212 @@ const Reservations = () => {
     setRejectReason("");
   };
 
-  return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Reserveringsbeheer</h1>
-        <p className="text-gray-600">Beheer alle asset reserveringsaanvragen</p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Reserveringsaanvragen</CardTitle>
-          <CardDescription>
-            {reservations.filter(r => r.status === "pending").length} van {reservations.length} aanvragen wachten op goedkeuring
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Asset</TableHead>
-                  <TableHead>Aanvrager</TableHead>
-                  <TableHead>Periode</TableHead>
-                  <TableHead>Doel</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Aangemaakt</TableHead>
-                  <TableHead>Acties</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {reservations.map((reservation) => (
-                  <TableRow key={reservation.id}>
-                    <TableCell className="font-medium">{reservation.assetName}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <User className="h-4 w-4 text-gray-400" />
-                        <span>{reservation.requesterName}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm">
-                          {new Date(reservation.requestedDate).toLocaleDateString()} - {new Date(reservation.returnDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <FileText className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm truncate max-w-[200px]" title={reservation.purpose}>
-                          {reservation.purpose}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(reservation.status)}>
-                        {getStatusText(reservation.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-500">
-                      {new Date(reservation.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        {reservation.status === "pending" && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleAction(reservation, "approve")}
-                              className="text-green-600 hover:text-green-700"
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleAction(reservation, "reject")}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleAction(reservation, "edit")}
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Action Dialog */}
-      {selectedReservation && actionType && (
-        <Dialog open={true} onOpenChange={closeDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {actionType === "approve" && "Reservering Goedkeuren"}
-                {actionType === "reject" && "Reservering Afwijzen"}
-                {actionType === "edit" && "Reservering Bewerken"}
-              </DialogTitle>
-              <DialogDescription>
-                Asset: {selectedReservation.assetName} voor {selectedReservation.requesterName}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div>
-                <Label>Periode</Label>
-                <p className="text-sm text-gray-600">
-                  {new Date(selectedReservation.requestedDate).toLocaleDateString()} - {new Date(selectedReservation.returnDate).toLocaleDateString()}
-                </p>
-              </div>
-              
-              <div>
-                <Label>Doel</Label>
-                <p className="text-sm text-gray-600">{selectedReservation.purpose}</p>
-              </div>
-
-              {actionType === "reject" && (
-                <div>
-                  <Label htmlFor="rejectReason">Reden voor afwijzing</Label>
-                  <Textarea
-                    id="rejectReason"
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                    placeholder="Geef een reden op waarom deze reservering wordt afgewezen..."
-                    className="mt-1"
-                  />
-                </div>
-              )}
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={closeDialog}>
-                Annuleren
+  // Show user view if requested or if user is not admin
+  if (showUserView || currentUserRole === "user") {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-6">
+          <div className="mb-6 flex items-center gap-4">
+            <Link to="/">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Terug
               </Button>
+            </Link>
+            {currentUserRole === "admin" && (
               <Button 
-                onClick={confirmAction}
-                variant={actionType === "reject" ? "destructive" : "default"}
+                onClick={() => setShowUserView(false)}
+                variant="outline"
+                size="sm"
               >
-                {actionType === "approve" && "Goedkeuren"}
-                {actionType === "reject" && "Afwijzen"}
-                {actionType === "edit" && "Opslaan"}
+                Admin View
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+            )}
+          </div>
+          <UserReservations />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-6">
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Reserveringsbeheer</h1>
+            <p className="text-gray-600">Beheer alle asset reserveringsaanvragen</p>
+          </div>
+          <div className="flex gap-2">
+            <Link to="/">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Terug
+              </Button>
+            </Link>
+            <Button 
+              onClick={() => setShowUserView(true)}
+              variant="outline"
+              size="sm"
+            >
+              Gebruiker View
+            </Button>
+          </div>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Reserveringsaanvragen</CardTitle>
+            <CardDescription>
+              {reservations.filter(r => r.status === "pending").length} van {reservations.length} aanvragen wachten op goedkeuring
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Asset</TableHead>
+                    <TableHead>Aanvrager</TableHead>
+                    <TableHead>Periode</TableHead>
+                    <TableHead>Doel</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Aangemaakt</TableHead>
+                    <TableHead>Acties</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reservations.map((reservation) => (
+                    <TableRow key={reservation.id}>
+                      <TableCell className="font-medium">{reservation.assetName}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <User className="h-4 w-4 text-gray-400" />
+                          <span>{reservation.requesterName}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm">
+                            {new Date(reservation.requestedDate).toLocaleDateString()} - {new Date(reservation.returnDate).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <FileText className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm truncate max-w-[200px]" title={reservation.purpose}>
+                            {reservation.purpose}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(reservation.status)}>
+                          {getStatusText(reservation.status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {new Date(reservation.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          {reservation.status === "pending" && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleAction(reservation, "approve")}
+                                className="text-green-600 hover:text-green-700"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleAction(reservation, "reject")}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleAction(reservation, "edit")}
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Action Dialog */}
+        {selectedReservation && actionType && (
+          <Dialog open={true} onOpenChange={closeDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {actionType === "approve" && "Reservering Goedkeuren"}
+                  {actionType === "reject" && "Reservering Afwijzen"}
+                  {actionType === "edit" && "Reservering Bewerken"}
+                </DialogTitle>
+                <DialogDescription>
+                  Asset: {selectedReservation.assetName} voor {selectedReservation.requesterName}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div>
+                  <Label>Periode</Label>
+                  <p className="text-sm text-gray-600">
+                    {new Date(selectedReservation.requestedDate).toLocaleDateString()} - {new Date(selectedReservation.returnDate).toLocaleDateString()}
+                  </p>
+                </div>
+                
+                <div>
+                  <Label>Doel</Label>
+                  <p className="text-sm text-gray-600">{selectedReservation.purpose}</p>
+                </div>
+
+                {actionType === "reject" && (
+                  <div>
+                    <Label htmlFor="rejectReason">Reden voor afwijzing</Label>
+                    <Textarea
+                      id="rejectReason"
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      placeholder="Geef een reden op waarom deze reservering wordt afgewezen..."
+                      className="mt-1"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={closeDialog}>
+                  Annuleren
+                </Button>
+                <Button 
+                  onClick={confirmAction}
+                  variant={actionType === "reject" ? "destructive" : "default"}
+                >
+                  {actionType === "approve" && "Goedkeuren"}
+                  {actionType === "reject" && "Afwijzen"}
+                  {actionType === "edit" && "Opslaan"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
     </div>
   );
 };
