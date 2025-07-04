@@ -1,14 +1,12 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, Filter, Search } from "lucide-react";
+import { CalendarDays, Filter, Search, RefreshCw, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { useNavigate } from "react-router-dom";
 
 interface ActivityLogEntry {
   id: string;
@@ -24,25 +22,25 @@ interface ActivityLogEntry {
 const ActivityLog = () => {
   const [activities, setActivities] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTable, setSelectedTable] = useState<string>("all");
   const [selectedAction, setSelectedAction] = useState<string>("all");
-  const { canViewSettings, loading: roleLoading } = useUserRole();
-  const navigate = useNavigate();
+  const { loading: roleLoading } = useUserRole();
 
   useEffect(() => {
-    // Since we're defaulting everyone to ICT Admin role now, allow access
-    // but if role loading fails, still allow access
     if (!roleLoading) {
       fetchActivityLog();
     }
   }, [roleLoading]);
 
   const fetchActivityLog = async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
       console.log("Attempting to fetch activity log...");
       
-      // Try to fetch activity log with error handling
       const { data, error } = await supabase
         .from('security_audit_log')
         .select('*')
@@ -52,25 +50,29 @@ const ActivityLog = () => {
       if (error) {
         console.error('Error fetching activity log:', error);
         
-        // If we get the same "role admin does not exist" error, 
-        // just show empty state instead of blocking the page
         if (error.message && error.message.includes('role "admin" does not exist')) {
-          console.log('Detected role admin error, showing empty state');
-          setActivities([]);
+          console.log('Database role error detected');
+          setError('Database configuratie wordt momenteel bijgewerkt. De activiteiten log is tijdelijk niet beschikbaar.');
         } else {
-          console.error('Other database error:', error);
-          setActivities([]);
+          setError('Kan activiteiten log niet laden. Probeer het later opnieuw.');
         }
+        setActivities([]);
       } else {
         console.log('Successfully fetched activity log:', data?.length || 0, 'entries');
         setActivities(data || []);
+        setError(null);
       }
     } catch (error) {
       console.error('Unexpected error fetching activity log:', error);
+      setError('Onverwachte fout bij laden van activiteiten log');
       setActivities([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRefresh = () => {
+    fetchActivityLog();
   };
 
   const getActionColor = (action: string) => {
@@ -103,7 +105,6 @@ const ActivityLog = () => {
 
   const uniqueTables = [...new Set(activities.map(a => a.table_name))];
 
-  // Show loading state
   if (roleLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -118,10 +119,33 @@ const ActivityLog = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto mobile-spacing py-4 sm:py-6 max-w-7xl">
-        <div className="mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Activiteiten Log</h1>
-          <p className="text-gray-600 mt-1 text-sm sm:text-base">Overzicht van alle systeemactiviteiten en wijzigingen</p>
+        <div className="mb-4 sm:mb-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Activiteiten Log</h1>
+            <p className="text-gray-600 mt-1 text-sm sm:text-base">Overzicht van alle systeemactiviteiten en wijzigingen</p>
+          </div>
+          <Button onClick={handleRefresh} variant="outline" size="sm" className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Vernieuwen
+          </Button>
         </div>
+
+        {error && (
+          <Card className="mb-4 sm:mb-6 border-yellow-200 bg-yellow-50">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                <div>
+                  <h3 className="font-medium text-yellow-800">Database Synchronisatie</h3>
+                  <p className="text-yellow-700 text-sm mt-1">{error}</p>
+                  <p className="text-yellow-600 text-xs mt-2">
+                    Dit is een tijdelijk probleem dat automatisch wordt opgelost. Probeer over een paar minuten opnieuw.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="mb-4 sm:mb-6">
           <CardHeader className="pb-4">
@@ -185,7 +209,7 @@ const ActivityLog = () => {
               <span>Activiteiten</span>
             </CardTitle>
             <CardDescription className="text-sm">
-              Toont de laatste {activities.length} activiteiten
+              {activities.length > 0 ? `Toont de laatste ${activities.length} activiteiten` : 'Geen activiteiten beschikbaar'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -194,12 +218,21 @@ const ActivityLog = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                 <p className="mt-2 text-gray-600">Laden...</p>
               </div>
+            ) : error ? (
+              <div className="text-center py-8">
+                <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                <p className="text-gray-600 mb-4">Activiteiten log tijdelijk niet beschikbaar</p>
+                <Button onClick={handleRefresh} variant="outline">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Opnieuw proberen
+                </Button>
+              </div>
             ) : filteredActivities.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 {activities.length === 0 ? (
                   <div>
-                    <p>Geen activiteiten gevonden</p>
-                    <p className="text-sm mt-2">Dit kan komen door database synchronisatie issues. Probeer de pagina te verversen.</p>
+                    <p>Geen activiteiten beschikbaar</p>
+                    <p className="text-sm mt-2">Activiteiten worden getoond zodra ze beschikbaar zijn</p>
                   </div>
                 ) : (
                   "Geen activiteiten gevonden met de huidige filters"

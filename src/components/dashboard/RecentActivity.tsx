@@ -15,20 +15,20 @@ interface ActivityItem {
 export const RecentActivity = () => {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { canViewSettings, loading: roleLoading } = useUserRole();
 
   useEffect(() => {
-    // Only fetch if role is loaded and user has permission
-    if (!roleLoading && canViewSettings) {
+    // Always try to fetch, regardless of role permissions for now
+    if (!roleLoading) {
       fetchRecentActivity();
-    } else if (!roleLoading) {
-      // If user doesn't have permission, stop loading
-      setLoading(false);
     }
-  }, [canViewSettings, roleLoading]);
+  }, [roleLoading]);
 
   const fetchRecentActivity = async () => {
     try {
+      console.log("Attempting to fetch recent activity...");
+      
       const { data, error } = await supabase
         .from('security_audit_log')
         .select('id, action, table_name, created_at, record_id')
@@ -37,12 +37,24 @@ export const RecentActivity = () => {
 
       if (error) {
         console.error('Error fetching recent activity:', error);
-        return;
+        
+        // Handle the specific "role admin does not exist" error
+        if (error.message && error.message.includes('role "admin" does not exist')) {
+          console.log('Database role error detected, showing empty state');
+          setError('Database configuratie wordt bijgewerkt. Probeer over een paar minuten opnieuw.');
+        } else {
+          setError('Kan recente activiteit niet laden');
+        }
+        setActivities([]);
+      } else {
+        console.log('Successfully fetched recent activity:', data?.length || 0, 'entries');
+        setActivities(data || []);
+        setError(null);
       }
-
-      setActivities(data || []);
     } catch (error) {
-      console.error('Error fetching recent activity:', error);
+      console.error('Unexpected error fetching recent activity:', error);
+      setError('Onverwachte fout bij laden van activiteit');
+      setActivities([]);
     } finally {
       setLoading(false);
     }
@@ -86,11 +98,6 @@ export const RecentActivity = () => {
     return `${Math.floor(diffInHours / 24)} dag${Math.floor(diffInHours / 24) > 1 ? 'en' : ''} geleden`;
   };
 
-  // Don't show the component if user doesn't have permission
-  if (!canViewSettings && !roleLoading) {
-    return null;
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -99,10 +106,21 @@ export const RecentActivity = () => {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-center py-4">Laden...</div>
+          <div className="text-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-sm text-gray-600">Laden...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-4">
+            <div className="text-yellow-600 bg-yellow-50 p-3 rounded-lg">
+              <p className="font-medium">Tijdelijke database issue</p>
+              <p className="text-sm mt-1">{error}</p>
+            </div>
+          </div>
         ) : activities.length === 0 ? (
           <div className="text-center py-4 text-gray-500">
-            Geen recente activiteit gevonden
+            <p>Geen recente activiteit beschikbaar</p>
+            <p className="text-sm mt-2">Activiteiten worden getoond zodra ze beschikbaar zijn</p>
           </div>
         ) : (
           <div className="space-y-4">
