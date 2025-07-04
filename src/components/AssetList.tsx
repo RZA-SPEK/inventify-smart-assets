@@ -44,19 +44,19 @@ export const AssetList = ({ assets, currentRole, onEdit, onDelete, onReserve }: 
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Afbeelding</TableHead>
-                <TableHead>Asset</TableHead>
-                <TableHead>Merk/Model</TableHead>
-                <TableHead>Serienummer</TableHead>
-                <TableHead>Asset Tag</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Categorie</TableHead>
-                <TableHead>Prijs</TableHead>
-                <TableHead>Boete</TableHead>
-                <TableHead>Toegewezen aan</TableHead>
-                <TableHead>Locatie</TableHead>
-                <TableHead>Specifieke locatie</TableHead>
-                <TableHead>Acties</TableHead>
+                <TableHead className="w-20">Afbeelding</TableHead>
+                <TableHead className="min-w-32">Asset</TableHead>
+                <TableHead className="min-w-32">Merk/Model</TableHead>
+                <TableHead className="min-w-32">Serienummer</TableHead>
+                <TableHead className="w-24">Asset Tag</TableHead>
+                <TableHead className="w-32">Status</TableHead>
+                <TableHead className="w-24">Categorie</TableHead>
+                <TableHead className="w-20">Prijs</TableHead>
+                <TableHead className="w-20">Boete</TableHead>
+                <TableHead className="min-w-32">Toegewezen aan</TableHead>
+                <TableHead className="min-w-24">Locatie</TableHead>
+                <TableHead className="min-w-32">Specifieke locatie</TableHead>
+                <TableHead className="w-32">Acties</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

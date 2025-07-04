@@ -35,7 +35,7 @@ export const AssetTableRow = ({
 
   return (
     <TableRow>
-      <TableCell>
+      <TableCell className="w-20">
         <AssetImage
           image={asset.image}
           brand={asset.brand}
@@ -44,15 +44,15 @@ export const AssetTableRow = ({
           size="sm"
         />
       </TableCell>
-      <TableCell>
+      <TableCell className="min-w-32">
         <div className="flex items-center space-x-2">
           {getAssetIcon(asset.type)}
           <span className="font-medium">{asset.type}</span>
         </div>
       </TableCell>
-      <TableCell>{asset.brand} {asset.model}</TableCell>
-      <TableCell className="font-mono text-sm">{asset.serialNumber}</TableCell>
-      <TableCell>
+      <TableCell className="min-w-32">{asset.brand} {asset.model}</TableCell>
+      <TableCell className="min-w-32 font-mono text-sm">{asset.serialNumber}</TableCell>
+      <TableCell className="w-24">
         {asset.assetTag ? (
           <div className="flex items-center space-x-1">
             <Tag className="h-3 w-3 text-blue-500" />
@@ -62,21 +62,31 @@ export const AssetTableRow = ({
           <span className="text-gray-400">Geen tag</span>
         )}
       </TableCell>
-      <TableCell>
-        <AssetBadges
-          status={asset.status}
-          category={asset.category}
-          getStatusColor={getStatusColor}
-          getCategoryDisplayName={getCategoryDisplayName}
-        />
+      <TableCell className="w-32">
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(asset.status)}`}>
+          {asset.status}
+        </span>
       </TableCell>
-      <TableCell>
-        <AssetPriceInfo
-          purchasePrice={asset.purchasePrice}
-          penaltyAmount={asset.penaltyAmount}
-        />
+      <TableCell className="w-24">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          {getCategoryDisplayName(asset.category)}
+        </span>
       </TableCell>
-      <TableCell>
+      <TableCell className="w-20">
+        {asset.purchasePrice ? (
+          <span className="text-sm font-medium">€{asset.purchasePrice.toLocaleString()}</span>
+        ) : (
+          <span className="text-gray-400">-</span>
+        )}
+      </TableCell>
+      <TableCell className="w-20">
+        {asset.penaltyAmount ? (
+          <span className="text-sm text-red-600">€{asset.penaltyAmount.toLocaleString()}</span>
+        ) : (
+          <span className="text-gray-400">-</span>
+        )}
+      </TableCell>
+      <TableCell className="min-w-32">
         {asset.assignedTo ? (
           <div className="flex items-center space-x-1">
             <span>{asset.assignedTo}</span>
@@ -85,15 +95,15 @@ export const AssetTableRow = ({
           <span className="text-gray-400">Niet toegewezen</span>
         )}
       </TableCell>
-      <TableCell>{asset.location}</TableCell>
-      <TableCell>
+      <TableCell className="min-w-24">{asset.location}</TableCell>
+      <TableCell className="min-w-32">
         {asset.assignedToLocation ? (
           <span className="text-sm">{asset.assignedToLocation}</span>
         ) : (
           <span className="text-gray-400">Geen specifieke locatie</span>
         )}
       </TableCell>
-      <TableCell>
+      <TableCell className="w-32">
         <div className="flex space-x-1">
           {canReserve && (
             <Button
