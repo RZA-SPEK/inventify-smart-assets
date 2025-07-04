@@ -12,7 +12,12 @@ export const useUserRole = () => {
 
   useEffect(() => {
     const fetchUserRole = async () => {
+      console.log("fetchUserRole called");
+      console.log("User:", user);
+      console.log("Session:", session);
+      
       if (!user || !session) {
+        console.log("No user or session, setting role to Gebruiker");
         setCurrentRole("Gebruiker");
         setLoading(false);
         return;
@@ -26,6 +31,8 @@ export const useUserRole = () => {
           .select('role')
           .eq('id', user.id)
           .single();
+
+        console.log("Profiles query result:", { profile, error });
 
         if (error) {
           console.error("Error fetching user role:", error);
@@ -54,6 +61,15 @@ export const useUserRole = () => {
     // For development/testing only - this won't work with real auth
     setCurrentRole(newRole);
   };
+
+  console.log("useUserRole returning:", {
+    currentRole,
+    loading,
+    isAdmin: currentRole === "ICT Admin" || currentRole === "Facilitair Admin",
+    canManageAssets: currentRole === "ICT Admin" || currentRole === "Facilitair Medewerker",
+    canManageUsers: currentRole === "ICT Admin",
+    canViewSettings: currentRole === "ICT Admin" || currentRole === "Facilitair Admin"
+  });
 
   return {
     currentRole,
