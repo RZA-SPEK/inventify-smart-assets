@@ -144,7 +144,7 @@ const Reservations = () => {
             <Link to="/">
               <Button variant="outline" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Terug
+                Terug naar Assets
               </Button>
             </Link>
             {currentUserRole === "admin" && (
@@ -167,17 +167,19 @@ const Reservations = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Reserveringsbeheer</h1>
-            <p className="text-gray-600">Beheer alle asset reserveringsaanvragen</p>
-          </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-4">
             <Link to="/">
               <Button variant="outline" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Terug
+                Terug naar Assets
               </Button>
             </Link>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Reserveringsbeheer</h1>
+              <p className="text-gray-600">Beheer alle asset reserveringsaanvragen</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
             <Button 
               onClick={() => setShowUserView(true)}
               variant="outline"

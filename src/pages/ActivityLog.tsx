@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Eye, Search, Calendar, User, Database, AlertCircle } from "lucide-react";
+import { Eye, Search, Calendar, User, Database, AlertCircle, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 
@@ -185,9 +186,17 @@ const ActivityLog = () => {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="container mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Activiteiten Log</h1>
-            <p className="text-gray-600 mt-1">Bekijk alle systeem activiteiten en wijzigingen</p>
+          <div className="flex items-center gap-4">
+            <Link to="/">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Terug naar Assets
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Activiteiten Log</h1>
+              <p className="text-gray-600 mt-1">Bekijk alle systeem activiteiten en wijzigingen</p>
+            </div>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <Calendar className="h-4 w-4" />
