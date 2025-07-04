@@ -30,6 +30,7 @@ export const useUserRole = () => {
     const fetchUserRole = async () => {
       // If no user or session, set default and stop loading
       if (!user || !session) {
+        console.log("No user or session, setting default role");
         setCurrentRole("Gebruiker");
         setLoading(false);
         return;
@@ -38,6 +39,7 @@ export const useUserRole = () => {
       // Check cache first
       if (roleCache.has(user.id)) {
         const cachedRole = roleCache.get(user.id)!;
+        console.log("Using cached role:", cachedRole);
         setCurrentRole(cachedRole);
         setLoading(false);
         return;
@@ -62,31 +64,58 @@ export const useUserRole = () => {
 
         if (error) {
           console.log("Error fetching profile:", error.message);
-          // Default to ICT Admin and try to create profile
-          setCurrentRole("ICT Admin");
-          roleCache.set(user.id, "ICT Admin");
           
-          // Try to create profile in background, but don't wait for it
-          setTimeout(async () => {
-            try {
-              await supabase
-                .from('profiles')
-                .insert({
-                  id: user.id,
-                  email: user.email || '',
-                  role: 'ICT Admin'
-                });
-            } catch (insertError) {
-              console.log("Background profile creation failed, but continuing...");
+          // Try to create profile with ICT Admin role if it doesn't exist
+          if (error.message.includes('no rows returned') || error.code === 'PGRST116') {
+            console.log("Profile doesn't exist, creating new profile with ICT Admin role");
+            
+            const { error: insertError } = await supabase
+              .from('profiles')
+              .insert({
+                id: user.id,
+                email: user.email || '',
+                role: 'ICT Admin'
+              });
+
+            if (insertError) {
+              console.log("Error creating profile:", insertError.message);
+              setCurrentRole("ICT Admin"); // Default to ICT Admin even if insert fails
+            } else {
+              console.log("Profile created successfully with ICT Admin role");
+              setCurrentRole("ICT Admin");
             }
-          }, 100);
+            
+            roleCache.set(user.id, "ICT Admin");
+          } else {
+            // For other errors, default to ICT Admin
+            console.log("Database error, defaulting to ICT Admin");
+            setCurrentRole("ICT Admin");
+            roleCache.set(user.id, "ICT Admin");
+          }
         } else if (profile?.role) {
           // Successfully got role from database
           const fetchedRole = profile.role as UserRole;
+          console.log("Successfully fetched role from database:", fetchedRole);
           setCurrentRole(fetchedRole);
           roleCache.set(user.id, fetchedRole);
         } else {
-          // No profile found, default to ICT Admin
+          // No profile found or no role, create profile with ICT Admin
+          console.log("No profile or role found, creating profile with ICT Admin role");
+          
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              email: user.email || '',
+              role: 'ICT Admin'
+            });
+
+          if (insertError) {
+            console.log("Error creating profile:", insertError.message);
+          } else {
+            console.log("Profile created successfully");
+          }
+          
           setCurrentRole("ICT Admin");
           roleCache.set(user.id, "ICT Admin");
         }
@@ -101,16 +130,12 @@ export const useUserRole = () => {
       }
     };
 
-    // Only fetch if we have a user and session, and haven't cached the role yet, and not on auth page
-    if (user && session && !roleCache.has(user.id) && !activeFetches.has(user.id) && !isAuthPage) {
+    // Always fetch if we have a user and session, and not on auth page
+    if (user && session && !isAuthPage) {
       fetchUserRole();
     } else if (!user || !session) {
       // Reset for logged out state
       setCurrentRole("Gebruiker");
-      setLoading(false);
-    } else if (user && roleCache.has(user.id)) {
-      // Use cached role
-      setCurrentRole(roleCache.get(user.id)!);
       setLoading(false);
     } else {
       // Default state
