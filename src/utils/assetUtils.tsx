@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Laptop, Smartphone, Headphones, Monitor, Coffee, Printer, Camera, Tablet, Router, Package } from "lucide-react";
 
 export const getAssetIcon = (type: string) => {
