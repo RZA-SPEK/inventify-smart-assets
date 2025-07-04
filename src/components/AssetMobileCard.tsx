@@ -1,6 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Tag, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Asset } from "@/types/asset";
 import { AssetImage } from "./AssetImage";
 
@@ -25,8 +26,10 @@ export const AssetMobileCard = ({
   getStatusColor,
   getCategoryDisplayName
 }: AssetMobileCardProps) => {
+  const navigate = useNavigate();
+
   const handleCardClick = () => {
-    onEdit(asset);
+    navigate(`/assets/${asset.id}`);
   };
 
   return (

@@ -1,6 +1,7 @@
 
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Tag, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Asset } from "@/types/asset";
 import { AssetImage } from "./AssetImage";
 
@@ -25,8 +26,10 @@ export const AssetTableRow = ({
   getStatusColor,
   getCategoryDisplayName
 }: AssetTableRowProps) => {
+  const navigate = useNavigate();
+
   const handleRowClick = () => {
-    onEdit(asset);
+    navigate(`/assets/${asset.id}`);
   };
 
   return (

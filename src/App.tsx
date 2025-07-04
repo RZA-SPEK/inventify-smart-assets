@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { MainNavigation } from "@/components/MainNavigation";
 import Dashboard from "./pages/Dashboard";
 import Assets from "./pages/Assets";
+import AssetDetails from "./pages/AssetDetails";
+import AssetEdit from "./pages/AssetEdit";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import ActivityLog from "./pages/ActivityLog";
@@ -27,6 +29,8 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/assets" element={<Assets />} />
+            <Route path="/assets/:id" element={<AssetDetails />} />
+            <Route path="/assets/:id/edit" element={<AssetEdit />} />
             <Route path="/users" element={<Users />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/activity" element={<ActivityLog />} />
