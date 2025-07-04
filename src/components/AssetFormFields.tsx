@@ -26,13 +26,15 @@ interface AssetFormFieldsProps {
   };
   onFormDataChange: (data: any) => void;
   onShowScanner: () => void;
+  onShowAssetTagScanner: () => void;
   onGenerateAssetTag: () => void;
 }
 
 export const AssetFormFields = ({ 
   formData, 
   onFormDataChange, 
-  onShowScanner, 
+  onShowScanner,
+  onShowAssetTagScanner,
   onGenerateAssetTag 
 }: AssetFormFieldsProps) => {
   return (
@@ -51,6 +53,7 @@ export const AssetFormFields = ({
         formData={formData}
         onFormDataChange={onFormDataChange}
         onShowScanner={onShowScanner}
+        onShowAssetTagScanner={onShowAssetTagScanner}
         onGenerateAssetTag={onGenerateAssetTag}
       />
 

@@ -14,6 +14,8 @@ interface AssetFormProps {
 
 export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
   const [showScanner, setShowScanner] = useState(false);
+  const [showAssetTagScanner, setShowAssetTagScanner] = useState(false);
+  const [scannerMode, setScannerMode] = useState<'serial' | 'assetTag'>('serial');
   const [formData, setFormData] = useState({
     type: "",
     brand: "",
@@ -37,7 +39,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
         type: asset.type,
         brand: asset.brand || "",
         model: asset.model || "",
-        serialNumber: asset.serialNumber,
+        serialNumber: asset.serialNumber || "",
         assetTag: asset.assetTag || "",
         purchaseDate: asset.purchaseDate,
         status: asset.status,
@@ -61,15 +63,33 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
       image: formData.image || undefined,
       assetTag: formData.assetTag || undefined,
       purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
-      penaltyAmount: formData.penaltyAmount ? parseFloat(formData.penaltyAmount) : 0
+      penaltyAmount: formData.penaltyAmount ? parseFloat(formData.penaltyAmount) : 0,
+      serialNumber: formData.serialNumber || `TEMP-${Date.now()}` // Generate temporary serial if empty
     };
     onSave(submitData);
   };
 
   const handleBarcodeScanned = (scannedData: string) => {
-    console.log("Setting serial number from barcode:", scannedData);
-    setFormData({ ...formData, serialNumber: scannedData });
+    console.log("Barcode scanned:", scannedData, "Mode:", scannerMode);
+    if (scannerMode === 'serial') {
+      setFormData({ ...formData, serialNumber: scannedData });
+    } else if (scannerMode === 'assetTag') {
+      // Handle asset tag scanning - add MVDS prefix if not present
+      const processedTag = scannedData.startsWith("MVDS-") ? scannedData : `MVDS-${scannedData}`;
+      setFormData({ ...formData, assetTag: processedTag });
+    }
     setShowScanner(false);
+    setShowAssetTagScanner(false);
+  };
+
+  const handleShowSerialScanner = () => {
+    setScannerMode('serial');
+    setShowScanner(true);
+  };
+
+  const handleShowAssetTagScanner = () => {
+    setScannerMode('assetTag');
+    setShowAssetTagScanner(true);
   };
 
   const generateAssetTag = () => {
@@ -119,7 +139,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
             <AssetFormFields
               formData={formData}
               onFormDataChange={setFormData}
-              onShowScanner={() => setShowScanner(true)}
+              onShowScanner={handleShowSerialScanner}
+              onShowAssetTagScanner={handleShowAssetTagScanner}
               onGenerateAssetTag={generateAssetTag}
             />
 
@@ -135,10 +156,13 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
         </DialogContent>
       </Dialog>
 
-      {showScanner && (
+      {(showScanner || showAssetTagScanner) && (
         <BarcodeScanner
           onScan={handleBarcodeScanned}
-          onClose={() => setShowScanner(false)}
+          onClose={() => {
+            setShowScanner(false);
+            setShowAssetTagScanner(false);
+          }}
         />
       )}
     </>

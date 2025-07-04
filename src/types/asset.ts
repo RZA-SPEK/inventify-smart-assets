@@ -4,7 +4,7 @@ export interface Asset {
   type: string;
   brand: string;
   model: string;
-  serialNumber: string;
+  serialNumber?: string;
   assetTag?: string;
   status: "In voorraad" | "In gebruik" | "Defect" | "Onderhoud" | "Deleted";
   location: string;
