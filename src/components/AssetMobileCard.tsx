@@ -1,6 +1,6 @@
 
 import { Card } from "@/components/ui/card";
-import { Tag } from "lucide-react";
+import { Tag, User } from "lucide-react";
 import { Asset } from "@/types/asset";
 import { AssetImage } from "./AssetImage";
 
@@ -58,6 +58,17 @@ export const AssetMobileCard = ({
               </div>
             ) : (
               <span className="text-gray-400 text-sm">Geen tag</span>
+            )}
+          </div>
+
+          <div className="mb-2">
+            {asset.assignedTo ? (
+              <div className="flex items-center space-x-1">
+                <User className="h-3 w-3 text-green-500" />
+                <span className="text-sm">{asset.assignedTo}</span>
+              </div>
+            ) : (
+              <span className="text-gray-400 text-sm">Niet toegewezen</span>
             )}
           </div>
 

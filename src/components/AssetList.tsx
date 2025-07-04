@@ -48,6 +48,7 @@ export const AssetList = ({ assets, currentRole, onEdit, onDelete, onReserve }: 
                 <TableHead className="min-w-32">Asset Type</TableHead>
                 <TableHead className="min-w-32">Merk</TableHead>
                 <TableHead className="w-24">Asset Tag</TableHead>
+                <TableHead className="min-w-40">Toegewezen aan</TableHead>
                 <TableHead className="w-32">Status</TableHead>
               </TableRow>
             </TableHeader>
