@@ -4,18 +4,54 @@ import { SystemConfiguration } from "@/components/SystemConfiguration";
 import { SettingsHeader } from "@/components/settings/SettingsHeader";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { SystemSettings } from "@/hooks/useSettings";
+import { supabase } from "@/integrations/supabase/client";
 
 const Settings = () => {
   const { canViewSettings, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
+  const [currentRole, setCurrentRole] = useState<string>('');
 
   useEffect(() => {
     // Redirect if user doesn't have permission
     if (!roleLoading && !canViewSettings) {
       navigate("/dashboard");
+      return;
+    }
+
+    // Fetch current user role
+    if (!roleLoading && canViewSettings) {
+      fetchCurrentRole();
     }
   }, [canViewSettings, roleLoading, navigate]);
+
+  const fetchCurrentRole = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching role:', error);
+        return;
+      }
+
+      setCurrentRole(data?.role || 'Gebruiker');
+    } catch (error) {
+      console.error('Error fetching role:', error);
+    }
+  };
+
+  const handleSaveSettings = (settings: SystemSettings) => {
+    console.log('Saving settings:', settings);
+    // TODO: Implement settings save logic
+  };
 
   // Don't render if user doesn't have permission
   if (!roleLoading && !canViewSettings) {
@@ -37,10 +73,10 @@ const Settings = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-4xl">
-        <SettingsHeader />
+        <SettingsHeader currentRole={currentRole} />
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SettingsForm />
+          <SettingsForm onSave={handleSaveSettings} />
           <SystemConfiguration />
         </div>
       </div>

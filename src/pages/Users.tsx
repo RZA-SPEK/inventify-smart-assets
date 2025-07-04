@@ -21,7 +21,8 @@ const Users = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRole, setSelectedRole] = useState<string>("all");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { canManageUsers, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
@@ -68,12 +69,35 @@ const Users = () => {
     fetchUsers();
   };
 
+  const handleEditUser = (user: any) => {
+    console.log('Edit user:', user);
+  };
+
+  const handleToggleStatus = (userId: string) => {
+    console.log('Toggle user status:', userId);
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    console.log('Delete user:', userId);
+  };
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (user.full_name && user.full_name.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesRole = selectedRole === "all" || user.role === selectedRole;
+    const matchesRole = roleFilter === "all" || user.role === roleFilter;
     return matchesSearch && matchesRole;
   });
+
+  // Convert users to match UserTable interface
+  const tableUsers = filteredUsers.map(user => ({
+    id: user.id,
+    name: user.full_name || user.email.split('@')[0],
+    email: user.email,
+    role: user.role as "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker",
+    status: "active" as const,
+    lastLogin: user.created_at,
+    createdAt: user.created_at
+  }));
 
   // Don't render if user doesn't have permission
   if (!roleLoading && !canManageUsers) {
@@ -112,15 +136,18 @@ const Users = () => {
 
         <UserFilters
           searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          selectedRole={selectedRole}
-          setSelectedRole={setSelectedRole}
+          roleFilter={roleFilter}
+          statusFilter={statusFilter}
+          onSearchChange={setSearchTerm}
+          onRoleFilterChange={setRoleFilter}
+          onStatusFilterChange={setStatusFilter}
         />
 
         <UserTable 
-          users={filteredUsers} 
-          loading={loading}
-          onUserUpdated={handleUserUpdated}
+          users={tableUsers}
+          onEditUser={handleEditUser}
+          onToggleStatus={handleToggleStatus}
+          onDeleteUser={handleDeleteUser}
         />
 
         <AddUserDialog

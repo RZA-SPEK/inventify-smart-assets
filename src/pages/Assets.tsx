@@ -6,24 +6,69 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAssetFilters } from "@/hooks/useAssetFilters";
-import { useAssetManagement } from "@/hooks/useAssetManagement";
 import { useUserRole } from "@/hooks/useUserRole";
+import { supabase } from "@/integrations/supabase/client";
+import { Asset } from "@/types/asset";
 
 const Assets = () => {
   const { canManageAssets, loading: roleLoading } = useUserRole();
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const {
     searchTerm,
     setSearchTerm,
-    selectedCategory,
-    setSelectedCategory,
-    selectedStatus,
-    setSelectedStatus,
-    selectedLocation,
-    setSelectedLocation,
+    statusFilter,
+    setStatusFilter,
+    categoryFilter,
+    setCategoryFilter,
+    typeFilter,
+    setTypeFilter,
+    assetTypes,
+    clearFilters,
     filteredAssets
-  } = useAssetFilters();
+  } = useAssetFilters(assets);
 
-  const { loading: assetsLoading } = useAssetManagement();
+  useEffect(() => {
+    // Only fetch if role is loaded and user has permission
+    if (!roleLoading && canManageAssets) {
+      fetchAssets();
+    } else if (!roleLoading) {
+      setLoading(false);
+    }
+  }, [canManageAssets, roleLoading]);
+
+  const fetchAssets = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('assets')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching assets:', error);
+        return;
+      }
+
+      setAssets(data || []);
+    } catch (error) {
+      console.error('Error fetching assets:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditAsset = (asset: Asset) => {
+    console.log('Edit asset:', asset);
+  };
+
+  const handleDeleteAsset = (id: string, reason: string) => {
+    console.log('Delete asset:', id, reason);
+  };
+
+  const handleReserveAsset = (asset: Asset) => {
+    console.log('Reserve asset:', asset);
+  };
 
   // Don't render content until role is loaded
   if (roleLoading) {
@@ -32,6 +77,17 @@ const Assets = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Laden...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if user doesn't have permission
+  if (!canManageAssets) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">U heeft geen toegang tot deze pagina.</p>
         </div>
       </div>
     );
@@ -58,18 +114,23 @@ const Assets = () => {
 
         <AssetFilters
           searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-          selectedStatus={selectedStatus}
-          setSelectedStatus={setSelectedStatus}
-          selectedLocation={selectedLocation}
-          setSelectedLocation={setSelectedLocation}
+          statusFilter={statusFilter}
+          categoryFilter={categoryFilter}
+          typeFilter={typeFilter}
+          onSearchChange={setSearchTerm}
+          onStatusFilterChange={setStatusFilter}
+          onCategoryFilterChange={setCategoryFilter}
+          onTypeFilterChange={setTypeFilter}
+          onClearFilters={clearFilters}
+          assetTypes={assetTypes}
         />
 
         <AssetList 
-          assets={filteredAssets} 
-          loading={assetsLoading}
+          assets={filteredAssets}
+          currentRole={canManageAssets ? 'ICT Admin' : 'Gebruiker'}
+          onEdit={handleEditAsset}
+          onDelete={handleDeleteAsset}
+          onReserve={handleReserveAsset}
         />
       </div>
     </div>
