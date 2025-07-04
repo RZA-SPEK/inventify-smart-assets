@@ -1,13 +1,8 @@
 
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "lucide-react";
+import { Tag } from "lucide-react";
 import { Asset } from "@/types/asset";
 import { AssetImage } from "./AssetImage";
-import { AssetBadges } from "./AssetBadges";
-import { AssetPriceInfo } from "./AssetPriceInfo";
-import { AssetAssignmentInfo } from "./AssetAssignmentInfo";
-import { AssetDeleteDialog } from "./AssetDeleteDialog";
 
 interface AssetMobileCardProps {
   asset: Asset;
@@ -30,12 +25,15 @@ export const AssetMobileCard = ({
   getStatusColor,
   getCategoryDisplayName
 }: AssetMobileCardProps) => {
-  const canEdit = (currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && asset.status !== "Deleted";
-  const canDelete = (currentRole === "ICT Admin" || currentRole === "Facilitair Admin") && asset.status !== "Deleted";
-  const canReserve = asset.status === "In voorraad";
+  const handleCardClick = () => {
+    onEdit(asset);
+  };
 
   return (
-    <Card className="p-4">
+    <Card 
+      className="p-4 cursor-pointer hover:bg-muted/50" 
+      onClick={handleCardClick}
+    >
       <div className="flex items-start space-x-3">
         <AssetImage
           image={asset.image}
@@ -50,53 +48,23 @@ export const AssetMobileCard = ({
             {getAssetIcon(asset.type)}
             <h3 className="font-medium text-lg truncate">{asset.type}</h3>
           </div>
-          <p className="text-sm text-gray-600 mb-1">{asset.brand} {asset.model}</p>
-          <p className="text-xs text-gray-500 font-mono mb-2">{asset.serialNumber}</p>
+          <p className="text-sm text-gray-600 mb-2">{asset.brand}</p>
           
-          <AssetBadges
-            status={asset.status}
-            category={asset.category}
-            getStatusColor={getStatusColor}
-            getCategoryDisplayName={getCategoryDisplayName}
-          />
-
-          <AssetPriceInfo
-            purchasePrice={asset.purchasePrice}
-            penaltyAmount={asset.penaltyAmount}
-          />
-
-          <AssetAssignmentInfo
-            assignedTo={asset.assignedTo}
-            location={asset.location}
-            assignedToLocation={asset.assignedToLocation}
-          />
-          
-          <div className="flex flex-wrap gap-2">
-            {canReserve && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onReserve(asset)}
-                className="flex items-center gap-1 text-xs"
-              >
-                <Calendar className="h-3 w-3" />
-                Reserveren
-              </Button>
+          <div className="flex items-center space-x-2 mb-2">
+            {asset.assetTag ? (
+              <div className="flex items-center space-x-1">
+                <Tag className="h-3 w-3 text-blue-500" />
+                <span className="font-mono text-sm">{asset.assetTag}</span>
+              </div>
+            ) : (
+              <span className="text-gray-400 text-sm">Geen tag</span>
             )}
-            {canEdit && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onEdit(asset)}
-                className="text-xs"
-              >
-                Bewerken
-              </Button>
-            )}
-            <AssetDeleteDialog
-              onDelete={(reason) => onDelete(asset.id, reason)}
-              canDelete={canDelete}
-            />
+          </div>
+
+          <div className="mb-2">
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(asset.status)}`}>
+              {asset.status}
+            </span>
           </div>
         </div>
       </div>

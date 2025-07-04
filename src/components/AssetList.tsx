@@ -45,18 +45,10 @@ export const AssetList = ({ assets, currentRole, onEdit, onDelete, onReserve }: 
             <TableHeader>
               <TableRow>
                 <TableHead className="w-20">Afbeelding</TableHead>
-                <TableHead className="min-w-32">Asset</TableHead>
-                <TableHead className="min-w-32">Merk/Model</TableHead>
-                <TableHead className="min-w-32">Serienummer</TableHead>
+                <TableHead className="min-w-32">Asset Type</TableHead>
+                <TableHead className="min-w-32">Merk</TableHead>
                 <TableHead className="w-24">Asset Tag</TableHead>
                 <TableHead className="w-32">Status</TableHead>
-                <TableHead className="w-24">Categorie</TableHead>
-                <TableHead className="w-20">Prijs</TableHead>
-                <TableHead className="w-20">Boete</TableHead>
-                <TableHead className="min-w-32">Toegewezen aan</TableHead>
-                <TableHead className="min-w-24">Locatie</TableHead>
-                <TableHead className="min-w-32">Specifieke locatie</TableHead>
-                <TableHead className="w-32">Acties</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
