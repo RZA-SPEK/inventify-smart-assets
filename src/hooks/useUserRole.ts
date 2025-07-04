@@ -55,20 +55,62 @@ export const useUserRole = () => {
       try {
         console.log("Fetching role for user:", user.id);
         
-        // Try direct database query to bypass any RLS issues
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .limit(1)
-          .single();
+        // Try to fetch using RPC call to bypass RLS issues completely
+        const { data: rpcResult, error: rpcError } = await supabase
+          .rpc('get_current_user_role');
 
-        if (error) {
-          console.log("Error fetching profile:", error.message, error.code);
+        if (!rpcError && rpcResult) {
+          const fetchedRole = rpcResult as UserRole;
+          console.log("Successfully fetched role via RPC:", fetchedRole);
+          setCurrentRole(fetchedRole);
+          roleCache.set(user.id, fetchedRole);
+        } else {
+          console.log("RPC failed, trying direct query:", rpcError?.message);
           
-          // If profile doesn't exist, create it
-          if (error.code === 'PGRST116' || error.message.includes('no rows')) {
-            console.log("Creating new profile with ICT Admin role");
+          // Fallback to direct database query
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .limit(1)
+            .single();
+
+          if (error) {
+            console.log("Error fetching profile:", error.message, error.code);
+            
+            // If profile doesn't exist, create it
+            if (error.code === 'PGRST116' || error.message.includes('no rows')) {
+              console.log("Creating new profile with ICT Admin role");
+              
+              const { error: insertError } = await supabase
+                .from('profiles')
+                .insert({
+                  id: user.id,
+                  email: user.email || '',
+                  role: 'ICT Admin'
+                });
+
+              if (insertError) {
+                console.log("Error creating profile:", insertError);
+              }
+              
+              setCurrentRole("ICT Admin");
+              roleCache.set(user.id, "ICT Admin");
+            } else {
+              // For any other error, default to ICT Admin
+              console.log("Using ICT Admin as default due to error");
+              setCurrentRole("ICT Admin");
+              roleCache.set(user.id, "ICT Admin");
+            }
+          } else if (profile?.role) {
+            // Successfully got role from database
+            const fetchedRole = profile.role as UserRole;
+            console.log("Successfully fetched role:", fetchedRole);
+            setCurrentRole(fetchedRole);
+            roleCache.set(user.id, fetchedRole);
+          } else {
+            // No role found, create profile with ICT Admin
+            console.log("No role found, creating profile");
             
             const { error: insertError } = await supabase
               .from('profiles')
@@ -84,36 +126,7 @@ export const useUserRole = () => {
             
             setCurrentRole("ICT Admin");
             roleCache.set(user.id, "ICT Admin");
-          } else {
-            // For any other error, default to ICT Admin
-            console.log("Using ICT Admin as default due to error");
-            setCurrentRole("ICT Admin");
-            roleCache.set(user.id, "ICT Admin");
           }
-        } else if (profile?.role) {
-          // Successfully got role from database
-          const fetchedRole = profile.role as UserRole;
-          console.log("Successfully fetched role:", fetchedRole);
-          setCurrentRole(fetchedRole);
-          roleCache.set(user.id, fetchedRole);
-        } else {
-          // No role found, create profile with ICT Admin
-          console.log("No role found, creating profile");
-          
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: user.id,
-              email: user.email || '',
-              role: 'ICT Admin'
-            });
-
-          if (insertError) {
-            console.log("Error creating profile:", insertError);
-          }
-          
-          setCurrentRole("ICT Admin");
-          roleCache.set(user.id, "ICT Admin");
         }
       } catch (error) {
         console.log("Unexpected error in fetchUserRole:", error);
