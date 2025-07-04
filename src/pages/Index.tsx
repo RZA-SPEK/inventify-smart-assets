@@ -1,11 +1,10 @@
-
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Calendar, History, Bell, Laptop, Smartphone, Headphones, Monitor, Desk, Coffee, Printer, Camera, Tablet, Router } from "lucide-react";
+import { Plus, Search, Calendar, History, Bell, Laptop, Smartphone, Headphones, Monitor, Coffee, Printer, Camera, Tablet, Router, Package } from "lucide-react";
 import { AssetForm } from "@/components/AssetForm";
 import { AssetFilters } from "@/components/AssetFilters";
 import { ReservationDialog } from "@/components/ReservationDialog";
@@ -118,12 +117,9 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [showReservationDialog, setShowReservationDialog] = useState(false);
-  const [filters, setFilters] = useState({
-    status: "",
-    location: "",
-    category: "",
-    type: ""
-  });
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [showUserReservations, setShowUserReservations] = useState(false);
 
   // Mock current user role - in a real app, this would come from authentication
@@ -135,7 +131,7 @@ const Index = () => {
       case 'smartphone': return <Smartphone className="h-4 w-4" />;
       case 'headset': return <Headphones className="h-4 w-4" />;
       case 'monitor': return <Monitor className="h-4 w-4" />;
-      case 'desk': return <Desk className="h-4 w-4" />;
+      case 'desk': return <Package className="h-4 w-4" />;
       case 'coffee machine': return <Coffee className="h-4 w-4" />;
       case 'printer': return <Printer className="h-4 w-4" />;
       case 'camera': return <Camera className="h-4 w-4" />;
@@ -166,6 +162,18 @@ const Index = () => {
     }
   };
 
+  // Get unique asset types for the filter
+  const assetTypes = useMemo(() => {
+    return Array.from(new Set(assets.map(asset => asset.type))).sort();
+  }, [assets]);
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setCategoryFilter("all");
+    setTypeFilter("all");
+  };
+
   const filteredAssets = useMemo(() => {
     return assets.filter(asset => {
       const matchesSearch = searchTerm === "" || 
@@ -177,14 +185,13 @@ const Index = () => {
         (asset.assignedTo && asset.assignedTo.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (asset.assetTag && asset.assetTag.toLowerCase().includes(searchTerm.toLowerCase()));
 
-      const matchesStatus = filters.status === "" || asset.status === filters.status;
-      const matchesLocation = filters.location === "" || asset.location === filters.location;
-      const matchesCategory = filters.category === "" || asset.category === filters.category;
-      const matchesType = filters.type === "" || asset.type === filters.type;
+      const matchesStatus = statusFilter === "all" || asset.status === statusFilter;
+      const matchesCategory = categoryFilter === "all" || asset.category === categoryFilter;
+      const matchesType = typeFilter === "all" || asset.type === typeFilter;
 
-      return matchesSearch && matchesStatus && matchesLocation && matchesCategory && matchesType;
+      return matchesSearch && matchesStatus && matchesCategory && matchesType;
     });
-  }, [assets, searchTerm, filters]);
+  }, [assets, searchTerm, statusFilter, categoryFilter, typeFilter]);
 
   const handleAddAsset = (newAsset: Omit<Asset, "id">) => {
     const asset: Asset = {
@@ -271,24 +278,18 @@ const Index = () => {
 
         <Card className="mb-6">
           <CardContent className="pt-6">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Zoek assets op type, merk, model, serienummer, locatie, asset tag of toegewezen aan..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <AssetFilters 
-                filters={filters} 
-                onFiltersChange={setFilters}
-                assets={assets}
-              />
-            </div>
+            <AssetFilters 
+              searchTerm={searchTerm}
+              statusFilter={statusFilter}
+              categoryFilter={categoryFilter}
+              typeFilter={typeFilter}
+              onSearchChange={setSearchTerm}
+              onStatusFilterChange={setStatusFilter}
+              onCategoryFilterChange={setCategoryFilter}
+              onTypeFilterChange={setTypeFilter}
+              onClearFilters={clearFilters}
+              assetTypes={assetTypes}
+            />
           </CardContent>
         </Card>
 
