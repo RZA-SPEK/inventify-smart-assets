@@ -11,6 +11,8 @@ import { AssetMobileCard } from "@/components/AssetMobileCard";
 import { UserRole } from "@/components/UserRole";
 import { DashboardStats } from "@/components/DashboardStats";
 import { ReservationDialog } from "@/components/ReservationDialog";
+import { SettingsForm } from "@/components/SettingsForm";
+import { SystemConfiguration } from "@/components/SystemConfiguration";
 
 export interface Asset {
   id: string;
@@ -197,6 +199,11 @@ const Index = () => {
     setShowAssetForm(true);
   };
 
+  const handleSaveSettings = (settings: any) => {
+    console.log('Settings saved:', settings);
+    // Here you would typically save to your backend/database
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="border-b bg-white shadow-sm">
@@ -370,23 +377,20 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Systeem Instellingen</CardTitle>
-                <CardDescription>Configuratie opties voor ICT Administrators</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center py-8">
-                    <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Instellingen</h3>
-                    <p className="text-gray-600">
-                      Systeem configuratie en AD synchronisatie instellingen komen hier.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <Tabs defaultValue="fields" className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="fields">Veld Opties</TabsTrigger>
+                <TabsTrigger value="system">Systeem Config</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="fields">
+                <SettingsForm onSave={handleSaveSettings} />
+              </TabsContent>
+              
+              <TabsContent value="system">
+                <SystemConfiguration />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
         </Tabs>
       </div>
