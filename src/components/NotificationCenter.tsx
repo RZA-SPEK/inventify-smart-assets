@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Bell, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,7 +43,13 @@ export const NotificationCenter = () => {
         return;
       }
 
-      setNotifications(data || []);
+      // Type assertion to match our interface
+      const typedNotifications = (data || []).map(notification => ({
+        ...notification,
+        type: notification.type as "info" | "warning" | "destructive"
+      }));
+
+      setNotifications(typedNotifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {

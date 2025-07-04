@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,7 +68,13 @@ export const UserReservations = () => {
         return;
       }
 
-      setReservations(data || []);
+      // Type assertion to match our interface
+      const typedReservations = (data || []).map(reservation => ({
+        ...reservation,
+        status: reservation.status as "pending" | "approved" | "rejected"
+      }));
+
+      setReservations(typedReservations);
     } catch (error) {
       console.error('Error fetching reservations:', error);
     } finally {
