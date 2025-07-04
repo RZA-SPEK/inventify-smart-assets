@@ -1,18 +1,16 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Search, Edit3, Trash2, UserCheck, UserX, AlertTriangle } from "lucide-react";
+import { Plus, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { UserRole } from "@/components/UserRole";
 import { useUserRole } from "@/hooks/useUserRole";
-import { supabase } from "@/integrations/supabase/client";
+import { UserFilters } from "@/components/users/UserFilters";
+import { UserTable } from "@/components/users/UserTable";
+import { AddUserDialog } from "@/components/users/AddUserDialog";
+import { EditUserDialog } from "@/components/users/EditUserDialog";
 
 interface User {
   id: string;
@@ -65,7 +63,7 @@ const mockUsers: User[] = [
 
 const Users = () => {
   const { toast } = useToast();
-  const { currentRole, canManageUsers } = useUserRole();
+  const { canManageUsers } = useUserRole();
   const [users, setUsers] = useState<User[]>(mockUsers);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -73,13 +71,6 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [newUser, setNewUser] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "Gebruiker" as "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker"
-  });
-  const [addUserLoading, setAddUserLoading] = useState(false);
 
   if (!canManageUsers) {
     return (
@@ -100,27 +91,6 @@ const Users = () => {
     );
   }
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case "ICT Admin":
-        return "bg-purple-100 text-purple-800";
-      case "Facilitair Admin":
-        return "bg-blue-100 text-blue-800";
-      case "Facilitair Medewerker":
-        return "bg-green-100 text-green-800";
-      case "Gebruiker":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    return status === "active" 
-      ? "bg-green-100 text-green-800" 
-      : "bg-red-100 text-red-800";
-  };
-
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -130,66 +100,9 @@ const Users = () => {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const handleAddUser = async () => {
-    if (!newUser.name || !newUser.email || !newUser.password) {
-      toast({
-        title: "Velden vereist",
-        description: "Vul alle velden in",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setAddUserLoading(true);
-
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: newUser.email,
-        password: newUser.password,
-        options: {
-          data: {
-            full_name: newUser.name,
-            role: newUser.role
-          }
-        }
-      });
-
-      if (error) {
-        toast({
-          title: "Fout bij aanmaken gebruiker",
-          description: error.message,
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Gebruiker aangemaakt",
-          description: `${newUser.name} is succesvol aangemaakt`
-        });
-        
-        // Add to local state for demo purposes
-        const newUserData: User = {
-          id: Math.random().toString(),
-          name: newUser.name,
-          email: newUser.email,
-          role: newUser.role,
-          status: "active",
-          lastLogin: new Date().toISOString(),
-          createdAt: new Date().toISOString().split('T')[0]
-        };
-        
-        setUsers(prev => [...prev, newUserData]);
-        setShowAddDialog(false);
-        setNewUser({ name: "", email: "", password: "", role: "Gebruiker" });
-      }
-    } catch (error) {
-      toast({
-        title: "Er is een fout opgetreden",
-        description: "Probeer het later opnieuw.",
-        variant: "destructive"
-      });
-    } finally {
-      setAddUserLoading(false);
-    }
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    setShowEditDialog(true);
   };
 
   const handleToggleStatus = (userId: string) => {
@@ -214,6 +127,16 @@ const Users = () => {
       description: `${user?.name} is verwijderd uit het systeem`,
       variant: "destructive"
     });
+  };
+
+  const handleUserAdded = (newUser: User) => {
+    setUsers(prev => [...prev, newUser]);
+  };
+
+  const handleUserUpdated = (updatedUser: User) => {
+    setUsers(prev => prev.map(user => 
+      user.id === updatedUser.id ? updatedUser : user
+    ));
   };
 
   return (
@@ -247,232 +170,36 @@ const Users = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Zoek gebruikers..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Filter op rol" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Alle rollen</SelectItem>
-                  <SelectItem value="ICT Admin">ICT Admin</SelectItem>
-                  <SelectItem value="Facilitair Admin">Facilitair Admin</SelectItem>
-                  <SelectItem value="Facilitair Medewerker">Facilitair Medewerker</SelectItem>
-                  <SelectItem value="Gebruiker">Gebruiker</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Filter op status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Alle statussen</SelectItem>
-                  <SelectItem value="active">Actief</SelectItem>
-                  <SelectItem value="inactive">Inactief</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <UserFilters
+              searchTerm={searchTerm}
+              roleFilter={roleFilter}
+              statusFilter={statusFilter}
+              onSearchChange={setSearchTerm}
+              onRoleFilterChange={setRoleFilter}
+              onStatusFilterChange={setStatusFilter}
+            />
 
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Naam</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Rol</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Laatste Login</TableHead>
-                    <TableHead>Acties</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>
-                        <Badge className={getRoleColor(user.role)}>
-                          {user.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(user.status)}>
-                          {user.status === "active" ? "Actief" : "Inactief"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-500">
-                        {new Date(user.lastLogin).toLocaleDateString('nl-NL')}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setShowEditDialog(true);
-                            }}
-                          >
-                            <Edit3 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleToggleStatus(user.id)}
-                            className={user.status === "active" ? "text-red-600 hover:text-red-700" : "text-green-600 hover:text-green-700"}
-                          >
-                            {user.status === "active" ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDeleteUser(user.id)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <UserTable
+              users={filteredUsers}
+              onEditUser={handleEditUser}
+              onToggleStatus={handleToggleStatus}
+              onDeleteUser={handleDeleteUser}
+            />
           </CardContent>
         </Card>
 
-        {/* Add User Dialog */}
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nieuwe Gebruiker Toevoegen</DialogTitle>
-              <DialogDescription>
-                Voeg een nieuwe gebruiker toe aan het systeem
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="newName">Naam</Label>
-                <Input 
-                  id="newName" 
-                  value={newUser.name}
-                  onChange={(e) => setNewUser(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Volledige naam"
-                />
-              </div>
-              <div>
-                <Label htmlFor="newEmail">Email</Label>
-                <Input 
-                  id="newEmail" 
-                  type="email" 
-                  value={newUser.email}
-                  onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="email@bedrijf.nl"
-                />
-              </div>
-              <div>
-                <Label htmlFor="newPassword">Wachtwoord</Label>
-                <Input 
-                  id="newPassword" 
-                  type="password" 
-                  value={newUser.password}
-                  onChange={(e) => setNewUser(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="••••••••"
-                  minLength={6}
-                />
-              </div>
-              <div>
-                <Label htmlFor="newRole">Rol</Label>
-                <Select 
-                  value={newUser.role} 
-                  onValueChange={(value: "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker") => 
-                    setNewUser(prev => ({ ...prev, role: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ICT Admin">ICT Admin</SelectItem>
-                    <SelectItem value="Facilitair Admin">Facilitair Admin</SelectItem>
-                    <SelectItem value="Facilitair Medewerker">Facilitair Medewerker</SelectItem>
-                    <SelectItem value="Gebruiker">Gebruiker</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                Annuleren
-              </Button>
-              <Button onClick={handleAddUser} disabled={addUserLoading}>
-                {addUserLoading ? "Toevoegen..." : "Gebruiker Toevoegen"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <AddUserDialog
+          open={showAddDialog}
+          onOpenChange={setShowAddDialog}
+          onUserAdded={handleUserAdded}
+        />
 
-        {/* Edit User Dialog */}
-        {selectedUser && (
-          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Gebruiker Bewerken</DialogTitle>
-                <DialogDescription>
-                  Wijzig de gegevens en rechten van {selectedUser.name}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Naam</Label>
-                  <Input id="name" defaultValue={selectedUser.name} />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" defaultValue={selectedUser.email} />
-                </div>
-                <div>
-                  <Label htmlFor="role">Rol</Label>
-                  <Select defaultValue={selectedUser.role}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ICT Admin">ICT Admin</SelectItem>
-                      <SelectItem value="Facilitair Admin">Facilitair Admin</SelectItem>
-                      <SelectItem value="Facilitair Medewerker">Facilitair Medewerker</SelectItem>
-                      <SelectItem value="Gebruiker">Gebruiker</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-                  Annuleren
-                </Button>
-                <Button onClick={() => {
-                  setShowEditDialog(false);
-                  toast({
-                    title: "Gebruiker bijgewerkt",
-                    description: `${selectedUser.name} is succesvol bijgewerkt`
-                  });
-                }}>
-                  Opslaan
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
+        <EditUserDialog
+          user={selectedUser}
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          onUserUpdated={handleUserUpdated}
+        />
       </div>
     </div>
   );
