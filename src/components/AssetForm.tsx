@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Asset } from "@/pages/Index";
+import { Asset } from "@/types/asset";
 import { AssetFormFields } from "./AssetFormFields";
 import { BarcodeScanner } from "./BarcodeScanner";
 

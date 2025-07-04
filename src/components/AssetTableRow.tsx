@@ -1,22 +1,12 @@
 
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tag, User, MapPin, Calendar, Trash2, Euro } from "lucide-react";
-import { Asset } from "@/pages/Index";
-import { useState } from "react";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Tag, Calendar } from "lucide-react";
+import { Asset } from "@/types/asset";
+import { AssetImage } from "./AssetImage";
+import { AssetBadges } from "./AssetBadges";
+import { AssetPriceInfo } from "./AssetPriceInfo";
+import { AssetDeleteDialog } from "./AssetDeleteDialog";
 
 interface AssetTableRowProps {
   asset: Asset;
@@ -39,39 +29,20 @@ export const AssetTableRow = ({
   getStatusColor,
   getCategoryDisplayName
 }: AssetTableRowProps) => {
-  const [deleteReason, setDeleteReason] = useState("");
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const handleDelete = () => {
-    if (deleteReason.trim()) {
-      onDelete(asset.id, deleteReason);
-      setDeleteReason("");
-      setIsDeleteDialogOpen(false);
-    }
-  };
-
-  const formatPrice = (price?: number) => {
-    if (!price) return "-";
-    return new Intl.NumberFormat('nl-NL', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(price);
-  };
+  const canEdit = (currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && asset.status !== "Deleted";
+  const canDelete = (currentRole === "ICT Admin" || currentRole === "Facilitair Admin") && asset.status !== "Deleted";
+  const canReserve = asset.status === "In voorraad";
 
   return (
     <TableRow>
       <TableCell>
-        {asset.image ? (
-          <img
-            src={asset.image}
-            alt={`${asset.brand} ${asset.model}`}
-            className="w-12 h-12 object-cover rounded-lg"
-          />
-        ) : (
-          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-            {getAssetIcon(asset.type)}
-          </div>
-        )}
+        <AssetImage
+          image={asset.image}
+          brand={asset.brand}
+          model={asset.model}
+          icon={getAssetIcon(asset.type)}
+          size="sm"
+        />
       </TableCell>
       <TableCell>
         <div className="flex items-center space-x-2">
@@ -92,35 +63,22 @@ export const AssetTableRow = ({
         )}
       </TableCell>
       <TableCell>
-        <Badge className={getStatusColor(asset.status)}>
-          {asset.status === "Deleted" ? "Verwijderd" : asset.status}
-        </Badge>
+        <AssetBadges
+          status={asset.status}
+          category={asset.category}
+          getStatusColor={getStatusColor}
+          getCategoryDisplayName={getCategoryDisplayName}
+        />
       </TableCell>
       <TableCell>
-        <Badge variant="outline">
-          {getCategoryDisplayName(asset.category)}
-        </Badge>
-      </TableCell>
-      <TableCell>
-        <div className="flex items-center space-x-1">
-          <Euro className="h-3 w-3 text-green-600" />
-          <span className="font-medium text-green-700">
-            {formatPrice(asset.purchasePrice)}
-          </span>
-        </div>
-      </TableCell>
-      <TableCell>
-        <div className="flex items-center space-x-1">
-          <Euro className="h-3 w-3 text-red-600" />
-          <span className="font-medium text-red-700">
-            {formatPrice(asset.penaltyAmount)}
-          </span>
-        </div>
+        <AssetPriceInfo
+          purchasePrice={asset.purchasePrice}
+          penaltyAmount={asset.penaltyAmount}
+        />
       </TableCell>
       <TableCell>
         {asset.assignedTo ? (
           <div className="flex items-center space-x-1">
-            <User className="h-3 w-3" />
             <span>{asset.assignedTo}</span>
           </div>
         ) : (
@@ -130,17 +88,14 @@ export const AssetTableRow = ({
       <TableCell>{asset.location}</TableCell>
       <TableCell>
         {asset.assignedToLocation ? (
-          <div className="flex items-center space-x-1">
-            <MapPin className="h-3 w-3 text-blue-500" />
-            <span className="text-sm">{asset.assignedToLocation}</span>
-          </div>
+          <span className="text-sm">{asset.assignedToLocation}</span>
         ) : (
           <span className="text-gray-400">Geen specifieke locatie</span>
         )}
       </TableCell>
       <TableCell>
         <div className="flex space-x-1">
-          {asset.status === "In voorraad" && (
+          {canReserve && (
             <Button
               variant="outline"
               size="sm"
@@ -151,7 +106,7 @@ export const AssetTableRow = ({
               <span className="hidden sm:inline">Reserveren</span>
             </Button>
           )}
-          {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && asset.status !== "Deleted" && (
+          {canEdit && (
             <Button
               variant="outline"
               size="sm"
@@ -162,51 +117,10 @@ export const AssetTableRow = ({
               <span className="sm:hidden">Edit</span>
             </Button>
           )}
-          {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin") && asset.status !== "Deleted" && (
-            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Asset verwijderen</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Weet je zeker dat je dit asset wilt verwijderen? Het asset wordt gemarkeerd als "Deleted" en kan later worden hersteld.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="space-y-2">
-                  <label htmlFor="delete-reason" className="text-sm font-medium">
-                    Reden voor verwijdering *
-                  </label>
-                  <Textarea
-                    id="delete-reason"
-                    placeholder="Geef een reden op voor het verwijderen van dit asset..."
-                    value={deleteReason}
-                    onChange={(e) => setDeleteReason(e.target.value)}
-                    className="min-h-[80px]"
-                  />
-                </div>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setDeleteReason("")}>
-                    Annuleren
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDelete}
-                    disabled={!deleteReason.trim()}
-                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
-                  >
-                    Verwijderen
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
+          <AssetDeleteDialog
+            onDelete={(reason) => onDelete(asset.id, reason)}
+            canDelete={canDelete}
+          />
         </div>
       </TableCell>
     </TableRow>
