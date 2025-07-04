@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { User, MapPin, Calendar, Trash2 } from "lucide-react";
+import { User, MapPin, Calendar, Trash2, Euro } from "lucide-react";
 import { Asset } from "@/pages/Index";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,6 +50,14 @@ export const AssetMobileCard = ({
     }
   };
 
+  const formatPrice = (price?: number) => {
+    if (!price) return "-";
+    return new Intl.NumberFormat('nl-NL', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(price);
+  };
+
   return (
     <Card className="p-4">
       <div className="flex items-start space-x-3">
@@ -73,6 +81,7 @@ export const AssetMobileCard = ({
           </div>
           <p className="text-sm text-gray-600 mb-1">{asset.brand} {asset.model}</p>
           <p className="text-xs text-gray-500 font-mono mb-2">{asset.serialNumber}</p>
+          
           <div className="flex flex-wrap gap-2 mb-3">
             <Badge className={getStatusColor(asset.status)}>
               {asset.status === "Deleted" ? "Verwijderd" : asset.status}
@@ -81,13 +90,33 @@ export const AssetMobileCard = ({
               {getCategoryDisplayName(asset.category)}
             </Badge>
           </div>
+
+          {/* Price and Penalty Information */}
+          <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+            <div className="flex items-center space-x-1">
+              <Euro className="h-3 w-3 text-green-600" />
+              <span className="text-gray-600">Prijs:</span>
+              <span className="font-medium text-green-700">
+                {formatPrice(asset.purchasePrice)}
+              </span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <Euro className="h-3 w-3 text-red-600" />
+              <span className="text-gray-600">Boete:</span>
+              <span className="font-medium text-red-700">
+                {formatPrice(asset.penaltyAmount)}
+              </span>
+            </div>
+          </div>
+
           {asset.assignedTo && (
             <div className="flex items-center space-x-1 mb-2">
               <User className="h-3 w-3" />
               <span className="text-sm">{asset.assignedTo}</span>
             </div>
           )}
-          <div className="flex flex-col space-y-1 text-sm text-gray-600">
+          
+          <div className="flex flex-col space-y-1 text-sm text-gray-600 mb-3">
             <span>{asset.location}</span>
             {asset.assignedToLocation && (
               <div className="flex items-center space-x-1">
@@ -96,7 +125,8 @@ export const AssetMobileCard = ({
               </div>
             )}
           </div>
-          <div className="flex flex-wrap gap-2 mt-3">
+          
+          <div className="flex flex-wrap gap-2">
             {asset.status === "In voorraad" && (
               <Button
                 variant="outline"

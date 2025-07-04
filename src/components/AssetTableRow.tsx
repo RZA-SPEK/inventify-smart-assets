@@ -2,7 +2,7 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tag, User, MapPin, Calendar, Trash2 } from "lucide-react";
+import { Tag, User, MapPin, Calendar, Trash2, Euro } from "lucide-react";
 import { Asset } from "@/pages/Index";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,6 +50,14 @@ export const AssetTableRow = ({
     }
   };
 
+  const formatPrice = (price?: number) => {
+    if (!price) return "-";
+    return new Intl.NumberFormat('nl-NL', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(price);
+  };
+
   return (
     <TableRow>
       <TableCell>
@@ -68,17 +76,12 @@ export const AssetTableRow = ({
       <TableCell>
         <div className="flex items-center space-x-2">
           {getAssetIcon(asset.type)}
-          <div>
-            <span className="font-medium">{asset.type}</span>
-            <div className="block md:hidden text-xs text-gray-500">
-              {asset.brand} {asset.model}
-            </div>
-          </div>
+          <span className="font-medium">{asset.type}</span>
         </div>
       </TableCell>
-      <TableCell className="hidden md:table-cell">{asset.brand} {asset.model}</TableCell>
-      <TableCell className="hidden lg:table-cell font-mono text-sm">{asset.serialNumber}</TableCell>
-      <TableCell className="hidden lg:table-cell">
+      <TableCell>{asset.brand} {asset.model}</TableCell>
+      <TableCell className="font-mono text-sm">{asset.serialNumber}</TableCell>
+      <TableCell>
         {asset.assetTag ? (
           <div className="flex items-center space-x-1">
             <Tag className="h-3 w-3 text-blue-500" />
@@ -93,12 +96,28 @@ export const AssetTableRow = ({
           {asset.status === "Deleted" ? "Verwijderd" : asset.status}
         </Badge>
       </TableCell>
-      <TableCell className="hidden md:table-cell">
+      <TableCell>
         <Badge variant="outline">
           {getCategoryDisplayName(asset.category)}
         </Badge>
       </TableCell>
-      <TableCell className="hidden lg:table-cell">
+      <TableCell>
+        <div className="flex items-center space-x-1">
+          <Euro className="h-3 w-3 text-green-600" />
+          <span className="font-medium text-green-700">
+            {formatPrice(asset.purchasePrice)}
+          </span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center space-x-1">
+          <Euro className="h-3 w-3 text-red-600" />
+          <span className="font-medium text-red-700">
+            {formatPrice(asset.penaltyAmount)}
+          </span>
+        </div>
+      </TableCell>
+      <TableCell>
         {asset.assignedTo ? (
           <div className="flex items-center space-x-1">
             <User className="h-3 w-3" />
@@ -108,8 +127,8 @@ export const AssetTableRow = ({
           <span className="text-gray-400">Niet toegewezen</span>
         )}
       </TableCell>
-      <TableCell className="hidden xl:table-cell">{asset.location}</TableCell>
-      <TableCell className="hidden xl:table-cell">
+      <TableCell>{asset.location}</TableCell>
+      <TableCell>
         {asset.assignedToLocation ? (
           <div className="flex items-center space-x-1">
             <MapPin className="h-3 w-3 text-blue-500" />

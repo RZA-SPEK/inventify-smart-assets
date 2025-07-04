@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PlusCircle, Laptop, Smartphone, Headphones, Cable, Monitor, User, Settings, BarChart3 } from "lucide-react";
+import { PlusCircle, Laptop, Smartphone, Headphones, Cable, Monitor, User, Settings, BarChart3, Activity } from "lucide-react";
 import { AssetForm } from "@/components/AssetForm";
 import { AssetFilters } from "@/components/AssetFilters";
 import { AssetTableRow } from "@/components/AssetTableRow";
@@ -15,6 +16,7 @@ import { SettingsForm } from "@/components/SettingsForm";
 import { SystemConfiguration } from "@/components/SystemConfiguration";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import Reservations from "./Reservations";
+import ActivityLog from "./ActivityLog";
 
 export interface Asset {
   id: string;
@@ -30,6 +32,8 @@ export interface Asset {
   assignedTo?: string;
   assignedToLocation?: string;
   image?: string;
+  purchasePrice?: number;
+  penaltyAmount?: number;
 }
 
 const mockAssets: Asset[] = [
@@ -45,7 +49,9 @@ const mockAssets: Asset[] = [
     location: "Kantoor Amsterdam",
     category: "ICT",
     assignedTo: "Jan Janssen",
-    assignedToLocation: "Werkplek A-101"
+    assignedToLocation: "Werkplek A-101",
+    purchasePrice: 1299.99,
+    penaltyAmount: 500.00
   },
   {
     id: "2",
@@ -58,7 +64,9 @@ const mockAssets: Asset[] = [
     status: "In voorraad",
     location: "ICT Magazijn",
     category: "ICT",
-    assignedToLocation: "Magazijn Rek B-3"
+    assignedToLocation: "Magazijn Rek B-3",
+    purchasePrice: 899.99,
+    penaltyAmount: 400.00
   },
   {
     id: "3",
@@ -72,7 +80,9 @@ const mockAssets: Asset[] = [
     location: "Kantoor Utrecht",
     category: "ICT",
     assignedTo: "Marie Peeters",
-    assignedToLocation: "Werkplek U-205"
+    assignedToLocation: "Werkplek U-205",
+    purchasePrice: 299.99,
+    penaltyAmount: 150.00
   },
   {
     id: "4",
@@ -86,7 +96,9 @@ const mockAssets: Asset[] = [
     location: "Kantoor Amsterdam",
     category: "Facilitair",
     assignedTo: "Tom de Vries",
-    assignedToLocation: "Werkplek A-150"
+    assignedToLocation: "Werkplek A-150",
+    purchasePrice: 149.99,
+    penaltyAmount: 75.00
   }
 ];
 
@@ -96,6 +108,7 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [showAssetForm, setShowAssetForm] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [reservationAsset, setReservationAsset] = useState<Asset | null>(null);
@@ -149,25 +162,33 @@ const Index = () => {
     }
   };
 
+  // Enhanced filtering with comprehensive search
   const filteredAssets = assets.filter(asset => {
-    const matchesSearch = asset.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         asset.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         asset.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         asset.assetTag?.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchFields = [
+      asset.type,
+      asset.brand,
+      asset.model,
+      asset.serialNumber,
+      asset.assetTag,
+      asset.location,
+      asset.assignedTo,
+      asset.assignedToLocation
+    ].filter(Boolean).join(' ').toLowerCase();
     
+    const matchesSearch = searchTerm === "" || searchFields.includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || asset.status === statusFilter;
     const matchesCategory = categoryFilter === "all" || asset.category === categoryFilter;
+    const matchesType = typeFilter === "all" || asset.type === typeFilter;
     
     if (currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") {
-      return matchesSearch && matchesStatus && matchesCategory && asset.category === "Facilitair";
+      return matchesSearch && matchesStatus && matchesCategory && matchesType && asset.category === "Facilitair";
     }
     
     if (currentRole === "Gebruiker") {
-      return matchesSearch && matchesStatus && matchesCategory && asset.assignedTo === "Jan Janssen";
+      return matchesSearch && matchesStatus && matchesCategory && matchesType && asset.assignedTo === "Jan Janssen";
     }
     
-    return matchesSearch && matchesStatus && matchesCategory;
+    return matchesSearch && matchesStatus && matchesCategory && matchesType;
   });
 
   const handleAddAsset = (assetData: Omit<Asset, "id">) => {
@@ -203,8 +224,17 @@ const Index = () => {
 
   const handleSaveSettings = (settings: any) => {
     console.log('Settings saved:', settings);
-    // Here you would typically save to your backend/database
   };
+
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setCategoryFilter("all");
+    setTypeFilter("all");
+  };
+
+  // Get unique asset types for filter dropdown
+  const uniqueAssetTypes = [...new Set(assets.map(asset => asset.type))].sort();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -229,13 +259,16 @@ const Index = () => {
 
       <div className="container mx-auto px-4 py-6">
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 lg:w-[500px]">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 lg:w-[600px]">
             <TabsTrigger value="dashboard" className="text-xs sm:text-sm">Dashboard</TabsTrigger>
             <TabsTrigger value="assets" className="text-xs sm:text-sm">Assets</TabsTrigger>
             <TabsTrigger value="reservations" disabled={currentRole === "Gebruiker"} className="text-xs sm:text-sm">
               Reserveringen
             </TabsTrigger>
             <TabsTrigger value="users" className="text-xs sm:text-sm">Gebruikers</TabsTrigger>
+            <TabsTrigger value="activity" disabled={currentRole !== "ICT Admin"} className="text-xs sm:text-sm">
+              Activiteiten
+            </TabsTrigger>
             <TabsTrigger value="settings" disabled={currentRole !== "ICT Admin"} className="text-xs sm:text-sm">
               Instellingen
             </TabsTrigger>
@@ -283,9 +316,13 @@ const Index = () => {
                 searchTerm={searchTerm}
                 statusFilter={statusFilter}
                 categoryFilter={categoryFilter}
+                typeFilter={typeFilter}
                 onSearchChange={setSearchTerm}
                 onStatusFilterChange={setStatusFilter}
                 onCategoryFilterChange={setCategoryFilter}
+                onTypeFilterChange={setTypeFilter}
+                onClearFilters={clearAllFilters}
+                assetTypes={uniqueAssetTypes}
               />
               {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && (
                 <div className="flex justify-end">
@@ -306,7 +343,7 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 {/* Mobile Card View */}
-                <div className="block sm:hidden space-y-4">
+                <div className="block lg:hidden space-y-4">
                   {filteredAssets.map((asset) => (
                     <AssetMobileCard
                       key={asset.id}
@@ -323,20 +360,22 @@ const Index = () => {
                 </div>
 
                 {/* Desktop Table View */}
-                <div className="hidden sm:block overflow-x-auto">
+                <div className="hidden lg:block overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-16">Foto</TableHead>
                         <TableHead>Type</TableHead>
-                        <TableHead className="hidden md:table-cell">Merk & Model</TableHead>
-                        <TableHead className="hidden lg:table-cell">Serienummer</TableHead>
-                        <TableHead className="hidden lg:table-cell">Asset Tag</TableHead>
+                        <TableHead>Merk & Model</TableHead>
+                        <TableHead>Serienummer</TableHead>
+                        <TableHead>Asset Tag</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead className="hidden md:table-cell">Categorie</TableHead>
-                        <TableHead className="hidden lg:table-cell">Toegewezen aan</TableHead>
-                        <TableHead className="hidden xl:table-cell">Locatie</TableHead>
-                        <TableHead className="hidden xl:table-cell">Specifieke Locatie</TableHead>
+                        <TableHead>Categorie</TableHead>
+                        <TableHead>Prijs</TableHead>
+                        <TableHead>Boete</TableHead>
+                        <TableHead>Toegewezen aan</TableHead>
+                        <TableHead>Locatie</TableHead>
+                        <TableHead>Specifieke Locatie</TableHead>
                         <TableHead>Acties</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -386,6 +425,10 @@ const Index = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="activity" className="space-y-6">
+            <ActivityLog />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
