@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, Key, User as UserIcon } from "lucide-react";
+import { Shield, Key, User as UserIcon, Mail } from "lucide-react";
 
 interface User {
   id: string;
@@ -34,7 +33,6 @@ export const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: Edit
     email: user?.email || "",
     role: user?.role || "Gebruiker" as "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker"
   });
-  const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSave = () => {
@@ -57,24 +55,14 @@ export const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: Edit
   };
 
   const handlePasswordReset = async () => {
-    if (!user || !newPassword) {
-      toast({
-        title: "Wachtwoord vereist",
-        description: "Voer een nieuw wachtwoord in",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!user) return;
 
     setLoading(true);
 
     try {
-      // In a real implementation, this would be done through admin API
-      // For now, we'll simulate the password reset
-      const { error } = await supabase.auth.admin.updateUserById(
-        user.id,
-        { password: newPassword }
-      );
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${window.location.origin}/auth`
+      });
 
       if (error) {
         toast({
@@ -84,10 +72,9 @@ export const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: Edit
         });
       } else {
         toast({
-          title: "Wachtwoord gereset",
-          description: `Wachtwoord voor ${user.name} is succesvol gewijzigd`
+          title: "Wachtwoord reset email verzonden",
+          description: `Een wachtwoord reset email is verzonden naar ${user.email}`
         });
-        setNewPassword("");
       }
     } catch (error) {
       toast({
@@ -240,29 +227,24 @@ export const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: Edit
           </TabsContent>
 
           <TabsContent value="security" className="space-y-4 mt-4">
-            <div>
-              <Label htmlFor="newPassword">Nieuw Wachtwoord</Label>
-              <Input 
-                id="newPassword" 
-                type="password" 
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Voer nieuw wachtwoord in"
-                minLength={6}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Minimaal 6 karakters vereist
-              </p>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-base font-medium">Wachtwoord Reset</Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  Stuur een wachtwoord reset email naar {user.email}
+                </p>
+              </div>
+              
+              <Button 
+                onClick={handlePasswordReset}
+                disabled={loading}
+                variant="outline"
+                className="w-full flex items-center gap-2"
+              >
+                <Mail className="h-4 w-4" />
+                {loading ? "Email Verzenden..." : "Wachtwoord Reset Email Verzenden"}
+              </Button>
             </div>
-            
-            <Button 
-              onClick={handlePasswordReset}
-              disabled={loading || !newPassword}
-              variant="outline"
-              className="w-full"
-            >
-              {loading ? "Wachtwoord Resetten..." : "Wachtwoord Resetten"}
-            </Button>
 
             <div className="border-t pt-4">
               <Label>Account Informatie</Label>
