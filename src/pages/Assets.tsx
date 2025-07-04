@@ -50,7 +50,27 @@ const Assets = () => {
         return;
       }
 
-      setAssets(data || []);
+      // Transform database response to match Asset interface
+      const transformedAssets: Asset[] = (data || []).map(dbAsset => ({
+        id: dbAsset.id,
+        type: dbAsset.type,
+        brand: dbAsset.brand || '',
+        model: dbAsset.model || '',
+        serialNumber: dbAsset.serial_number || '',
+        assetTag: dbAsset.asset_tag || '',
+        status: dbAsset.status as Asset['status'],
+        location: dbAsset.location,
+        assignedTo: dbAsset.assigned_to || '',
+        assignedToLocation: dbAsset.assigned_to_location || '',
+        purchaseDate: dbAsset.purchase_date,
+        warrantyExpiry: dbAsset.warranty_expiry || '',
+        purchasePrice: dbAsset.purchase_price || 0,
+        penaltyAmount: dbAsset.penalty_amount || 0,
+        category: dbAsset.category as Asset['category'],
+        image: dbAsset.image_url || ''
+      }));
+
+      setAssets(transformedAssets);
     } catch (error) {
       console.error('Error fetching assets:', error);
     } finally {
