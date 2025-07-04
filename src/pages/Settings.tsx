@@ -7,8 +7,19 @@ import { AlertTriangle } from "lucide-react";
 import { SettingsHeader } from "@/components/settings/SettingsHeader";
 
 const Settings = () => {
-  const { currentRole, canViewSettings } = useUserRole();
+  const { currentRole, canViewSettings, loading } = useUserRole();
   const { settings, saveSettings } = useSettings();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Laden...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!canViewSettings) {
     return (

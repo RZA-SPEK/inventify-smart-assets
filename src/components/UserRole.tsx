@@ -10,7 +10,7 @@ interface UserRoleProps {
 }
 
 export const UserRole = ({ currentRole: propCurrentRole, onRoleChange: propOnRoleChange }: UserRoleProps) => {
-  const { currentRole: hookCurrentRole, changeRole } = useUserRole();
+  const { currentRole: hookCurrentRole, changeRole, loading } = useUserRole();
   
   // Use props if provided, otherwise use hook
   const currentRole = propCurrentRole || hookCurrentRole;
@@ -60,6 +60,17 @@ export const UserRole = ({ currentRole: propCurrentRole, onRoleChange: propOnRol
         return "";
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium text-gray-600">Huidige rol:</span>
+          <div className="animate-pulse bg-gray-200 h-6 w-20 rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center space-x-4">

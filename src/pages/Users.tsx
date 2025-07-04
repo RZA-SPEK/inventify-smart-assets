@@ -61,7 +61,7 @@ const mockUsers: User[] = [
 
 const Users = () => {
   const { toast } = useToast();
-  const { canManageUsers } = useUserRole();
+  const { canManageUsers, loading } = useUserRole();
   const [users, setUsers] = useState<User[]>(mockUsers);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -69,6 +69,17 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Laden...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!canManageUsers) {
     return (
