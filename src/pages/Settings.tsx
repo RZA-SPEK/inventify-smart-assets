@@ -5,7 +5,6 @@ import { useSettings } from "@/hooks/useSettings";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { SettingsHeader } from "@/components/settings/SettingsHeader";
-import { UserRole } from "@/components/UserRole";
 
 const Settings = () => {
   const { currentRole, canViewSettings } = useUserRole();
@@ -15,10 +14,6 @@ const Settings = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6 max-w-7xl">
-          <div className="mb-6">
-            <UserRole />
-          </div>
-          
           <Alert className="border-red-200 bg-red-50">
             <AlertTriangle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-800">

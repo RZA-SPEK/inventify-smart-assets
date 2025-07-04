@@ -7,7 +7,6 @@ import { ReservationDialog } from "@/components/ReservationDialog";
 import { UserReservations } from "@/components/UserReservations";
 import { AssetHeader } from "@/components/AssetHeader";
 import { AssetList } from "@/components/AssetList";
-import { UserRole } from "@/components/UserRole";
 import { mockAssets } from "@/data/mockAssets";
 import { Asset } from "@/types/asset";
 import { useAssetFilters } from "@/hooks/useAssetFilters";
@@ -58,10 +57,6 @@ const Assets = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="mb-6">
-          <UserRole />
-        </div>
-        
         <AssetHeader
           onAddAsset={() => setShowForm(true)}
           onShowUserReservations={() => setShowUserReservations(true)}

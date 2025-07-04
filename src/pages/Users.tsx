@@ -1,11 +1,9 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Plus, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { UserRole } from "@/components/UserRole";
 import { useUserRole } from "@/hooks/useUserRole";
 import { UserFilters } from "@/components/users/UserFilters";
 import { UserTable } from "@/components/users/UserTable";
@@ -76,10 +74,6 @@ const Users = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6 max-w-7xl">
-          <div className="mb-6">
-            <UserRole />
-          </div>
-          
           <Alert className="border-red-200 bg-red-50">
             <AlertTriangle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-800">
@@ -142,10 +136,6 @@ const Users = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="mb-6">
-          <UserRole />
-        </div>
-        
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gebruikersbeheer</h1>
           <p className="text-gray-600 mt-1">Beheer gebruikers en hun toegangsrechten</p>

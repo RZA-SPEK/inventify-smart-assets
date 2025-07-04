@@ -1,7 +1,6 @@
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield } from "lucide-react";
-import { UserRole } from "@/components/UserRole";
 
 interface SettingsHeaderProps {
   currentRole: string;
@@ -10,10 +9,6 @@ interface SettingsHeaderProps {
 export const SettingsHeader = ({ currentRole }: SettingsHeaderProps) => {
   return (
     <>
-      <div className="mb-6">
-        <UserRole />
-      </div>
-
       {currentRole === "ICT Admin" && (
         <Alert className="mb-6 border-blue-200 bg-blue-50">
           <Shield className="h-4 w-4 text-blue-600" />
