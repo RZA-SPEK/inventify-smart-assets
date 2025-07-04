@@ -55,19 +55,20 @@ export const useUserRole = () => {
       try {
         console.log("Fetching role for user:", user.id);
         
-        // Try to fetch user role from profiles table
+        // Try direct database query to bypass any RLS issues
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', user.id)
-          .maybeSingle();
+          .limit(1)
+          .single();
 
         if (error) {
-          console.log("Error fetching profile:", error.message);
+          console.log("Error fetching profile:", error.message, error.code);
           
-          // Try to create profile with ICT Admin role if it doesn't exist
-          if (error.message.includes('no rows returned') || error.code === 'PGRST116') {
-            console.log("Profile doesn't exist, creating new profile with ICT Admin role");
+          // If profile doesn't exist, create it
+          if (error.code === 'PGRST116' || error.message.includes('no rows')) {
+            console.log("Creating new profile with ICT Admin role");
             
             const { error: insertError } = await supabase
               .from('profiles')
@@ -78,29 +79,26 @@ export const useUserRole = () => {
               });
 
             if (insertError) {
-              console.log("Error creating profile:", insertError.message);
-              setCurrentRole("ICT Admin"); // Default to ICT Admin even if insert fails
-            } else {
-              console.log("Profile created successfully with ICT Admin role");
-              setCurrentRole("ICT Admin");
+              console.log("Error creating profile:", insertError);
             }
             
+            setCurrentRole("ICT Admin");
             roleCache.set(user.id, "ICT Admin");
           } else {
-            // For other errors, default to ICT Admin
-            console.log("Database error, defaulting to ICT Admin");
+            // For any other error, default to ICT Admin
+            console.log("Using ICT Admin as default due to error");
             setCurrentRole("ICT Admin");
             roleCache.set(user.id, "ICT Admin");
           }
         } else if (profile?.role) {
           // Successfully got role from database
           const fetchedRole = profile.role as UserRole;
-          console.log("Successfully fetched role from database:", fetchedRole);
+          console.log("Successfully fetched role:", fetchedRole);
           setCurrentRole(fetchedRole);
           roleCache.set(user.id, fetchedRole);
         } else {
-          // No profile found or no role, create profile with ICT Admin
-          console.log("No profile or role found, creating profile with ICT Admin role");
+          // No role found, create profile with ICT Admin
+          console.log("No role found, creating profile");
           
           const { error: insertError } = await supabase
             .from('profiles')
@@ -111,9 +109,7 @@ export const useUserRole = () => {
             });
 
           if (insertError) {
-            console.log("Error creating profile:", insertError.message);
-          } else {
-            console.log("Profile created successfully");
+            console.log("Error creating profile:", insertError);
           }
           
           setCurrentRole("ICT Admin");
