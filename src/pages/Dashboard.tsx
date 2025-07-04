@@ -1,7 +1,7 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardStats } from "@/components/DashboardStats";
 import { UserRole } from "@/components/UserRole";
+import { mockAssets } from "@/data/mockAssets";
 import { useState } from "react";
 
 const Dashboard = () => {
@@ -19,7 +19,7 @@ const Dashboard = () => {
           <p className="text-gray-600 mt-1">Overzicht van alle asset management activiteiten</p>
         </div>
 
-        <DashboardStats />
+        <DashboardStats assets={mockAssets} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
           <Card>
