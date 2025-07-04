@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface ActivityItem {
   id: string;
@@ -14,10 +15,17 @@ interface ActivityItem {
 export const RecentActivity = () => {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const { canViewSettings, loading: roleLoading } = useUserRole();
 
   useEffect(() => {
-    fetchRecentActivity();
-  }, []);
+    // Only fetch if role is loaded and user has permission
+    if (!roleLoading && canViewSettings) {
+      fetchRecentActivity();
+    } else if (!roleLoading) {
+      // If user doesn't have permission, stop loading
+      setLoading(false);
+    }
+  }, [canViewSettings, roleLoading]);
 
   const fetchRecentActivity = async () => {
     try {
@@ -77,6 +85,11 @@ export const RecentActivity = () => {
     if (diffInHours < 24) return `${diffInHours} uur geleden`;
     return `${Math.floor(diffInHours / 24)} dag${Math.floor(diffInHours / 24) > 1 ? 'en' : ''} geleden`;
   };
+
+  // Don't show the component if user doesn't have permission
+  if (!canViewSettings && !roleLoading) {
+    return null;
+  }
 
   return (
     <Card>
