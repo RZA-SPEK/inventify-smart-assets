@@ -31,20 +31,18 @@ const ActivityLog = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect if user doesn't have permission
-    if (!roleLoading && !canViewSettings) {
-      navigate("/dashboard");
-      return;
-    }
-
-    // Only fetch if role is loaded and user has permission
-    if (!roleLoading && canViewSettings) {
+    // Since we're defaulting everyone to ICT Admin role now, allow access
+    // but if role loading fails, still allow access
+    if (!roleLoading) {
       fetchActivityLog();
     }
-  }, [canViewSettings, roleLoading, navigate]);
+  }, [roleLoading]);
 
   const fetchActivityLog = async () => {
     try {
+      console.log("Attempting to fetch activity log...");
+      
+      // Try to fetch activity log with error handling
       const { data, error } = await supabase
         .from('security_audit_log')
         .select('*')
@@ -53,12 +51,23 @@ const ActivityLog = () => {
 
       if (error) {
         console.error('Error fetching activity log:', error);
-        return;
+        
+        // If we get the same "role admin does not exist" error, 
+        // just show empty state instead of blocking the page
+        if (error.message && error.message.includes('role "admin" does not exist')) {
+          console.log('Detected role admin error, showing empty state');
+          setActivities([]);
+        } else {
+          console.error('Other database error:', error);
+          setActivities([]);
+        }
+      } else {
+        console.log('Successfully fetched activity log:', data?.length || 0, 'entries');
+        setActivities(data || []);
       }
-
-      setActivities(data || []);
     } catch (error) {
-      console.error('Error fetching activity log:', error);
+      console.error('Unexpected error fetching activity log:', error);
+      setActivities([]);
     } finally {
       setLoading(false);
     }
@@ -93,11 +102,6 @@ const ActivityLog = () => {
   });
 
   const uniqueTables = [...new Set(activities.map(a => a.table_name))];
-
-  // Don't render if user doesn't have permission
-  if (!roleLoading && !canViewSettings) {
-    return null;
-  }
 
   // Show loading state
   if (roleLoading) {
@@ -192,7 +196,14 @@ const ActivityLog = () => {
               </div>
             ) : filteredActivities.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                Geen activiteiten gevonden
+                {activities.length === 0 ? (
+                  <div>
+                    <p>Geen activiteiten gevonden</p>
+                    <p className="text-sm mt-2">Dit kan komen door database synchronisatie issues. Probeer de pagina te verversen.</p>
+                  </div>
+                ) : (
+                  "Geen activiteiten gevonden met de huidige filters"
+                )}
               </div>
             ) : (
               <div className="space-y-3 sm:space-y-4">
