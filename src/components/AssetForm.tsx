@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -64,7 +63,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
       assetTag: formData.assetTag || undefined,
       purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
       penaltyAmount: formData.penaltyAmount ? parseFloat(formData.penaltyAmount) : 0,
-      serialNumber: formData.serialNumber || `TEMP-${Date.now()}` // Generate temporary serial if empty
+      serialNumber: formData.serialNumber || undefined
     };
     onSave(submitData);
   };
