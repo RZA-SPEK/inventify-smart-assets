@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { CheckCircle, XCircle, Edit3, Calendar, User, FileText, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { UserReservations } from "@/components/UserReservations";
+import { UserRole } from "@/components/UserRole";
 import { Link } from "react-router-dom";
 
 interface Reservation {
@@ -66,7 +66,7 @@ const Reservations = () => {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [actionType, setActionType] = useState<"approve" | "reject" | "edit" | null>(null);
   const [rejectReason, setRejectReason] = useState("");
-  const [currentUserRole] = useState<"admin" | "user">("admin"); // Mock role - should come from auth
+  const [currentUserRole, setCurrentUserRole] = useState<"ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker">("ICT Admin");
   const [showUserView, setShowUserView] = useState(false);
 
   const getStatusColor = (status: string) => {
@@ -136,7 +136,7 @@ const Reservations = () => {
   };
 
   // Show user view if requested or if user is not admin
-  if (showUserView || currentUserRole === "user") {
+  if (showUserView || currentUserRole === "Gebruiker") {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6">
@@ -147,7 +147,8 @@ const Reservations = () => {
                 Terug naar Assets
               </Button>
             </Link>
-            {currentUserRole === "admin" && (
+            <UserRole currentRole={currentUserRole} onRoleChange={setCurrentUserRole} />
+            {(currentUserRole === "ICT Admin" || currentUserRole === "Facilitair Admin") && (
               <Button 
                 onClick={() => setShowUserView(false)}
                 variant="outline"
@@ -166,6 +167,10 @@ const Reservations = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6">
+        <div className="mb-6">
+          <UserRole currentRole={currentUserRole} onRoleChange={setCurrentUserRole} />
+        </div>
+        
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-4">
             <Link to="/">

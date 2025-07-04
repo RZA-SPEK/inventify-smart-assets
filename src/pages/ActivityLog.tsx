@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Eye, Search, Calendar, User, Database, AlertCircle, ArrowLeft } from "lucide-react";
+import { UserRole } from "@/components/UserRole";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
@@ -32,6 +32,7 @@ const ActivityLog = () => {
   const [tableFilter, setTableFilter] = useState("all");
   const [actionFilter, setActionFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [currentRole, setCurrentRole] = useState<"ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker">("ICT Admin");
 
   // Mock data for demonstration
   useEffect(() => {
@@ -185,6 +186,10 @@ const ActivityLog = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="container mx-auto space-y-6">
+        <div className="mb-6">
+          <UserRole currentRole={currentRole} onRoleChange={setCurrentRole} />
+        </div>
+        
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
             <Link to="/">

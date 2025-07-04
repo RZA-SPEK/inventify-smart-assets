@@ -7,6 +7,7 @@ import { ReservationDialog } from "@/components/ReservationDialog";
 import { UserReservations } from "@/components/UserReservations";
 import { AssetHeader } from "@/components/AssetHeader";
 import { AssetList } from "@/components/AssetList";
+import { UserRole } from "@/components/UserRole";
 import { mockAssets } from "@/data/mockAssets";
 import { Asset } from "@/types/asset";
 import { useAssetFilters } from "@/hooks/useAssetFilters";
@@ -16,9 +17,7 @@ const Index = () => {
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [showReservationDialog, setShowReservationDialog] = useState(false);
   const [showUserReservations, setShowUserReservations] = useState(false);
-
-  // Mock current user role - in a real app, this would come from authentication
-  const currentRole = "ICT Admin";
+  const [currentRole, setCurrentRole] = useState<"ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker">("ICT Admin");
 
   const {
     assets,
@@ -58,6 +57,10 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <div className="mb-6">
+          <UserRole currentRole={currentRole} onRoleChange={setCurrentRole} />
+        </div>
+        
         <AssetHeader
           onAddAsset={() => setShowForm(true)}
           onShowUserReservations={() => setShowUserReservations(true)}
