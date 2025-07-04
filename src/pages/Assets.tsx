@@ -93,7 +93,7 @@ const Assets = () => {
   // Don't render content until role is loaded
   if (roleLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Laden...</p>
@@ -105,7 +105,7 @@ const Assets = () => {
   // Redirect if user doesn't have permission
   if (!canManageAssets) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-gray-600">U heeft geen toegang tot deze pagina.</p>
         </div>
@@ -115,35 +115,39 @@ const Assets = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Assets</h1>
-            <p className="text-gray-600 mt-1">Beheer en overzicht van alle assets</p>
+      <div className="container mx-auto mobile-spacing py-4 sm:py-6 max-w-7xl">
+        <div className="flex flex-col gap-4 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="w-full sm:w-auto">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Assets</h1>
+              <p className="text-gray-600 mt-1 text-sm sm:text-base">Beheer en overzicht van alle assets</p>
+            </div>
+            
+            {canManageAssets && (
+              <Link to="/assets/new" className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto flex items-center justify-center space-x-2">
+                  <Plus className="h-4 w-4" />
+                  <span>Nieuwe Asset</span>
+                </Button>
+              </Link>
+            )}
           </div>
-          
-          {canManageAssets && (
-            <Link to="/assets/new">
-              <Button className="flex items-center space-x-2">
-                <Plus className="h-4 w-4" />
-                <span>Nieuwe Asset</span>
-              </Button>
-            </Link>
-          )}
         </div>
 
-        <AssetFilters
-          searchTerm={searchTerm}
-          statusFilter={statusFilter}
-          categoryFilter={categoryFilter}
-          typeFilter={typeFilter}
-          onSearchChange={setSearchTerm}
-          onStatusFilterChange={setStatusFilter}
-          onCategoryFilterChange={setCategoryFilter}
-          onTypeFilterChange={setTypeFilter}
-          onClearFilters={clearFilters}
-          assetTypes={assetTypes}
-        />
+        <div className="mb-4 sm:mb-6">
+          <AssetFilters
+            searchTerm={searchTerm}
+            statusFilter={statusFilter}
+            categoryFilter={categoryFilter}
+            typeFilter={typeFilter}
+            onSearchChange={setSearchTerm}
+            onStatusFilterChange={setStatusFilter}
+            onCategoryFilterChange={setCategoryFilter}
+            onTypeFilterChange={setTypeFilter}
+            onClearFilters={clearFilters}
+            assetTypes={assetTypes}
+          />
+        </div>
 
         <AssetList 
           assets={filteredAssets}

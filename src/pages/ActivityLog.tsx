@@ -102,7 +102,7 @@ const ActivityLog = () => {
   // Show loading state
   if (roleLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Laden...</p>
@@ -113,21 +113,21 @@ const ActivityLog = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Activiteiten Log</h1>
-          <p className="text-gray-600 mt-1">Overzicht van alle systeemactiviteiten en wijzigingen</p>
+      <div className="container mx-auto mobile-spacing py-4 sm:py-6 max-w-7xl">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Activiteiten Log</h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">Overzicht van alle systeemactiviteiten en wijzigingen</p>
         </div>
 
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
+        <Card className="mb-4 sm:mb-6">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center space-x-2 text-lg">
               <Filter className="h-5 w-5" />
               <span>Filters</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Zoeken</label>
                 <div className="relative">
@@ -147,7 +147,7 @@ const ActivityLog = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Selecteer tabel" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border shadow-lg z-50">
                     <SelectItem value="all">Alle tabellen</SelectItem>
                     {uniqueTables.map(table => (
                       <SelectItem key={table} value={table}>{table}</SelectItem>
@@ -162,7 +162,7 @@ const ActivityLog = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Selecteer actie" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border shadow-lg z-50">
                     <SelectItem value="all">Alle acties</SelectItem>
                     <SelectItem value="insert">Insert</SelectItem>
                     <SelectItem value="update">Update</SelectItem>
@@ -176,11 +176,11 @@ const ActivityLog = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
+            <CardTitle className="flex items-center space-x-2 text-lg">
               <CalendarDays className="h-5 w-5" />
               <span>Activiteiten</span>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Toont de laatste {activities.length} activiteiten
             </CardDescription>
           </CardHeader>
@@ -195,30 +195,33 @@ const ActivityLog = () => {
                 Geen activiteiten gevonden
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {filteredActivities.map((activity) => (
                   <div
                     key={activity.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg space-y-2 sm:space-y-0"
+                    className="flex flex-col space-y-2 p-3 sm:p-4 bg-gray-50 rounded-lg"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <Badge className={getActionColor(activity.action)}>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <Badge className={`${getActionColor(activity.action)} text-xs`}>
                           {activity.action}
                         </Badge>
-                        <span className="font-medium">{activity.table_name}</span>
+                        <span className="font-medium text-sm sm:text-base">{activity.table_name}</span>
                         {activity.record_id && (
-                          <span className="text-sm text-gray-500">
+                          <span className="text-xs sm:text-sm text-gray-500 font-mono">
                             ID: {activity.record_id.substring(0, 8)}...
                           </span>
                         )}
                       </div>
-                      <div className="text-sm text-gray-600">
-                        Tijdstip: {formatTimestamp(activity.created_at)}
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-1 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                      <div>
+                        <span className="font-medium">Tijdstip:</span> {formatTimestamp(activity.created_at)}
                       </div>
                       {activity.user_id && (
-                        <div className="text-sm text-gray-600">
-                          Gebruiker: {activity.user_id.substring(0, 8)}...
+                        <div>
+                          <span className="font-medium">Gebruiker:</span> {activity.user_id.substring(0, 8)}...
                         </div>
                       )}
                     </div>

@@ -107,7 +107,7 @@ const Users = () => {
   // Show loading state
   if (roleLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Laden...</p>
@@ -118,37 +118,43 @@ const Users = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gebruikers</h1>
-            <p className="text-gray-600 mt-1">Beheer gebruikersaccounts en rollen</p>
+      <div className="container mx-auto mobile-spacing py-4 sm:py-6 max-w-7xl">
+        <div className="flex flex-col gap-4 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="w-full sm:w-auto">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Gebruikers</h1>
+              <p className="text-gray-600 mt-1 text-sm sm:text-base">Beheer gebruikersaccounts en rollen</p>
+            </div>
+            
+            <Button 
+              onClick={() => setIsAddDialogOpen(true)}
+              className="w-full sm:w-auto flex items-center justify-center space-x-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Nieuwe Gebruiker</span>
+            </Button>
           </div>
-          
-          <Button 
-            onClick={() => setIsAddDialogOpen(true)}
-            className="flex items-center space-x-2"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Nieuwe Gebruiker</span>
-          </Button>
         </div>
 
-        <UserFilters
-          searchTerm={searchTerm}
-          roleFilter={roleFilter}
-          statusFilter={statusFilter}
-          onSearchChange={setSearchTerm}
-          onRoleFilterChange={setRoleFilter}
-          onStatusFilterChange={setStatusFilter}
-        />
+        <div className="mb-4 sm:mb-6">
+          <UserFilters
+            searchTerm={searchTerm}
+            roleFilter={roleFilter}
+            statusFilter={statusFilter}
+            onSearchChange={setSearchTerm}
+            onRoleFilterChange={setRoleFilter}
+            onStatusFilterChange={setStatusFilter}
+          />
+        </div>
 
-        <UserTable 
-          users={tableUsers}
-          onEditUser={handleEditUser}
-          onToggleStatus={handleToggleStatus}
-          onDeleteUser={handleDeleteUser}
-        />
+        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+          <UserTable 
+            users={tableUsers}
+            onEditUser={handleEditUser}
+            onToggleStatus={handleToggleStatus}
+            onDeleteUser={handleDeleteUser}
+          />
+        </div>
 
         <AddUserDialog
           open={isAddDialogOpen}

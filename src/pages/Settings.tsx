@@ -61,7 +61,7 @@ const Settings = () => {
   // Show loading state
   if (roleLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Laden...</p>
@@ -72,12 +72,16 @@ const Settings = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
+      <div className="container mx-auto mobile-spacing py-4 sm:py-6 max-w-7xl">
         <SettingsHeader currentRole={currentRole} />
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SettingsForm onSave={handleSaveSettings} />
-          <SystemConfiguration />
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+          <div className="w-full">
+            <SettingsForm onSave={handleSaveSettings} />
+          </div>
+          <div className="w-full">
+            <SystemConfiguration />
+          </div>
         </div>
       </div>
     </div>
