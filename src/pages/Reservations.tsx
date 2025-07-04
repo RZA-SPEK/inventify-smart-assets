@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { UserReservations } from "@/components/UserReservations";
 import { UserRole } from "@/components/UserRole";
 import { Link } from "react-router-dom";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface Reservation {
   id: string;
@@ -66,8 +68,8 @@ const Reservations = () => {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [actionType, setActionType] = useState<"approve" | "reject" | "edit" | null>(null);
   const [rejectReason, setRejectReason] = useState("");
-  const [currentUserRole, setCurrentUserRole] = useState<"ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker">("ICT Admin");
   const [showUserView, setShowUserView] = useState(false);
+  const { currentRole, canManageUsers, canViewSettings } = useUserRole();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -136,7 +138,7 @@ const Reservations = () => {
   };
 
   // Show user view if requested or if user is not admin
-  if (showUserView || currentUserRole === "Gebruiker") {
+  if (showUserView || currentRole === "Gebruiker") {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6">
@@ -147,8 +149,8 @@ const Reservations = () => {
                 Terug naar Assets
               </Button>
             </Link>
-            <UserRole currentRole={currentUserRole} onRoleChange={setCurrentUserRole} />
-            {(currentUserRole === "ICT Admin" || currentUserRole === "Facilitair Admin") && (
+            <UserRole />
+            {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin") && (
               <Button 
                 onClick={() => setShowUserView(false)}
                 variant="outline"
@@ -168,7 +170,7 @@ const Reservations = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6">
-          <UserRole currentRole={currentUserRole} onRoleChange={setCurrentUserRole} />
+          <UserRole />
         </div>
         
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
