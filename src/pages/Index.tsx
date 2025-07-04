@@ -13,6 +13,8 @@ import { DashboardStats } from "@/components/DashboardStats";
 import { ReservationDialog } from "@/components/ReservationDialog";
 import { SettingsForm } from "@/components/SettingsForm";
 import { SystemConfiguration } from "@/components/SystemConfiguration";
+import { NotificationCenter } from "@/components/NotificationCenter";
+import Reservations from "./Reservations";
 
 export interface Asset {
   id: string;
@@ -215,7 +217,10 @@ const Index = () => {
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Asset Management Tool</h1>
               </div>
             </div>
-            <div className="flex justify-end">
+            <div className="flex items-center space-x-4">
+              {(currentRole === "ICT Admin" || currentRole === "Facilitair Admin" || currentRole === "Facilitair Medewerker") && (
+                <NotificationCenter />
+              )}
               <UserRole currentRole={currentRole} onRoleChange={setCurrentRole} />
             </div>
           </div>
@@ -224,9 +229,12 @@ const Index = () => {
 
       <div className="container mx-auto px-4 py-6">
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:w-[400px]">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 lg:w-[500px]">
             <TabsTrigger value="dashboard" className="text-xs sm:text-sm">Dashboard</TabsTrigger>
             <TabsTrigger value="assets" className="text-xs sm:text-sm">Assets</TabsTrigger>
+            <TabsTrigger value="reservations" disabled={currentRole === "Gebruiker"} className="text-xs sm:text-sm">
+              Reserveringen
+            </TabsTrigger>
             <TabsTrigger value="users" className="text-xs sm:text-sm">Gebruikers</TabsTrigger>
             <TabsTrigger value="settings" disabled={currentRole !== "ICT Admin"} className="text-xs sm:text-sm">
               Instellingen
@@ -351,6 +359,10 @@ const Index = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="reservations" className="space-y-6">
+            <Reservations />
           </TabsContent>
 
           <TabsContent value="users" className="space-y-6">

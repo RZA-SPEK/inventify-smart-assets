@@ -25,7 +25,8 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // In a real application, this would send the reservation request to a backend
+    // In a real application, this would send the reservation request to the backend
+    // and trigger the notification system
     console.log("Reservation request:", {
       assetId: asset.id,
       assetName: `${asset.brand} ${asset.model}`,
@@ -34,7 +35,7 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
 
     toast({
       title: "Reservering Aangevraagd",
-      description: `Uw reservering voor ${asset.brand} ${asset.model} is aangevraagd en wordt beoordeeld.`,
+      description: `Uw reservering voor ${asset.brand} ${asset.model} is aangevraagd en wordt beoordeeld door een administrator.`,
     });
 
     onClose();
