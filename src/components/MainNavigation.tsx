@@ -22,15 +22,13 @@ const MainNavigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { currentRole, canManageUsers, canViewSettings, loading } = useUserRole();
 
-  console.log("MainNavigation - Role info:", {
-    currentRole,
-    canManageUsers,
-    canViewSettings,
-    loading
-  });
+  // Don't render navigation on auth page or when user is not logged in
+  if (location.pathname === '/auth' || !user) {
+    return null;
+  }
 
   const handleSignOut = async () => {
     await signOut();
