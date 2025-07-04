@@ -1,20 +1,17 @@
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Shield, User, Wrench, Settings } from "lucide-react";
 import { useUserRole, UserRole as UserRoleType } from "@/hooks/useUserRole";
 
 interface UserRoleProps {
   currentRole?: UserRoleType;
-  onRoleChange?: (role: UserRoleType) => void;
 }
 
-export const UserRole = ({ currentRole: propCurrentRole, onRoleChange: propOnRoleChange }: UserRoleProps) => {
-  const { currentRole: hookCurrentRole, changeRole, loading } = useUserRole();
+export const UserRole = ({ currentRole: propCurrentRole }: UserRoleProps) => {
+  const { currentRole: hookCurrentRole, loading } = useUserRole();
   
   // Use props if provided, otherwise use hook
   const currentRole = propCurrentRole || hookCurrentRole;
-  const onRoleChange = propOnRoleChange || changeRole;
 
   const getRoleIcon = (role: string) => {
     switch (role) {
@@ -80,41 +77,6 @@ export const UserRole = ({ currentRole: propCurrentRole, onRoleChange: propOnRol
           {getRoleIcon(currentRole)}
           <span>{currentRole}</span>
         </Badge>
-      </div>
-      
-      <div className="flex items-center space-x-2">
-        <span className="text-sm text-gray-500">Simulatie:</span>
-        <Select value={currentRole} onValueChange={onRoleChange}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ICT Admin">
-              <div className="flex items-center space-x-2">
-                <Shield className="h-3 w-3" />
-                <span>ICT Admin</span>
-              </div>
-            </SelectItem>
-            <SelectItem value="Facilitair Admin">
-              <div className="flex items-center space-x-2">
-                <Settings className="h-3 w-3" />
-                <span>Facilitair Admin</span>
-              </div>
-            </SelectItem>
-            <SelectItem value="Facilitair Medewerker">
-              <div className="flex items-center space-x-2">
-                <Wrench className="h-3 w-3" />
-                <span>Facilitair Medewerker</span>
-              </div>
-            </SelectItem>
-            <SelectItem value="Gebruiker">
-              <div className="flex items-center space-x-2">
-                <User className="h-3 w-3" />
-                <span>Gebruiker</span>
-              </div>
-            </SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="hidden md:block text-xs text-gray-500 max-w-xs">

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,13 +87,6 @@ export const useUserRole = () => {
     fetchUserRole();
   }, [user, session]);
 
-  const changeRole = (newRole: UserRole) => {
-    // This function should be removed in production as roles should be managed by admins
-    console.warn("Role changing is disabled in production");
-    // For development/testing only - this won't work with real auth
-    setCurrentRole(newRole);
-  };
-
   console.log("useUserRole returning:", {
     currentRole,
     loading,
@@ -106,7 +98,6 @@ export const useUserRole = () => {
 
   return {
     currentRole,
-    changeRole,
     loading,
     isAdmin: currentRole === "ICT Admin" || currentRole === "Facilitair Admin",
     canManageAssets: currentRole === "ICT Admin" || currentRole === "Facilitair Medewerker",
