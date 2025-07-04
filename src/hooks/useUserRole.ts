@@ -20,6 +20,7 @@ export const useUserRole = () => {
         console.log("No user or session, setting role to Gebruiker");
         setCurrentRole("Gebruiker");
         setLoading(false);
+        hasInitialized.current = false;
         return;
       }
 
@@ -100,16 +101,17 @@ export const useUserRole = () => {
       }
     };
 
-    // Only fetch once per user session
+    // Only fetch if we haven't initialized for this user session
     if (!hasInitialized.current && user?.id) {
       hasInitialized.current = true;
       fetchUserRole();
     } else if (!user) {
+      // Reset when user logs out
       hasInitialized.current = false;
       setCurrentRole("Gebruiker");
       setLoading(false);
     }
-  }, [user?.id, session]); // Only depend on user.id and session, not the full user object
+  }, [user?.id, session?.access_token]); // Stable dependencies
 
   const rolePermissions = {
     currentRole,

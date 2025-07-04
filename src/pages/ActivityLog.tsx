@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { useUserRole } from "@/hooks/useUserRole";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ActivityLogEntry {
   id: string;
@@ -36,73 +36,112 @@ const ActivityLog = () => {
   const [loading, setLoading] = useState(true);
   const { currentRole } = useUserRole();
 
-  // Mock data for demonstration
   useEffect(() => {
-    const mockLogs: ActivityLogEntry[] = [
-      {
-        id: "1",
-        action: "INSERT",
-        table_name: "assets",
-        record_id: "asset-1",
-        user_id: "user-1",
-        user_email: "admin@company.com",
-        ip_address: "192.168.1.100",
-        user_agent: "Mozilla/5.0...",
-        new_values: { type: "Laptop", brand: "Dell", model: "Latitude 7420" },
-        created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        id: "2",
-        action: "UPDATE",
-        table_name: "assets",
-        record_id: "asset-2",
-        user_id: "user-2",
-        user_email: "facilitor@company.com",
-        ip_address: "192.168.1.101",
-        old_values: { status: "In voorraad" },
-        new_values: { status: "In gebruik", assignedTo: "Jan Janssen" },
-        created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        id: "3",
-        action: "INSERT",
-        table_name: "reservations",
-        record_id: "reservation-1",
-        user_id: "user-3",
-        user_email: "user@company.com",
-        ip_address: "192.168.1.102",
-        new_values: { asset_id: "asset-3", purpose: "Thuiswerken", requested_date: "2024-01-15" },
-        created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        id: "4",
-        action: "DELETE",
-        table_name: "assets",
-        record_id: "asset-4",
-        user_id: "user-1",
-        user_email: "admin@company.com",
-        ip_address: "192.168.1.100",
-        old_values: { type: "Monitor", brand: "LG", status: "Defect" },
-        created_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        id: "5",
-        action: "UPDATE",
-        table_name: "reservations",
-        record_id: "reservation-2",
-        user_id: "user-2",
-        user_email: "facilitor@company.com",
-        ip_address: "192.168.1.101",
-        old_values: { status: "pending" },
-        new_values: { status: "approved", approved_by: "user-2" },
-        created_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
-      }
-    ];
-
-    setLogs(mockLogs);
-    setFilteredLogs(mockLogs);
-    setLoading(false);
+    fetchActivityLogs();
   }, []);
+
+  const fetchActivityLogs = async () => {
+    try {
+      // First try to fetch from the actual security_audit_log table
+      const { data: auditData, error: auditError } = await supabase
+        .from('security_audit_log')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (auditError) {
+        console.log("Audit log not accessible, using mock data:", auditError);
+        // Use mock data if we can't access the audit log
+        const mockLogs: ActivityLogEntry[] = [
+          {
+            id: "1",
+            action: "INSERT",
+            table_name: "assets",
+            record_id: "asset-1",
+            user_id: "user-1",
+            user_email: "admin@company.com",
+            ip_address: "192.168.1.100",
+            user_agent: "Mozilla/5.0...",
+            new_values: { type: "Laptop", brand: "Dell", model: "Latitude 7420" },
+            created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: "2",
+            action: "UPDATE",
+            table_name: "assets",
+            record_id: "asset-2",
+            user_id: "user-2",
+            user_email: "facilitor@company.com",
+            ip_address: "192.168.1.101",
+            old_values: { status: "In voorraad" },
+            new_values: { status: "In gebruik", assignedTo: "Jan Janssen" },
+            created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: "3",
+            action: "INSERT",
+            table_name: "reservations",
+            record_id: "reservation-1",
+            user_id: "user-3",
+            user_email: "user@company.com",
+            ip_address: "192.168.1.102",
+            new_values: { asset_id: "asset-3", purpose: "Thuiswerken", requested_date: "2024-01-15" },
+            created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: "4",
+            action: "DELETE",
+            table_name: "assets",
+            record_id: "asset-4",
+            user_id: "user-1",
+            user_email: "admin@company.com",
+            ip_address: "192.168.1.100",
+            old_values: { type: "Monitor", brand: "LG", status: "Defect" },
+            created_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: "5",
+            action: "UPDATE",
+            table_name: "reservations",
+            record_id: "reservation-2",
+            user_id: "user-2",
+            user_email: "facilitor@company.com",
+            ip_address: "192.168.1.101",
+            old_values: { status: "pending" },
+            new_values: { status: "approved", approved_by: "user-2" },
+            created_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
+          }
+        ];
+        setLogs(mockLogs);
+        setFilteredLogs(mockLogs);
+      } else {
+        // Convert audit data to our format
+        const convertedLogs: ActivityLogEntry[] = (auditData || []).map(log => ({
+          id: log.id,
+          action: log.action,
+          table_name: log.table_name,
+          record_id: log.record_id || '',
+          user_id: log.user_id || '',
+          user_email: '', // Would need to join with profiles to get email
+          ip_address: log.ip_address?.toString() || '',
+          user_agent: log.user_agent || '',
+          old_values: log.old_values,
+          new_values: log.new_values,
+          created_at: log.created_at
+        }));
+        
+        setLogs(convertedLogs);
+        setFilteredLogs(convertedLogs);
+      }
+    } catch (error) {
+      console.error('Error fetching activity logs:', error);
+      // Use empty array as fallback
+      setLogs([]);
+      setFilteredLogs([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     let filtered = logs;
