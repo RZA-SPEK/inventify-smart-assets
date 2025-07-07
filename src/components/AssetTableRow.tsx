@@ -1,6 +1,6 @@
 
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Tag, User, Calendar } from "lucide-react";
+import { Tag, User, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Asset } from "@/types/asset";
@@ -46,6 +46,7 @@ export const AssetTableRow = ({
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log('Edit button clicked for asset:', asset.id);
     onEdit(asset);
   };
 
@@ -103,9 +104,10 @@ export const AssetTableRow = ({
               variant="outline"
               onClick={handleEditClick}
               className="h-8 w-8 p-0"
+              title="Asset bewerken"
             >
+              <Edit className="h-4 w-4" />
               <span className="sr-only">Bewerken</span>
-              📝
             </Button>
           </div>
         </TableCell>
@@ -118,7 +120,6 @@ export const AssetTableRow = ({
             onClick={handleReserveClick}
             className="flex items-center space-x-1"
           >
-            <Calendar className="h-3 w-3" />
             <span>Reserveren</span>
           </Button>
         </TableCell>
