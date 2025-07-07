@@ -14,7 +14,194 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assets: {
+        Row: {
+          asset_tag: string | null
+          assigned_to: string | null
+          assigned_to_location: string | null
+          brand: string | null
+          category: string | null
+          created_at: string | null
+          id: string
+          image_url: string | null
+          location: string | null
+          model: string | null
+          penalty_amount: number | null
+          purchase_date: string | null
+          purchase_price: number | null
+          serial_number: string | null
+          status: string | null
+          type: string
+          warranty_expiry: string | null
+        }
+        Insert: {
+          asset_tag?: string | null
+          assigned_to?: string | null
+          assigned_to_location?: string | null
+          brand?: string | null
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          model?: string | null
+          penalty_amount?: number | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          serial_number?: string | null
+          status?: string | null
+          type: string
+          warranty_expiry?: string | null
+        }
+        Update: {
+          asset_tag?: string | null
+          assigned_to?: string | null
+          assigned_to_location?: string | null
+          brand?: string | null
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          model?: string | null
+          penalty_amount?: number | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          serial_number?: string | null
+          status?: string | null
+          type?: string
+          warranty_expiry?: string | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string | null
+          read_at: string | null
+          related_asset_id: string | null
+          related_reservation_id: string | null
+          title: string
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          read_at?: string | null
+          related_asset_id?: string | null
+          related_reservation_id?: string | null
+          title: string
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          read_at?: string | null
+          related_asset_id?: string | null
+          related_reservation_id?: string | null
+          title?: string
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          role: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          role?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          role?: string | null
+        }
+        Relationships: []
+      }
+      reservations: {
+        Row: {
+          asset_id: string | null
+          created_at: string | null
+          id: string
+          purpose: string | null
+          requested_date: string
+          requester_id: string | null
+          requester_name: string | null
+          return_date: string
+          status: string | null
+        }
+        Insert: {
+          asset_id?: string | null
+          created_at?: string | null
+          id?: string
+          purpose?: string | null
+          requested_date: string
+          requester_id?: string | null
+          requester_name?: string | null
+          return_date: string
+          status?: string | null
+        }
+        Update: {
+          asset_id?: string | null
+          created_at?: string | null
+          id?: string
+          purpose?: string | null
+          requested_date?: string
+          requester_id?: string | null
+          requester_name?: string | null
+          return_date?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      security_audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          record_id: string | null
+          table_name: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          record_id?: string | null
+          table_name: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          record_id?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
