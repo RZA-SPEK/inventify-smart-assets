@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Bell, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Notification {
   id: string;
@@ -22,15 +24,42 @@ export const NotificationCenter = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchNotifications();
+    
+    // Set up real-time subscription for new notifications
+    const channel = supabase
+      .channel('notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications'
+        },
+        () => {
+          fetchNotifications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchNotifications = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        console.log('No user found');
+        setLoading(false);
+        return;
+      }
+
+      console.log('Fetching notifications for user:', user.id);
 
       const { data, error } = await supabase
         .from('notifications')
@@ -40,8 +69,15 @@ export const NotificationCenter = () => {
 
       if (error) {
         console.error('Error fetching notifications:', error);
+        toast({
+          title: "Fout bij laden van meldingen",
+          description: "Kon meldingen niet ophalen.",
+          variant: "destructive",
+        });
         return;
       }
+
+      console.log('Fetched notifications:', data);
 
       // Type assertion to match our interface
       const typedNotifications = (data || []).map(notification => ({
@@ -52,6 +88,11 @@ export const NotificationCenter = () => {
       setNotifications(typedNotifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
+      toast({
+        title: "Fout",
+        description: "Er is een onverwachte fout opgetreden bij het laden van meldingen.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
