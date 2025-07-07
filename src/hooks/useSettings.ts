@@ -54,7 +54,9 @@ export const useSettings = () => {
       }
 
       if (data?.settings_data) {
-        setSettings({ ...DEFAULT_SETTINGS, ...data.settings_data });
+        // Cast the Json type to our SystemSettings interface
+        const dbSettings = data.settings_data as SystemSettings;
+        setSettings({ ...DEFAULT_SETTINGS, ...dbSettings });
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -81,21 +83,21 @@ export const useSettings = () => {
 
       let result;
       if (existingSettings) {
-        // Update existing settings
+        // Update existing settings - cast SystemSettings to Json
         result = await supabase
           .from('system_settings')
           .update({
-            settings_data: newSettings,
+            settings_data: newSettings as any,
             updated_by: user.id,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingSettings.id);
       } else {
-        // Insert new settings
+        // Insert new settings - cast SystemSettings to Json
         result = await supabase
           .from('system_settings')
           .insert({
-            settings_data: newSettings,
+            settings_data: newSettings as any,
             updated_by: user.id
           });
       }
