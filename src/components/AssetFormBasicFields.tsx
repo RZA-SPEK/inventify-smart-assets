@@ -3,7 +3,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Asset } from "@/types/asset";
-import { AssetTypeSelector } from "./AssetTypeSelector";
 import { useSettings } from "@/hooks/useSettings";
 
 interface AssetFormBasicFieldsProps {
@@ -23,7 +22,7 @@ export const AssetFormBasicFields = ({ formData, onFormDataChange }: AssetFormBa
 
   // Helper function to update individual fields
   const handleFieldChange = (field: string, value: any) => {
-    console.log(`Updating field ${field} with value:`, value);
+    console.log(`AssetFormBasicFields: Updating field ${field} with value:`, value);
     onFormDataChange({ [field]: value });
   };
 
@@ -31,8 +30,15 @@ export const AssetFormBasicFields = ({ formData, onFormDataChange }: AssetFormBa
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="type">Asset Type</Label>
-          <Select value={formData.type || ""} onValueChange={(value) => handleFieldChange('type', value)}>
+          <Label htmlFor="type">Asset Type *</Label>
+          <Select 
+            value={formData.type || ""} 
+            onValueChange={(value) => {
+              console.log('Asset type selected:', value);
+              handleFieldChange('type', value);
+            }}
+            required
+          >
             <SelectTrigger>
               <SelectValue placeholder="Selecteer asset type" />
             </SelectTrigger>

@@ -36,7 +36,12 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
 
   // Use useCallback to prevent unnecessary re-renders
   const updateFormData = useCallback((newData: any) => {
-    setFormData(prevData => ({ ...prevData, ...newData }));
+    console.log('updateFormData called with:', newData);
+    setFormData(prevData => {
+      const updatedData = { ...prevData, ...newData };
+      console.log('Form data updated:', updatedData);
+      return updatedData;
+    });
   }, []);
 
   useEffect(() => {
@@ -58,7 +63,29 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
         penaltyAmount: asset.penaltyAmount?.toString() || "",
         comments: asset.comments || ""
       };
+      console.log('Setting initial form data from asset:', initialData);
       setFormData(initialData);
+    } else {
+      // Reset form data when creating a new asset
+      const resetData = {
+        type: "",
+        brand: "",
+        model: "",
+        serialNumber: "",
+        assetTag: "",
+        purchaseDate: "",
+        status: "In voorraad" as Asset["status"],
+        location: "",
+        category: "ICT" as Asset["category"],
+        assignedTo: "",
+        assignedToLocation: "",
+        image: "",
+        purchasePrice: "",
+        penaltyAmount: "",
+        comments: ""
+      };
+      console.log('Resetting form data for new asset:', resetData);
+      setFormData(resetData);
     }
   }, [asset]);
 
@@ -66,19 +93,31 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     e.preventDefault();
     console.log("Submitting form data:", formData);
     
+    // Ensure type is included and not empty
+    if (!formData.type || formData.type.trim() === "") {
+      console.error("Asset type is required but missing:", formData.type);
+      return;
+    }
+    
     const submitData = {
-      ...formData,
+      type: formData.type,
+      brand: formData.brand || "",
+      model: formData.model || "",
+      serialNumber: formData.serialNumber || undefined,
+      assetTag: formData.assetTag || undefined,
+      status: formData.status,
+      location: formData.location || "",
+      category: formData.category,
       assignedTo: formData.assignedTo === "unassigned" ? "" : formData.assignedTo,
       assignedToLocation: formData.assignedToLocation === "unassigned" ? "" : formData.assignedToLocation,
+      purchaseDate: formData.purchaseDate || "",
       image: formData.image || undefined,
-      assetTag: formData.assetTag || undefined,
       purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
       penaltyAmount: formData.penaltyAmount ? parseFloat(formData.penaltyAmount) : 0,
-      serialNumber: formData.serialNumber || undefined,
       comments: formData.comments || undefined
     };
     
-    console.log("Final submit data:", submitData);
+    console.log("Final submit data with type:", submitData);
     onSave(submitData);
   };
 
