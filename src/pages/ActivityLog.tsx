@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -101,6 +100,46 @@ const ActivityLog = () => {
           }
         }
 
+        // Get user information for all activities by looking up based on record_id
+        try {
+          let userId = null;
+          
+          // For profile changes, the record_id is the user_id
+          if (activity.table_name === 'profiles' && activity.record_id) {
+            userId = activity.record_id;
+          }
+          // For reservations, get the requester_id
+          else if (activity.table_name === 'reservations' && activity.record_id) {
+            const { data: reservationData } = await supabase
+              .from('reservations')
+              .select('requester_id')
+              .eq('id', activity.record_id)
+              .single();
+            
+            if (reservationData?.requester_id) {
+              userId = reservationData.requester_id;
+            }
+          }
+          // For assets, we can't directly determine who made the change from the current data
+          // This would require additional audit trail improvements in the future
+
+          // Fetch user profile if we have a userId
+          if (userId) {
+            const { data: userData } = await supabase
+              .from('profiles')
+              .select('email, full_name')
+              .eq('id', userId)
+              .single();
+            
+            if (userData) {
+              enrichedActivity.user_email = userData.email || undefined;
+              enrichedActivity.user_name = userData.full_name || undefined;
+            }
+          }
+        } catch (error) {
+          console.log('Could not fetch user info for activity:', activity.id);
+        }
+
         return enrichedActivity;
       })
     );
@@ -180,6 +219,16 @@ const ActivityLog = () => {
     return description;
   };
 
+  const getUserDisplayName = (activity: ActivityLogEntry) => {
+    if (activity.user_name) {
+      return activity.user_name;
+    }
+    if (activity.user_email) {
+      return activity.user_email;
+    }
+    return 'Onbekende gebruiker';
+  };
+
   const formatTimestamp = (timestamp: string) => {
     return new Date(timestamp).toLocaleString('nl-NL', {
       year: 'numeric',
@@ -198,6 +247,8 @@ const ActivityLog = () => {
       activity.asset_info?.brand,
       activity.asset_info?.model,
       activity.asset_info?.type,
+      activity.user_name,
+      activity.user_email,
       activity.record_id
     ].filter(Boolean).join(' ').toLowerCase();
 
@@ -265,7 +316,7 @@ const ActivityLog = () => {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    placeholder="Zoek op actie, type, merk..."
+                    placeholder="Zoek op actie, type, gebruiker..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -366,6 +417,9 @@ const ActivityLog = () => {
                     <div className="flex flex-col sm:flex-row gap-1 sm:gap-4 text-xs sm:text-sm text-gray-600">
                       <div>
                         <span className="font-medium">Tijdstip:</span> {formatTimestamp(activity.created_at)}
+                      </div>
+                      <div>
+                        <span className="font-medium">Gebruiker:</span> {getUserDisplayName(activity)}
                       </div>
                       {activity.record_id && (
                         <div>
