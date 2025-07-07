@@ -1,6 +1,6 @@
 
 import { Badge } from "@/components/ui/badge";
-import { Shield, User, Wrench, Settings } from "lucide-react";
+import { Shield, User, Settings } from "lucide-react";
 import { useUserRole, UserRole as UserRoleType } from "@/hooks/useUserRole";
 
 interface UserRoleProps {
@@ -19,8 +19,6 @@ export const UserRole = ({ currentRole: propCurrentRole }: UserRoleProps) => {
         return <Shield className="h-3 w-3" />;
       case "Facilitair Admin":
         return <Settings className="h-3 w-3" />;
-      case "Facilitair Medewerker":
-        return <Wrench className="h-3 w-3" />;
       case "Gebruiker":
         return <User className="h-3 w-3" />;
       default:
@@ -34,8 +32,6 @@ export const UserRole = ({ currentRole: propCurrentRole }: UserRoleProps) => {
         return "bg-red-100 text-red-800";
       case "Facilitair Admin":
         return "bg-purple-100 text-purple-800";
-      case "Facilitair Medewerker":
-        return "bg-blue-100 text-blue-800";
       case "Gebruiker":
         return "bg-green-100 text-green-800";
       default:
@@ -48,9 +44,7 @@ export const UserRole = ({ currentRole: propCurrentRole }: UserRoleProps) => {
       case "ICT Admin":
         return "Volledige toegang tot alle functies";
       case "Facilitair Admin":
-        return "Beheer van facilitaire assets en instellingen";
-      case "Facilitair Medewerker":
-        return "Beheer van facilitaire assets";
+        return "Volledige toegang tot alle functies";
       case "Gebruiker":
         return "Basis toegang en eigen reserveringen";
       default:

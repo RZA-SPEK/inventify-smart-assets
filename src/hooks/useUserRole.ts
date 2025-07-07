@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocation } from "react-router-dom";
 
-export type UserRole = "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker";
+export type UserRole = "ICT Admin" | "Facilitair Admin" | "Gebruiker";
 
 // Global cache to prevent duplicate fetches
 const roleCache = new Map<string, UserRole>();
@@ -88,9 +88,10 @@ export const useUserRole = () => {
   const rolePermissions = {
     currentRole,
     loading,
+    // Both ICT Admin and Facilitair Admin have full access
     isAdmin: currentRole === "ICT Admin" || currentRole === "Facilitair Admin",
-    canManageAssets: currentRole === "ICT Admin" || currentRole === "Facilitair Medewerker",
-    canManageUsers: currentRole === "ICT Admin",
+    canManageAssets: currentRole === "ICT Admin" || currentRole === "Facilitair Admin",
+    canManageUsers: currentRole === "ICT Admin" || currentRole === "Facilitair Admin",
     canViewSettings: currentRole === "ICT Admin" || currentRole === "Facilitair Admin"
   };
 
