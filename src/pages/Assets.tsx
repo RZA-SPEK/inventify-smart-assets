@@ -4,14 +4,17 @@ import { AssetList } from "@/components/AssetList";
 import { AssetFilters } from "@/components/AssetFilters";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAssetFilters } from "@/hooks/useAssetFilters";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Asset } from "@/types/asset";
 
 const Assets = () => {
   const { canManageAssets, loading: roleLoading } = useUserRole();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,6 +43,7 @@ const Assets = () => {
 
   const fetchAssets = async () => {
     try {
+      console.log('Fetching assets from database...');
       const { data, error } = await supabase
         .from('assets')
         .select('*')
@@ -47,8 +51,15 @@ const Assets = () => {
 
       if (error) {
         console.error('Error fetching assets:', error);
+        toast({
+          title: "Fout bij laden",
+          description: "Er is een fout opgetreden bij het laden van de assets.",
+          variant: "destructive",
+        });
         return;
       }
+
+      console.log('Assets fetched successfully:', data?.length || 0, 'items');
 
       // Transform database response to match Asset interface
       const transformedAssets: Asset[] = (data || []).map(dbAsset => ({
@@ -73,6 +84,11 @@ const Assets = () => {
       setAssets(transformedAssets);
     } catch (error) {
       console.error('Error fetching assets:', error);
+      toast({
+        title: "Fout bij laden",
+        description: "Er is een onverwachte fout opgetreden.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -80,18 +96,56 @@ const Assets = () => {
 
   const handleEditAsset = (asset: Asset) => {
     console.log('Edit asset:', asset);
+    navigate(`/assets/${asset.id}/edit`);
   };
 
-  const handleDeleteAsset = (id: string, reason: string) => {
-    console.log('Delete asset:', id, reason);
+  const handleDeleteAsset = async (id: string, reason: string) => {
+    try {
+      console.log('Deleting asset:', id, reason);
+      
+      const { error } = await supabase
+        .from('assets')
+        .update({ status: 'Deleted' })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting asset:', error);
+        toast({
+          title: "Fout bij verwijderen",
+          description: "Er is een fout opgetreden bij het verwijderen van het asset.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update local state
+      setAssets(assets.map(asset => 
+        asset.id === id ? { ...asset, status: "Deleted" as const } : asset
+      ));
+
+      const asset = assets.find(a => a.id === id);
+      toast({
+        title: "Asset verwijderd",
+        description: `${asset?.brand} ${asset?.model} is gemarkeerd als verwijderd. Reden: ${reason}`,
+        variant: "destructive",
+      });
+    } catch (error) {
+      console.error('Error deleting asset:', error);
+      toast({
+        title: "Fout bij verwijderen",
+        description: "Er is een onverwachte fout opgetreden.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleReserveAsset = (asset: Asset) => {
     console.log('Reserve asset:', asset);
+    // TODO: Implement reservation functionality
   };
 
   // Don't render content until role is loaded
-  if (roleLoading) {
+  if (roleLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">

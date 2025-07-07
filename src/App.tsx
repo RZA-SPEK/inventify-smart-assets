@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Assets from "./pages/Assets";
 import AssetDetails from "./pages/AssetDetails";
 import AssetEdit from "./pages/AssetEdit";
+import AssetNew from "./pages/AssetNew";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import ActivityLog from "./pages/ActivityLog";
@@ -46,6 +47,12 @@ const App = () => (
                 <ProtectedRoute>
                   <MainNavigation />
                   <Assets />
+                </ProtectedRoute>
+              } />
+              <Route path="/assets/new" element={
+                <ProtectedRoute>
+                  <MainNavigation />
+                  <AssetNew />
                 </ProtectedRoute>
               } />
               <Route path="/assets/:id" element={
