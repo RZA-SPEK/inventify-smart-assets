@@ -42,7 +42,6 @@ export const UserFilters = ({
             <SelectItem value="all">Alle rollen</SelectItem>
             <SelectItem value="ICT Admin">ICT Admin</SelectItem>
             <SelectItem value="Facilitair Admin">Facilitair Admin</SelectItem>
-            <SelectItem value="Facilitair Medewerker">Facilitair Medewerker</SelectItem>
             <SelectItem value="Gebruiker">Gebruiker</SelectItem>
           </SelectContent>
         </Select>

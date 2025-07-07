@@ -8,7 +8,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker";
+  role: "ICT Admin" | "Facilitair Admin" | "Gebruiker";
   status: "active" | "inactive";
   lastLogin: string;
   createdAt: string;
@@ -28,8 +28,6 @@ export const UserTable = ({ users, onEditUser, onToggleStatus, onDeleteUser }: U
         return "bg-red-100 text-red-800";
       case "Facilitair Admin":
         return "bg-purple-100 text-purple-800";
-      case "Facilitair Medewerker":
-        return "bg-blue-100 text-blue-800";
       case "Gebruiker":
         return "bg-green-100 text-green-800";
       default:
