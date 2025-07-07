@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Asset } from "@/types/asset";
@@ -32,29 +33,37 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     penaltyAmount: ""
   });
 
+  // Use useCallback to prevent unnecessary re-renders
+  const updateFormData = useCallback((newData: any) => {
+    setFormData(prevData => ({ ...prevData, ...newData }));
+  }, []);
+
   useEffect(() => {
     if (asset) {
-      setFormData({
-        type: asset.type,
+      const initialData = {
+        type: asset.type || "",
         brand: asset.brand || "",
         model: asset.model || "",
         serialNumber: asset.serialNumber || "",
         assetTag: asset.assetTag || "",
-        purchaseDate: asset.purchaseDate,
-        status: asset.status,
-        location: asset.location,
-        category: asset.category,
+        purchaseDate: asset.purchaseDate || "",
+        status: asset.status || "In voorraad" as Asset["status"],
+        location: asset.location || "",
+        category: asset.category || "ICT" as Asset["category"],
         assignedTo: asset.assignedTo || "",
         assignedToLocation: asset.assignedToLocation || "",
         image: asset.image || "",
         purchasePrice: asset.purchasePrice?.toString() || "",
         penaltyAmount: asset.penaltyAmount?.toString() || ""
-      });
+      };
+      setFormData(initialData);
     }
   }, [asset]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Submitting form data:", formData);
+    
     const submitData = {
       ...formData,
       assignedTo: formData.assignedTo === "unassigned" ? "" : formData.assignedTo,
@@ -65,17 +74,19 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
       penaltyAmount: formData.penaltyAmount ? parseFloat(formData.penaltyAmount) : 0,
       serialNumber: formData.serialNumber || undefined
     };
+    
+    console.log("Final submit data:", submitData);
     onSave(submitData);
   };
 
   const handleBarcodeScanned = (scannedData: string) => {
     console.log("Barcode scanned:", scannedData, "Mode:", scannerMode);
     if (scannerMode === 'serial') {
-      setFormData({ ...formData, serialNumber: scannedData });
+      updateFormData({ serialNumber: scannedData });
     } else if (scannerMode === 'assetTag') {
       // Handle asset tag scanning - add MVDS prefix if not present
       const processedTag = scannedData.startsWith("MVDS-") ? scannedData : `MVDS-${scannedData}`;
-      setFormData({ ...formData, assetTag: processedTag });
+      updateFormData({ assetTag: processedTag });
     }
     setShowScanner(false);
     setShowAssetTagScanner(false);
@@ -118,7 +129,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     }
     
     const generatedTag = `${prefix}${formattedNumber}`;
-    setFormData({ ...formData, assetTag: generatedTag });
+    updateFormData({ assetTag: generatedTag });
   };
 
   return (
@@ -137,7 +148,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <AssetFormFields
               formData={formData}
-              onFormDataChange={setFormData}
+              onFormDataChange={updateFormData}
               onShowScanner={handleShowSerialScanner}
               onShowAssetTagScanner={handleShowAssetTagScanner}
               onGenerateAssetTag={generateAssetTag}

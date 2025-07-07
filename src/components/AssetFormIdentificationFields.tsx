@@ -22,12 +22,19 @@ export const AssetFormIdentificationFields = ({
   onShowAssetTagScanner,
   onGenerateAssetTag 
 }: AssetFormIdentificationFieldsProps) => {
+  
   const handleAssetTagChange = (value: string) => {
+    console.log("Asset tag input changed:", value);
     if (value && !value.startsWith("MVDS-") && value !== "MVDS-") {
-      onFormDataChange({ ...formData, assetTag: "MVDS-" + value });
+      onFormDataChange({ assetTag: "MVDS-" + value });
     } else {
-      onFormDataChange({ ...formData, assetTag: value });
+      onFormDataChange({ assetTag: value });
     }
+  };
+
+  const handleSerialNumberChange = (value: string) => {
+    console.log("Serial number input changed:", value);
+    onFormDataChange({ serialNumber: value });
   };
 
   return (
@@ -38,7 +45,7 @@ export const AssetFormIdentificationFields = ({
           <Input
             id="serialNumber"
             value={formData.serialNumber}
-            onChange={(e) => onFormDataChange({ ...formData, serialNumber: e.target.value })}
+            onChange={(e) => handleSerialNumberChange(e.target.value)}
             className="flex-1"
             placeholder="Voer serienummer in of scan"
           />

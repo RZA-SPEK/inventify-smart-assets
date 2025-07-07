@@ -14,7 +14,8 @@ export const AssetFormPriceFields = ({ formData, onFormDataChange }: AssetFormPr
   const handlePriceChange = (field: 'purchasePrice' | 'penaltyAmount', value: string) => {
     // Allow only numbers and decimal point
     const numericValue = value.replace(/[^0-9.]/g, '');
-    onFormDataChange({ ...formData, [field]: numericValue });
+    console.log(`Updating ${field} with value:`, numericValue);
+    onFormDataChange({ [field]: numericValue });
   };
 
   return (

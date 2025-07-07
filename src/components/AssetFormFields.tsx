@@ -37,11 +37,16 @@ export const AssetFormFields = ({
   onShowAssetTagScanner,
   onGenerateAssetTag 
 }: AssetFormFieldsProps) => {
+  // Helper function to update individual fields while preserving other data
+  const handleFieldChange = (field: string, value: any) => {
+    onFormDataChange({ [field]: value });
+  };
+
   return (
     <>
       <ImageUpload
         currentImage={formData.image}
-        onImageChange={(imageUrl) => onFormDataChange({ ...formData, image: imageUrl || "" })}
+        onImageChange={(imageUrl) => handleFieldChange('image', imageUrl || "")}
       />
 
       <AssetFormBasicFields
@@ -65,13 +70,13 @@ export const AssetFormFields = ({
       <LocationSelector
         mainLocation={formData.location}
         specificLocation={formData.assignedToLocation}
-        onMainLocationChange={(value) => onFormDataChange({ ...formData, location: value })}
-        onSpecificLocationChange={(value) => onFormDataChange({ ...formData, assignedToLocation: value })}
+        onMainLocationChange={(value) => handleFieldChange('location', value)}
+        onSpecificLocationChange={(value) => handleFieldChange('assignedToLocation', value)}
       />
 
       <AssignmentSelector
         assignedTo={formData.assignedTo}
-        onAssignedToChange={(value) => onFormDataChange({ ...formData, assignedTo: value })}
+        onAssignedToChange={(value) => handleFieldChange('assignedTo', value)}
       />
     </>
   );
