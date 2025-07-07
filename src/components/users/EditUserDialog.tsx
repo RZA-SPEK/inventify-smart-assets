@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker";
+  role: "ICT Admin" | "Facilitair Admin" | "Gebruiker";
   status: "active" | "inactive";
   lastLogin: string;
   createdAt: string;
@@ -31,27 +32,59 @@ export const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: Edit
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
-    role: user?.role || "Gebruiker" as "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker"
+    role: user?.role || "Gebruiker" as "ICT Admin" | "Facilitair Admin" | "Gebruiker"
   });
   const [loading, setLoading] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!user) return;
     
-    const updatedUser = {
-      ...user,
-      name: formData.name,
-      email: formData.email,
-      role: formData.role
-    };
+    setLoading(true);
     
-    onUserUpdated(updatedUser);
-    onOpenChange(false);
-    
-    toast({
-      title: "Gebruiker bijgewerkt",
-      description: `${formData.name} is succesvol bijgewerkt`
-    });
+    try {
+      // Update the user's role in the database
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          role: formData.role,
+          full_name: formData.name
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error updating user:', error);
+        toast({
+          title: "Fout bij bijwerken",
+          description: "Er is een fout opgetreden bij het bijwerken van de gebruiker.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const updatedUser = {
+        ...user,
+        name: formData.name,
+        email: formData.email,
+        role: formData.role
+      };
+      
+      onUserUpdated(updatedUser);
+      onOpenChange(false);
+      
+      toast({
+        title: "Gebruiker bijgewerkt",
+        description: `${formData.name} is succesvol bijgewerkt met rol: ${formData.role}`
+      });
+    } catch (error) {
+      console.error('Error updating user:', error);
+      toast({
+        title: "Er is een fout opgetreden",
+        description: "Probeer het later opnieuw.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePasswordReset = async () => {
@@ -163,7 +196,7 @@ export const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: Edit
               <Label htmlFor="role">Rol</Label>
               <Select 
                 value={formData.role}
-                onValueChange={(value: "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker") => 
+                onValueChange={(value: "ICT Admin" | "Facilitair Admin" | "Gebruiker") => 
                   setFormData(prev => ({ ...prev, role: value }))
                 }
               >
@@ -173,7 +206,6 @@ export const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: Edit
                 <SelectContent>
                   <SelectItem value="ICT Admin">ICT Admin</SelectItem>
                   <SelectItem value="Facilitair Admin">Facilitair Admin</SelectItem>
-                  <SelectItem value="Facilitair Medewerker">Facilitair Medewerker</SelectItem>
                   <SelectItem value="Gebruiker">Gebruiker</SelectItem>
                 </SelectContent>
               </Select>
@@ -197,18 +229,10 @@ export const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: Edit
                   <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
                     <h4 className="font-medium text-purple-800">Facilitair Admin</h4>
                     <ul className="text-purple-700 mt-1 space-y-1">
-                      <li>• Facilitaire assets beheren</li>
-                      <li>• Instellingen voor facilitaire zaken</li>
+                      <li>• Volledige toegang tot alle functies</li>
+                      <li>• Gebruikersbeheer</li>
+                      <li>• Assets beheren</li>
                       <li>• Reserveringen goedkeuren</li>
-                    </ul>
-                  </div>
-                )}
-                {formData.role === "Facilitair Medewerker" && (
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h4 className="font-medium text-blue-800">Facilitair Medewerker</h4>
-                    <ul className="text-blue-700 mt-1 space-y-1">
-                      <li>• Facilitaire assets beheren</li>
-                      <li>• Reserveringen verwerken</li>
                     </ul>
                   </div>
                 )}
@@ -216,7 +240,7 @@ export const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: Edit
                   <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                     <h4 className="font-medium text-green-800">Gebruiker</h4>
                     <ul className="text-green-700 mt-1 space-y-1">
-                      <li>• Eigen assets bekijken</li>
+                      <li>• Assets bekijken</li>
                       <li>• Reserveringen aanvragen</li>
                       <li>• Basis functionaliteit</li>
                     </ul>
@@ -260,8 +284,8 @@ export const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: Edit
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Annuleren
           </Button>
-          <Button onClick={handleSave}>
-            Wijzigingen Opslaan
+          <Button onClick={handleSave} disabled={loading}>
+            {loading ? "Bezig..." : "Wijzigingen Opslaan"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { UserTable } from "@/components/users/UserTable";
 import { UserFilters } from "@/components/users/UserFilters";
@@ -97,9 +96,9 @@ const Users = () => {
     return matchesSearch && matchesRole;
   });
 
-  // Convert users to match UserTable interface, handling role migration
+  // Convert users to match UserTable interface - keep original roles
   const tableUsers = filteredUsers.map(user => {
-    // Convert "Facilitair Medewerker" to "Gebruiker" for the simplified role system
+    // Map roles properly without losing "Facilitair Admin"
     let mappedRole: "ICT Admin" | "Facilitair Admin" | "Gebruiker";
     
     if (user.role === "ICT Admin") {
@@ -107,7 +106,7 @@ const Users = () => {
     } else if (user.role === "Facilitair Admin") {
       mappedRole = "Facilitair Admin";
     } else {
-      // Map both "Gebruiker" and "Facilitair Medewerker" to "Gebruiker"
+      // Only map unknown roles to "Gebruiker"
       mappedRole = "Gebruiker";
     }
 
