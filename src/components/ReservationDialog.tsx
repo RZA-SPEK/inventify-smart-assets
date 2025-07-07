@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Asset } from "@/types/asset";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ReservationDialogProps {
   asset: Asset;
@@ -16,9 +17,9 @@ interface ReservationDialogProps {
 
 export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    requesterName: "",
     requestedDate: "",
     returnDate: "",
     purpose: ""
@@ -29,8 +30,6 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
     setLoading(true);
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user) {
         toast({
           title: "Fout",
@@ -40,15 +39,24 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
         return;
       }
 
+      // Get user's full name from profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      const requesterName = profile?.full_name || user.email || 'Unknown User';
+
       const { error } = await supabase
         .from('reservations')
         .insert({
           asset_id: asset.id,
           requester_id: user.id,
-          requester_name: formData.requesterName,
+          requester_name: requesterName,
           requested_date: formData.requestedDate,
           return_date: formData.returnDate,
-          purpose: formData.purpose,
+          purpose: formData.purpose || null,
           status: 'pending'
         });
 
@@ -65,6 +73,7 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
       console.log("Reservation created successfully for:", {
         assetId: asset.id,
         assetName: `${asset.brand} ${asset.model}`,
+        requesterName,
         ...formData
       });
 
@@ -97,16 +106,6 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="requesterName">Uw Naam</Label>
-            <Input
-              id="requesterName"
-              value={formData.requesterName}
-              onChange={(e) => setFormData({ ...formData, requesterName: e.target.value })}
-              required
-            />
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="requestedDate">Startdatum</Label>
@@ -132,13 +131,12 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="purpose">Doel van gebruik</Label>
+            <Label htmlFor="purpose">Doel van gebruik (optioneel)</Label>
             <Textarea
               id="purpose"
               value={formData.purpose}
               onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
               placeholder="Beschrijf waarvoor u dit asset nodig heeft..."
-              required
             />
           </div>
 

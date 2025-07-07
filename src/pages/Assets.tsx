@@ -9,6 +9,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Asset } from "@/types/asset";
+import { ReservationDialog } from "@/components/ReservationDialog";
 
 const Assets = () => {
   const { canManageAssets, currentRole, loading: roleLoading } = useUserRole();
@@ -16,6 +17,8 @@ const Assets = () => {
   const navigate = useNavigate();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showReservationDialog, setShowReservationDialog] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
 
   const {
     searchTerm,
@@ -165,13 +168,15 @@ const Assets = () => {
       return;
     }
     
-    toast({
-      title: "Reservering aanvragen",
-      description: "Reserveringsfunctionaliteit wordt binnenkort toegevoegd.",
-    });
+    setSelectedAsset(asset);
+    setShowReservationDialog(true);
   };
 
-  // Show loading state
+  const handleCloseReservationDialog = () => {
+    setShowReservationDialog(false);
+    setSelectedAsset(null);
+  };
+
   if (roleLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -231,6 +236,13 @@ const Assets = () => {
           onDelete={handleDeleteAsset}
           onReserve={handleReserveAsset}
         />
+
+        {showReservationDialog && selectedAsset && (
+          <ReservationDialog
+            asset={selectedAsset}
+            onClose={handleCloseReservationDialog}
+          />
+        )}
       </div>
     </div>
   );
