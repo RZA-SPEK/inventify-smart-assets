@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { UserTable } from "@/components/users/UserTable";
 import { UserFilters } from "@/components/users/UserFilters";
@@ -88,16 +87,30 @@ const Users = () => {
     return matchesSearch && matchesRole;
   });
 
-  // Convert users to match UserTable interface
-  const tableUsers = filteredUsers.map(user => ({
-    id: user.id,
-    name: user.full_name || user.email.split('@')[0],
-    email: user.email,
-    role: user.role as "ICT Admin" | "Facilitair Admin" | "Facilitair Medewerker" | "Gebruiker",
-    status: "active" as const,
-    lastLogin: user.created_at,
-    createdAt: user.created_at
-  }));
+  // Convert users to match UserTable interface, handling role migration
+  const tableUsers = filteredUsers.map(user => {
+    // Convert "Facilitair Medewerker" to "Gebruiker" for the simplified role system
+    let mappedRole: "ICT Admin" | "Facilitair Admin" | "Gebruiker";
+    
+    if (user.role === "ICT Admin") {
+      mappedRole = "ICT Admin";
+    } else if (user.role === "Facilitair Admin") {
+      mappedRole = "Facilitair Admin";
+    } else {
+      // Map both "Gebruiker" and "Facilitair Medewerker" to "Gebruiker"
+      mappedRole = "Gebruiker";
+    }
+
+    return {
+      id: user.id,
+      name: user.full_name || user.email.split('@')[0],
+      email: user.email,
+      role: mappedRole,
+      status: "active" as const,
+      lastLogin: user.created_at,
+      createdAt: user.created_at
+    };
+  });
 
   // Don't render if user doesn't have permission
   if (!roleLoading && !canManageUsers) {
