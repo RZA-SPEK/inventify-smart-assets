@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,8 +18,6 @@ interface Reservation {
   return_date: string;
   status: string;
   created_at: string;
-  approved_at: string | null;
-  approved_by: string | null;
   assets?: {
     type: string;
     serial_number: string;
@@ -73,12 +70,6 @@ const Reservations = () => {
         status: newStatus,
         updated_at: new Date().toISOString(),
       };
-
-      if (newStatus === 'approved') {
-        updates.approved_at = new Date().toISOString();
-        // In a real app, you'd get the current user's ID
-        // updates.approved_by = currentUserId;
-      }
 
       const { error } = await supabase
         .from('reservations')
@@ -237,9 +228,6 @@ const Reservations = () => {
                         <div><strong>Doel:</strong> {reservation.purpose}</div>
                         <div><strong>Periode:</strong> {formatDate(reservation.requested_date)} - {formatDate(reservation.return_date)}</div>
                         <div><strong>Aangevraagd:</strong> {formatDate(reservation.created_at)}</div>
-                        {reservation.approved_at && (
-                          <div><strong>Goedgekeurd:</strong> {formatDate(reservation.approved_at)}</div>
-                        )}
                       </div>
                     </div>
                     
