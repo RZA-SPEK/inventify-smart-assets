@@ -100,7 +100,7 @@ const ActivityLog = () => {
           }
         }
 
-        // Get user information for all activities by looking up based on record_id
+        // Enhanced user information detection
         try {
           let userId = null;
           
@@ -114,14 +114,29 @@ const ActivityLog = () => {
               .from('reservations')
               .select('requester_id')
               .eq('id', activity.record_id)
-              .single();
+              .maybeSingle();
             
             if (reservationData?.requester_id) {
               userId = reservationData.requester_id;
             }
           }
-          // For assets, we can't directly determine who made the change from the current data
-          // This would require additional audit trail improvements in the future
+          // For assets, try to get the current user or assigned user
+          else if (activity.table_name === 'assets' && activity.record_id) {
+            const { data: assetData } = await supabase
+              .from('assets')
+              .select('assigned_to')
+              .eq('id', activity.record_id)
+              .maybeSingle();
+            
+            // If asset is assigned to someone, use that as a fallback
+            if (assetData?.assigned_to) {
+              // Check if assigned_to is a user ID (UUID format)
+              const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+              if (uuidRegex.test(assetData.assigned_to)) {
+                userId = assetData.assigned_to;
+              }
+            }
+          }
 
           // Fetch user profile if we have a userId
           if (userId) {
@@ -129,15 +144,33 @@ const ActivityLog = () => {
               .from('profiles')
               .select('email, full_name')
               .eq('id', userId)
-              .single();
+              .maybeSingle();
             
             if (userData) {
               enrichedActivity.user_email = userData.email || undefined;
               enrichedActivity.user_name = userData.full_name || undefined;
             }
           }
+
+          // If we still don't have user info, try to get the current authenticated user
+          // This is a fallback for actions that might have been performed by the current session
+          if (!enrichedActivity.user_email && !enrichedActivity.user_name) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              const { data: currentUserData } = await supabase
+                .from('profiles')
+                .select('email, full_name')
+                .eq('id', user.id)
+                .maybeSingle();
+              
+              if (currentUserData) {
+                enrichedActivity.user_email = currentUserData.email || undefined;
+                enrichedActivity.user_name = currentUserData.full_name || undefined;
+              }
+            }
+          }
         } catch (error) {
-          console.log('Could not fetch user info for activity:', activity.id);
+          console.log('Could not fetch user info for activity:', activity.id, error);
         }
 
         return enrichedActivity;
@@ -226,7 +259,7 @@ const ActivityLog = () => {
     if (activity.user_email) {
       return activity.user_email;
     }
-    return 'Onbekende gebruiker';
+    return 'Systeem';
   };
 
   const formatTimestamp = (timestamp: string) => {
