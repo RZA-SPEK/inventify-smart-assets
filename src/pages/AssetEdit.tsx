@@ -18,7 +18,10 @@ const AssetEdit = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('AssetEdit: Component mounted, id:', id, 'canManageAssets:', canManageAssets);
+    
     if (!canManageAssets) {
+      console.log('AssetEdit: User cannot manage assets, redirecting to assets list');
       navigate("/assets");
       return;
     }
@@ -30,7 +33,7 @@ const AssetEdit = () => {
 
   const fetchAsset = async () => {
     try {
-      console.log('Fetching asset with ID:', id);
+      console.log('AssetEdit: Fetching asset with ID:', id);
       
       const { data, error } = await supabase
         .from('assets')
@@ -39,7 +42,7 @@ const AssetEdit = () => {
         .single();
 
       if (error) {
-        console.error('Error fetching asset:', error);
+        console.error('AssetEdit: Error fetching asset:', error);
         toast({
           title: "Fout bij laden",
           description: "Er is een fout opgetreden bij het laden van het asset.",
@@ -49,7 +52,7 @@ const AssetEdit = () => {
       }
 
       if (data) {
-        console.log('Asset fetched successfully:', data);
+        console.log('AssetEdit: Asset fetched successfully:', data);
         
         // Transform database response to match Asset interface
         const transformedAsset: Asset = {
@@ -72,10 +75,11 @@ const AssetEdit = () => {
           comments: data.comments || ''
         };
 
+        console.log('AssetEdit: Transformed asset:', transformedAsset);
         setAsset(transformedAsset);
       }
     } catch (error) {
-      console.error('Error fetching asset:', error);
+      console.error('AssetEdit: Error fetching asset:', error);
       toast({
         title: "Fout bij laden",
         description: "Er is een onverwachte fout opgetreden.",
@@ -88,7 +92,7 @@ const AssetEdit = () => {
 
   const handleSave = async (updatedAsset: Omit<Asset, "id">) => {
     try {
-      console.log('Updating asset:', updatedAsset);
+      console.log('AssetEdit: Updating asset:', updatedAsset);
       
       const { error } = await supabase
         .from('assets')
@@ -113,7 +117,7 @@ const AssetEdit = () => {
         .eq('id', id);
 
       if (error) {
-        console.error('Error updating asset:', error);
+        console.error('AssetEdit: Error updating asset:', error);
         toast({
           title: "Fout bij bijwerken",
           description: "Er is een fout opgetreden bij het bijwerken van het asset.",
@@ -122,7 +126,7 @@ const AssetEdit = () => {
         return;
       }
 
-      console.log('Asset updated successfully');
+      console.log('AssetEdit: Asset updated successfully');
       toast({
         title: "Asset bijgewerkt",
         description: `${updatedAsset.brand} ${updatedAsset.model} is succesvol bijgewerkt.`,
@@ -130,7 +134,7 @@ const AssetEdit = () => {
       
       navigate(`/assets/${id}`);
     } catch (error) {
-      console.error('Error updating asset:', error);
+      console.error('AssetEdit: Error updating asset:', error);
       toast({
         title: "Fout bij bijwerken",
         description: "Er is een onverwachte fout opgetreden.",
@@ -140,6 +144,7 @@ const AssetEdit = () => {
   };
 
   const handleCancel = () => {
+    console.log('AssetEdit: Cancel clicked, navigating back to asset details');
     navigate(`/assets/${id}`);
   };
 
