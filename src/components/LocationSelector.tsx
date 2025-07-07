@@ -1,6 +1,7 @@
 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useSettings } from "@/hooks/useSettings";
 
 interface LocationSelectorProps {
   mainLocation: string;
@@ -15,10 +16,7 @@ export const LocationSelector = ({
   onMainLocationChange, 
   onSpecificLocationChange 
 }: LocationSelectorProps) => {
-  const locations = [
-    "Kantoor Amsterdam", "Kantoor Utrecht", "Kantoor Rotterdam",
-    "ICT Magazijn", "Facilitair Magazijn", "Thuiswerken"
-  ];
+  const { settings } = useSettings();
 
   const specificLocations = [
     "Werkplek A-101", "Werkplek A-102", "Werkplek A-150", "Werkplek A-200",
@@ -38,7 +36,7 @@ export const LocationSelector = ({
             <SelectValue placeholder="Selecteer hoofdlocatie" />
           </SelectTrigger>
           <SelectContent>
-            {locations.map((location) => (
+            {settings.locations.map((location) => (
               <SelectItem key={location} value={location}>
                 {location}
               </SelectItem>

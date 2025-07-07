@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Asset } from "@/types/asset";
 import { AssetTypeSelector } from "./AssetTypeSelector";
+import { useSettings } from "@/hooks/useSettings";
 
 interface AssetFormBasicFieldsProps {
   formData: {
@@ -18,25 +19,39 @@ interface AssetFormBasicFieldsProps {
 }
 
 export const AssetFormBasicFields = ({ formData, onFormDataChange }: AssetFormBasicFieldsProps) => {
+  const { settings } = useSettings();
+
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <AssetTypeSelector
-          value={formData.type}
-          onChange={(value) => onFormDataChange({ ...formData, type: value })}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="type">Asset Type</Label>
+          <Select value={formData.type} onValueChange={(value) => onFormDataChange({ ...formData, type: value })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecteer asset type" />
+            </SelectTrigger>
+            <SelectContent>
+              {settings.assetTypes.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {type}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <div className="space-y-2">
           <Label htmlFor="category">Categorie</Label>
           <Select value={formData.category} onValueChange={(value: Asset["category"]) => onFormDataChange({ ...formData, category: value })}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder="Selecteer categorie" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ICT">ICT</SelectItem>
-              <SelectItem value="Facilitair">Facilitair</SelectItem>
-              <SelectItem value="Catering">Catering</SelectItem>
-              <SelectItem value="Logistics">Logistiek</SelectItem>
+              {settings.categories.map((category) => (
+                <SelectItem key={category} value={category as Asset["category"]}>
+                  {category}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -44,12 +59,19 @@ export const AssetFormBasicFields = ({ formData, onFormDataChange }: AssetFormBa
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="brand">Merk (optioneel)</Label>
-          <Input
-            id="brand"
-            value={formData.brand}
-            onChange={(e) => onFormDataChange({ ...formData, brand: e.target.value })}
-          />
+          <Label htmlFor="brand">Merk</Label>
+          <Select value={formData.brand} onValueChange={(value) => onFormDataChange({ ...formData, brand: value })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecteer merk" />
+            </SelectTrigger>
+            <SelectContent>
+              {settings.brands.map((brand) => (
+                <SelectItem key={brand} value={brand}>
+                  {brand}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
@@ -58,6 +80,7 @@ export const AssetFormBasicFields = ({ formData, onFormDataChange }: AssetFormBa
             id="model"
             value={formData.model}
             onChange={(e) => onFormDataChange({ ...formData, model: e.target.value })}
+            placeholder="Voer model in"
           />
         </div>
       </div>
@@ -78,13 +101,14 @@ export const AssetFormBasicFields = ({ formData, onFormDataChange }: AssetFormBa
           <Label htmlFor="status">Status</Label>
           <Select value={formData.status} onValueChange={(value: Asset["status"]) => onFormDataChange({ ...formData, status: value })}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder="Selecteer status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="In voorraad">In voorraad</SelectItem>
-              <SelectItem value="In gebruik">In gebruik</SelectItem>
-              <SelectItem value="Defect">Defect</SelectItem>
-              <SelectItem value="Onderhoud">Onderhoud</SelectItem>
+              {settings.statuses.map((status) => (
+                <SelectItem key={status} value={status as Asset["status"]}>
+                  {status}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
