@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, Filter, Search, RefreshCw, AlertTriangle } from "lucide-react";
+import { CalendarDays, Filter, Search, RefreshCw, AlertTriangle, User, Package, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 
@@ -14,6 +15,13 @@ interface ActivityLogEntry {
   table_name: string;
   created_at: string;
   record_id: string | null;
+  user_email?: string;
+  user_name?: string;
+  asset_info?: {
+    type: string;
+    brand: string;
+    model: string;
+  };
 }
 
 const ActivityLog = () => {
@@ -56,7 +64,10 @@ const ActivityLog = () => {
         setActivities([]);
       } else {
         console.log('Successfully fetched activity log:', data?.length || 0, 'entries');
-        setActivities(data || []);
+        
+        // Enrich the data with additional information
+        const enrichedActivities = await enrichActivitiesWithDetails(data || []);
+        setActivities(enrichedActivities);
         setError(null);
       }
     } catch (error) {
@@ -66,6 +77,35 @@ const ActivityLog = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const enrichActivitiesWithDetails = async (activities: ActivityLogEntry[]) => {
+    const enriched = await Promise.all(
+      activities.map(async (activity) => {
+        const enrichedActivity = { ...activity };
+
+        // Get asset information if it's an asset-related activity
+        if (activity.table_name === 'assets' && activity.record_id) {
+          try {
+            const { data: assetData } = await supabase
+              .from('assets')
+              .select('type, brand, model')
+              .eq('id', activity.record_id)
+              .single();
+            
+            if (assetData) {
+              enrichedActivity.asset_info = assetData;
+            }
+          } catch (error) {
+            console.log('Could not fetch asset info for:', activity.record_id);
+          }
+        }
+
+        return enrichedActivity;
+      })
+    );
+
+    return enriched;
   };
 
   const handleRefresh = () => {
@@ -80,6 +120,66 @@ const ActivityLog = () => {
     return 'bg-gray-100 text-gray-800';
   };
 
+  const getActionIcon = (tableName: string) => {
+    switch (tableName) {
+      case 'assets':
+        return <Package className="h-4 w-4" />;
+      case 'profiles':
+        return <User className="h-4 w-4" />;
+      case 'reservations':
+        return <CalendarDays className="h-4 w-4" />;
+      default:
+        return <FileText className="h-4 w-4" />;
+    }
+  };
+
+  const getFriendlyTableName = (tableName: string) => {
+    switch (tableName) {
+      case 'assets':
+        return 'Asset';
+      case 'profiles':
+        return 'Gebruiker';
+      case 'reservations':
+        return 'Reservering';
+      default:
+        return tableName;
+    }
+  };
+
+  const getFriendlyActionName = (action: string) => {
+    switch (action.toLowerCase()) {
+      case 'insert':
+        return 'Toegevoegd';
+      case 'update':
+        return 'Bijgewerkt';
+      case 'delete':
+        return 'Verwijderd';
+      default:
+        return action;
+    }
+  };
+
+  const getActivityDescription = (activity: ActivityLogEntry) => {
+    const tableName = getFriendlyTableName(activity.table_name);
+    const actionName = getFriendlyActionName(activity.action);
+    
+    let description = `${tableName} ${actionName.toLowerCase()}`;
+    
+    if (activity.asset_info) {
+      const assetDescription = [
+        activity.asset_info.brand,
+        activity.asset_info.model,
+        `(${activity.asset_info.type})`
+      ].filter(Boolean).join(' ');
+      
+      if (assetDescription) {
+        description += `: ${assetDescription}`;
+      }
+    }
+    
+    return description;
+  };
+
   const formatTimestamp = (timestamp: string) => {
     return new Date(timestamp).toLocaleString('nl-NL', {
       year: 'numeric',
@@ -92,9 +192,16 @@ const ActivityLog = () => {
   };
 
   const filteredActivities = activities.filter(activity => {
-    const matchesSearch = activity.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         activity.table_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (activity.record_id && activity.record_id.includes(searchTerm));
+    const searchableText = [
+      getFriendlyActionName(activity.action),
+      getFriendlyTableName(activity.table_name),
+      activity.asset_info?.brand,
+      activity.asset_info?.model,
+      activity.asset_info?.type,
+      activity.record_id
+    ].filter(Boolean).join(' ').toLowerCase();
+
+    const matchesSearch = searchableText.includes(searchTerm.toLowerCase());
     const matchesTable = selectedTable === "all" || activity.table_name === selectedTable;
     const matchesAction = selectedAction === "all" || activity.action.toLowerCase().includes(selectedAction.toLowerCase());
     return matchesSearch && matchesTable && matchesAction;
@@ -158,7 +265,7 @@ const ActivityLog = () => {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    placeholder="Zoek op actie, tabel of ID..."
+                    placeholder="Zoek op actie, type, merk..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -167,15 +274,15 @@ const ActivityLog = () => {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium">Tabel</label>
+                <label className="text-sm font-medium">Type</label>
                 <Select value={selectedTable} onValueChange={setSelectedTable}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecteer tabel" />
+                    <SelectValue placeholder="Selecteer type" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border shadow-lg z-50">
-                    <SelectItem value="all">Alle tabellen</SelectItem>
+                    <SelectItem value="all">Alle types</SelectItem>
                     {uniqueTables.map(table => (
-                      <SelectItem key={table} value={table}>{table}</SelectItem>
+                      <SelectItem key={table} value={table}>{getFriendlyTableName(table)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -189,9 +296,9 @@ const ActivityLog = () => {
                   </SelectTrigger>
                   <SelectContent className="bg-white border shadow-lg z-50">
                     <SelectItem value="all">Alle acties</SelectItem>
-                    <SelectItem value="insert">Insert</SelectItem>
-                    <SelectItem value="update">Update</SelectItem>
-                    <SelectItem value="delete">Delete</SelectItem>
+                    <SelectItem value="insert">Toegevoegd</SelectItem>
+                    <SelectItem value="update">Bijgewerkt</SelectItem>
+                    <SelectItem value="delete">Verwijderd</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -244,15 +351,15 @@ const ActivityLog = () => {
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                        <Badge className={`${getActionColor(activity.action)} text-xs`}>
-                          {activity.action}
-                        </Badge>
-                        <span className="font-medium text-sm sm:text-base">{activity.table_name}</span>
-                        {activity.record_id && (
-                          <span className="text-xs sm:text-sm text-gray-500 font-mono">
-                            ID: {activity.record_id.substring(0, 8)}...
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {getActionIcon(activity.table_name)}
+                          <Badge className={`${getActionColor(activity.action)} text-xs`}>
+                            {getFriendlyActionName(activity.action)}
+                          </Badge>
+                        </div>
+                        <span className="font-medium text-sm sm:text-base">
+                          {getActivityDescription(activity)}
+                        </span>
                       </div>
                     </div>
                     
@@ -260,6 +367,14 @@ const ActivityLog = () => {
                       <div>
                         <span className="font-medium">Tijdstip:</span> {formatTimestamp(activity.created_at)}
                       </div>
+                      {activity.record_id && (
+                        <div>
+                          <span className="font-medium">ID:</span> 
+                          <span className="font-mono ml-1">
+                            {activity.record_id.substring(0, 8)}...
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
