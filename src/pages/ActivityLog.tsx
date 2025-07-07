@@ -260,11 +260,6 @@ const ActivityLog = () => {
                       <div>
                         <span className="font-medium">Tijdstip:</span> {formatTimestamp(activity.created_at)}
                       </div>
-                      {activity.user_id && (
-                        <div>
-                          <span className="font-medium">Gebruiker:</span> {activity.user_id.substring(0, 8)}...
-                        </div>
-                      )}
                     </div>
                   </div>
                 ))}
