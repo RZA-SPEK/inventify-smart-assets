@@ -4,10 +4,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Asset } from "@/types/asset";
-import { mockAssets } from "@/data/mockAssets";
 import { AssetForm } from "@/components/AssetForm";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
+import { supabase } from "@/integrations/supabase/client";
 
 const AssetEdit = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +15,7 @@ const AssetEdit = () => {
   const { toast } = useToast();
   const { canManageAssets } = useUserRole();
   const [asset, setAsset] = useState<Asset | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!canManageAssets) {
@@ -23,21 +24,117 @@ const AssetEdit = () => {
     }
 
     if (id) {
-      const foundAsset = mockAssets.find(a => a.id === id);
-      setAsset(foundAsset || null);
+      fetchAsset();
     }
   }, [id, canManageAssets, navigate]);
 
-  const handleSave = (updatedAsset: Omit<Asset, "id">) => {
-    // In a real app, this would update the asset in the database
-    console.log("Updating asset:", { ...updatedAsset, id });
-    
-    toast({
-      title: "Asset bijgewerkt",
-      description: `${updatedAsset.brand} ${updatedAsset.model} is succesvol bijgewerkt.`,
-    });
-    
-    navigate(`/assets/${id}`);
+  const fetchAsset = async () => {
+    try {
+      console.log('Fetching asset with ID:', id);
+      
+      const { data, error } = await supabase
+        .from('assets')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching asset:', error);
+        toast({
+          title: "Fout bij laden",
+          description: "Er is een fout opgetreden bij het laden van het asset.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data) {
+        console.log('Asset fetched successfully:', data);
+        
+        // Transform database response to match Asset interface
+        const transformedAsset: Asset = {
+          id: data.id,
+          type: data.type,
+          brand: data.brand || '',
+          model: data.model || '',
+          serialNumber: data.serial_number || '',
+          assetTag: data.asset_tag || '',
+          status: data.status as Asset['status'],
+          location: data.location || '',
+          assignedTo: data.assigned_to || '',
+          assignedToLocation: data.assigned_to_location || '',
+          purchaseDate: data.purchase_date || '',
+          warrantyExpiry: data.warranty_expiry || '',
+          purchasePrice: data.purchase_price || 0,
+          penaltyAmount: data.penalty_amount || 0,
+          category: data.category as Asset['category'],
+          image: data.image_url || ''
+        };
+
+        setAsset(transformedAsset);
+      }
+    } catch (error) {
+      console.error('Error fetching asset:', error);
+      toast({
+        title: "Fout bij laden",
+        description: "Er is een onverwachte fout opgetreden.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async (updatedAsset: Omit<Asset, "id">) => {
+    try {
+      console.log('Updating asset:', updatedAsset);
+      
+      const { error } = await supabase
+        .from('assets')
+        .update({
+          type: updatedAsset.type,
+          brand: updatedAsset.brand || null,
+          model: updatedAsset.model || null,
+          serial_number: updatedAsset.serialNumber || null,
+          asset_tag: updatedAsset.assetTag || null,
+          status: updatedAsset.status,
+          location: updatedAsset.location,
+          assigned_to: updatedAsset.assignedTo || null,
+          assigned_to_location: updatedAsset.assignedToLocation || null,
+          purchase_date: updatedAsset.purchaseDate,
+          warranty_expiry: updatedAsset.warrantyExpiry || null,
+          purchase_price: updatedAsset.purchasePrice || null,
+          penalty_amount: updatedAsset.penaltyAmount || 0,
+          category: updatedAsset.category,
+          image_url: updatedAsset.image || null
+        })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error updating asset:', error);
+        toast({
+          title: "Fout bij bijwerken",
+          description: "Er is een fout opgetreden bij het bijwerken van het asset.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Asset updated successfully');
+      toast({
+        title: "Asset bijgewerkt",
+        description: `${updatedAsset.brand} ${updatedAsset.model} is succesvol bijgewerkt.`,
+      });
+      
+      navigate(`/assets/${id}`);
+    } catch (error) {
+      console.error('Error updating asset:', error);
+      toast({
+        title: "Fout bij bijwerken",
+        description: "Er is een onverwachte fout opgetreden.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCancel = () => {
@@ -45,7 +142,24 @@ const AssetEdit = () => {
   };
 
   if (!canManageAssets) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">U heeft geen toegang tot deze pagina.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Laden...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!asset) {
