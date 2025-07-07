@@ -4,7 +4,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { UserRole } from "@/components/UserRole";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { 
@@ -122,9 +121,8 @@ const MainNavigation = () => {
 
             {/* User Actions & Mobile Menu */}
             <div className="flex items-center space-x-3">
-              {/* Desktop User Role & Logout */}
+              {/* Desktop Logout */}
               <div className="hidden md:flex items-center space-x-3">
-                <UserRole />
                 <Button
                   onClick={handleSignOut}
                   variant="outline"
@@ -161,11 +159,10 @@ const MainNavigation = () => {
                       </nav>
                       
                       <div className="px-4 py-4 border-t border-gray-200">
-                        <UserRole />
                         <Button
                           onClick={handleSignOut}
                           variant="outline"
-                          className="w-full mt-4 flex items-center justify-center space-x-2"
+                          className="w-full flex items-center justify-center space-x-2"
                         >
                           <LogOut className="h-4 w-4" />
                           <span>Uitloggen</span>
