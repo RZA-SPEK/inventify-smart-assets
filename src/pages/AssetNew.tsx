@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -12,7 +12,20 @@ import { supabase } from "@/integrations/supabase/client";
 const AssetNew = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { canManageAssets } = useUserRole();
+  const { canManageAssets, loading: roleLoading } = useUserRole();
+
+  useEffect(() => {
+    // Redirect if user doesn't have permission
+    if (!roleLoading && !canManageAssets) {
+      navigate("/assets");
+      toast({
+        title: "Geen toegang",
+        description: "U heeft geen toegang om nieuwe assets toe te voegen.",
+        variant: "destructive",
+      });
+      return;
+    }
+  }, [canManageAssets, roleLoading, navigate, toast]);
 
   const handleSave = async (assetData: Omit<Asset, "id">) => {
     try {
@@ -71,14 +84,20 @@ const AssetNew = () => {
     navigate("/assets");
   };
 
-  if (!canManageAssets) {
+  // Don't render if user doesn't have permission or role is still loading
+  if (roleLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">U heeft geen toegang tot deze pagina.</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Laden...</p>
         </div>
       </div>
     );
+  }
+
+  if (!canManageAssets) {
+    return null; // Component will redirect in useEffect
   }
 
   return (

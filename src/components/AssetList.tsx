@@ -15,12 +15,17 @@ interface AssetListProps {
 }
 
 export const AssetList = ({ assets, currentRole, onEdit, onDelete, onReserve }: AssetListProps) => {
+  const isAdmin = currentRole === "ICT Admin" || currentRole === "Facilitair Admin";
+  
   return (
     <Card>
       <CardHeader>
         <CardTitle>Assets ({assets.length})</CardTitle>
         <CardDescription>
-          Overzicht van alle bedrijfsassets
+          {isAdmin 
+            ? "Overzicht van alle bedrijfsassets" 
+            : "Beschikbare assets voor reservering"
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -50,6 +55,7 @@ export const AssetList = ({ assets, currentRole, onEdit, onDelete, onReserve }: 
                 <TableHead className="w-24">Asset Tag</TableHead>
                 <TableHead className="min-w-40">Toegewezen aan</TableHead>
                 <TableHead className="w-32">Status</TableHead>
+                {isAdmin && <TableHead className="w-32">Acties</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>

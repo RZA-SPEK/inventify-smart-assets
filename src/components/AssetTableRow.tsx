@@ -1,6 +1,7 @@
 
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Tag, User } from "lucide-react";
+import { Tag, User, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Asset } from "@/types/asset";
 import { AssetImage } from "./AssetImage";
@@ -27,9 +28,25 @@ export const AssetTableRow = ({
   getCategoryDisplayName
 }: AssetTableRowProps) => {
   const navigate = useNavigate();
+  const isAdmin = currentRole === "ICT Admin" || currentRole === "Facilitair Admin";
+  const isAvailableForReservation = asset.status === "In voorraad";
 
-  const handleRowClick = () => {
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on action buttons
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
     navigate(`/assets/${asset.id}`);
+  };
+
+  const handleReserveClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onReserve(asset);
+  };
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEdit(asset);
   };
 
   return (
@@ -78,6 +95,34 @@ export const AssetTableRow = ({
           {asset.status}
         </span>
       </TableCell>
+      {isAdmin && (
+        <TableCell className="w-32">
+          <div className="flex space-x-1">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleEditClick}
+              className="h-8 w-8 p-0"
+            >
+              <span className="sr-only">Bewerken</span>
+              📝
+            </Button>
+          </div>
+        </TableCell>
+      )}
+      {!isAdmin && isAvailableForReservation && (
+        <TableCell className="w-32">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleReserveClick}
+            className="flex items-center space-x-1"
+          >
+            <Calendar className="h-3 w-3" />
+            <span>Reserveren</span>
+          </Button>
+        </TableCell>
+      )}
     </TableRow>
   );
 };

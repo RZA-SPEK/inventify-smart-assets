@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AssetList } from "@/components/AssetList";
 import { AssetFilters } from "@/components/AssetFilters";
@@ -12,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Asset } from "@/types/asset";
 
 const Assets = () => {
-  const { canManageAssets, loading: roleLoading } = useUserRole();
+  const { canManageAssets, currentRole, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -33,13 +32,11 @@ const Assets = () => {
   } = useAssetFilters(assets);
 
   useEffect(() => {
-    // Only fetch if role is loaded and user has permission
-    if (!roleLoading && canManageAssets) {
+    // Fetch assets for all authenticated users
+    if (!roleLoading) {
       fetchAssets();
-    } else if (!roleLoading) {
-      setLoading(false);
     }
-  }, [canManageAssets, roleLoading]);
+  }, [roleLoading]);
 
   const fetchAssets = async () => {
     try {
@@ -95,11 +92,28 @@ const Assets = () => {
   };
 
   const handleEditAsset = (asset: Asset) => {
+    if (!canManageAssets) {
+      toast({
+        title: "Geen toegang",
+        description: "U heeft geen toegang om assets te bewerken.",
+        variant: "destructive",
+      });
+      return;
+    }
     console.log('Edit asset:', asset);
     navigate(`/assets/${asset.id}/edit`);
   };
 
   const handleDeleteAsset = async (id: string, reason: string) => {
+    if (!canManageAssets) {
+      toast({
+        title: "Geen toegang",
+        description: "U heeft geen toegang om assets te verwijderen.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       console.log('Deleting asset:', id, reason);
       
@@ -141,27 +155,29 @@ const Assets = () => {
 
   const handleReserveAsset = (asset: Asset) => {
     console.log('Reserve asset:', asset);
-    // TODO: Implement reservation functionality
+    // Check if asset is available for reservation
+    if (asset.status !== "In voorraad") {
+      toast({
+        title: "Niet beschikbaar",
+        description: "Dit asset is momenteel niet beschikbaar voor reservering.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toast({
+      title: "Reservering aanvragen",
+      description: "Reserveringsfunctionaliteit wordt binnenkort toegevoegd.",
+    });
   };
 
-  // Don't render content until role is loaded
+  // Show loading state
   if (roleLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Laden...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirect if user doesn't have permission
-  if (!canManageAssets) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="text-center">
-          <p className="text-gray-600">U heeft geen toegang tot deze pagina.</p>
         </div>
       </div>
     );
@@ -174,7 +190,12 @@ const Assets = () => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="w-full sm:w-auto">
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Assets</h1>
-              <p className="text-gray-600 mt-1 text-sm sm:text-base">Beheer en overzicht van alle assets</p>
+              <p className="text-gray-600 mt-1 text-sm sm:text-base">
+                {canManageAssets 
+                  ? "Beheer en overzicht van alle assets" 
+                  : "Overzicht van beschikbare assets voor reservering"
+                }
+              </p>
             </div>
             
             {canManageAssets && (
@@ -205,7 +226,7 @@ const Assets = () => {
 
         <AssetList 
           assets={filteredAssets}
-          currentRole={canManageAssets ? 'ICT Admin' : 'Gebruiker'}
+          currentRole={currentRole}
           onEdit={handleEditAsset}
           onDelete={handleDeleteAsset}
           onReserve={handleReserveAsset}
