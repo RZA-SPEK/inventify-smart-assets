@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Asset } from "@/types/asset";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ReservationDialogProps {
   asset: Asset;
@@ -15,6 +16,7 @@ interface ReservationDialogProps {
 
 export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) => {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     requesterName: "",
     requestedDate: "",
@@ -22,23 +24,66 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
     purpose: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     
-    // In a real application, this would send the reservation request to the backend
-    // and trigger the notification system
-    console.log("Reservation request:", {
-      assetId: asset.id,
-      assetName: `${asset.brand} ${asset.model}`,
-      ...formData
-    });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Fout",
+          description: "U moet ingelogd zijn om een reservering aan te vragen.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    toast({
-      title: "Reservering Aangevraagd",
-      description: `Uw reservering voor ${asset.brand} ${asset.model} is aangevraagd en wordt beoordeeld door een administrator.`,
-    });
+      const { error } = await supabase
+        .from('reservations')
+        .insert({
+          asset_id: asset.id,
+          requester_id: user.id,
+          requester_name: formData.requesterName,
+          requested_date: formData.requestedDate,
+          return_date: formData.returnDate,
+          purpose: formData.purpose,
+          status: 'pending'
+        });
 
-    onClose();
+      if (error) {
+        console.error('Error creating reservation:', error);
+        toast({
+          title: "Fout",
+          description: "Er is een fout opgetreden bij het aanvragen van de reservering.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Reservation created successfully for:", {
+        assetId: asset.id,
+        assetName: `${asset.brand} ${asset.model}`,
+        ...formData
+      });
+
+      toast({
+        title: "Reservering Aangevraagd",
+        description: `Uw reservering voor ${asset.brand} ${asset.model} is aangevraagd en wordt beoordeeld door een administrator.`,
+      });
+
+      onClose();
+    } catch (error) {
+      console.error('Error creating reservation:', error);
+      toast({
+        title: "Fout",
+        description: "Er is een onverwachte fout opgetreden.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -98,11 +143,11 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Annuleren
             </Button>
-            <Button type="submit">
-              Reservering Aanvragen
+            <Button type="submit" disabled={loading}>
+              {loading ? "Bezig..." : "Reservering Aanvragen"}
             </Button>
           </DialogFooter>
         </form>
