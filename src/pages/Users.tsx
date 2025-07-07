@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { UserTable } from "@/components/users/UserTable";
 import { UserFilters } from "@/components/users/UserFilters";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
+import { EditUserDialog } from "@/components/users/EditUserDialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +25,8 @@ const Users = () => {
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const { canManageUsers, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
 
@@ -68,10 +72,14 @@ const Users = () => {
 
   const handleUserUpdated = () => {
     fetchUsers();
+    setIsEditDialogOpen(false);
+    setSelectedUser(null);
   };
 
   const handleEditUser = (user: any) => {
     console.log('Edit user:', user);
+    setSelectedUser(user);
+    setIsEditDialogOpen(true);
   };
 
   const handleToggleStatus = (userId: string) => {
@@ -175,6 +183,13 @@ const Users = () => {
           open={isAddDialogOpen}
           onOpenChange={setIsAddDialogOpen}
           onUserAdded={handleUserAdded}
+        />
+
+        <EditUserDialog
+          user={selectedUser}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onUserUpdated={handleUserUpdated}
         />
       </div>
     </div>
