@@ -29,65 +29,56 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <div className="min-h-screen bg-gray-50">
+            <MainNavigation />
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/" element={
                 <ProtectedRoute>
-                  <MainNavigation />
                   <Dashboard />
                 </ProtectedRoute>
               } />
               <Route path="/dashboard" element={
                 <ProtectedRoute>
-                  <MainNavigation />
                   <Dashboard />
                 </ProtectedRoute>
               } />
               <Route path="/assets" element={
                 <ProtectedRoute>
-                  <MainNavigation />
                   <Assets />
                 </ProtectedRoute>
               } />
               <Route path="/assets/new" element={
                 <ProtectedRoute>
-                  <MainNavigation />
                   <AssetNew />
                 </ProtectedRoute>
               } />
               <Route path="/assets/:id" element={
                 <ProtectedRoute>
-                  <MainNavigation />
                   <AssetDetails />
                 </ProtectedRoute>
               } />
               <Route path="/assets/:id/edit" element={
                 <ProtectedRoute>
-                  <MainNavigation />
                   <AssetEdit />
                 </ProtectedRoute>
               } />
               <Route path="/users" element={
                 <ProtectedRoute>
-                  <MainNavigation />
                   <Users />
                 </ProtectedRoute>
               } />
               <Route path="/settings" element={
                 <ProtectedRoute>
-                  <MainNavigation />
                   <Settings />
                 </ProtectedRoute>
               } />
               <Route path="/activity" element={
                 <ProtectedRoute>
-                  <MainNavigation />
                   <ActivityLog />
                 </ProtectedRoute>
               } />
               <Route path="/reservations" element={
                 <ProtectedRoute>
-                  <MainNavigation />
                   <Reservations />
                 </ProtectedRoute>
               } />
