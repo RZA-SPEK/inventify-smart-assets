@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -9,6 +8,7 @@ export interface SystemSettings {
   locations: string[];
   brands: string[];
   maintenanceTypes: string[];
+  specificLocations: string[];
 }
 
 const DEFAULT_SETTINGS: SystemSettings = {
@@ -17,7 +17,15 @@ const DEFAULT_SETTINGS: SystemSettings = {
   assetTypes: ["Laptop", "Telefoon", "Headset", "Bureau", "Monitor", "Printer", "Kabel", "Toetsenbord", "Muis"],
   locations: ["Kantoor Amsterdam", "Kantoor Utrecht", "ICT Magazijn", "Facilitair Magazijn", "Hoofdkantoor"],
   brands: ["Dell", "Apple", "HP", "Lenovo", "Samsung", "IKEA", "Jabra", "Logitech", "Microsoft"],
-  maintenanceTypes: ["Preventief", "Correctief", "Noodonderhoud", "Kalibratie", "Schoonmaak", "Software Update"]
+  maintenanceTypes: ["Preventief", "Correctief", "Noodonderhoud", "Kalibratie", "Schoonmaak", "Software Update"],
+  specificLocations: [
+    "Werkplek A-101", "Werkplek A-102", "Werkplek A-150", "Werkplek A-200",
+    "Werkplek U-201", "Werkplek U-205", "Werkplek U-210", "Werkplek U-250",
+    "Werkplek R-301", "Werkplek R-305", "Werkplek R-310", "Werkplek R-350",
+    "Magazijn Rek A-1", "Magazijn Rek A-2", "Magazijn Rek B-1", "Magazijn Rek B-3",
+    "Vergaderruimte Alpha", "Vergaderruimte Beta", "Vergaderruimte Gamma",
+    "Reception", "Keuken", "Break Room", "Server Room", "Storage Room"
+  ]
 };
 
 export const useSettings = () => {

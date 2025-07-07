@@ -23,7 +23,8 @@ export const SettingsForm = () => {
     assetType: "",
     location: "",
     brand: "",
-    maintenanceType: ""
+    maintenanceType: "",
+    specificLocation: ""
   });
 
   // Update local settings when current settings change
@@ -210,11 +211,12 @@ export const SettingsForm = () => {
       )}
 
       <Tabs defaultValue="categories" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7">
           <TabsTrigger value="categories">Categorieën</TabsTrigger>
           <TabsTrigger value="statuses">Statussen</TabsTrigger>
           <TabsTrigger value="types">Asset Types</TabsTrigger>
           <TabsTrigger value="locations">Locaties</TabsTrigger>
+          <TabsTrigger value="specific-locations">Specifieke Locaties</TabsTrigger>
           <TabsTrigger value="brands">Merken</TabsTrigger>
           <TabsTrigger value="maintenance">Onderhoud</TabsTrigger>
         </TabsList>
@@ -251,7 +253,16 @@ export const SettingsForm = () => {
             "Locaties",
             "locations",
             "location",
-            "Beheer de beschikbare locaties"
+            "Beheer de beschikbare hoofdlocaties"
+          )}
+        </TabsContent>
+
+        <TabsContent value="specific-locations">
+          {renderSettingsSection(
+            "Specifieke Locaties",
+            "specificLocations",
+            "specificLocation",
+            "Beheer de beschikbare specifieke locaties (werkplekken, vergaderruimtes, etc.)"
           )}
         </TabsContent>
 
