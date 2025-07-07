@@ -74,8 +74,9 @@ const Settings = () => {
       <div className="container mx-auto mobile-spacing py-4 sm:py-6 max-w-7xl">
         <SettingsHeader currentRole={currentRole} />
         
-        <div className="w-full">
+        <div className="w-full space-y-8">
           <SettingsForm />
+          <SystemConfiguration />
         </div>
       </div>
     </div>
