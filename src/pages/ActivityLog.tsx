@@ -13,10 +13,7 @@ interface ActivityLogEntry {
   action: string;
   table_name: string;
   created_at: string;
-  user_id: string | null;
   record_id: string | null;
-  old_values: any;
-  new_values: any;
 }
 
 const ActivityLog = () => {
