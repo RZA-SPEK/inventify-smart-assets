@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Camera, Upload, X } from "lucide-react";
@@ -10,15 +10,23 @@ interface ImageUploadProps {
 }
 
 export const ImageUpload = ({ currentImage, onImageChange }: ImageUploadProps) => {
-  const [preview, setPreview] = useState<string | null>(currentImage || null);
+  const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Update preview when currentImage changes
+  useEffect(() => {
+    console.log('ImageUpload: currentImage changed to:', currentImage);
+    setPreview(currentImage || null);
+  }, [currentImage]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      console.log('ImageUpload: File selected:', file.name);
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
+        console.log('ImageUpload: File read as base64, length:', result.length);
         setPreview(result);
         onImageChange(result);
       };
@@ -27,6 +35,7 @@ export const ImageUpload = ({ currentImage, onImageChange }: ImageUploadProps) =
   };
 
   const handleRemoveImage = () => {
+    console.log('ImageUpload: Removing image');
     setPreview(null);
     onImageChange(null);
     if (fileInputRef.current) {
@@ -51,6 +60,7 @@ export const ImageUpload = ({ currentImage, onImageChange }: ImageUploadProps) =
               size="sm"
               className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
               onClick={handleRemoveImage}
+              title="Foto verwijderen"
             >
               <X className="h-3 w-3" />
             </Button>
@@ -69,16 +79,31 @@ export const ImageUpload = ({ currentImage, onImageChange }: ImageUploadProps) =
           className="hidden"
         />
         
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-2 w-fit"
-        >
-          <Upload className="h-4 w-4" />
-          {preview ? "Foto Wijzigen" : "Foto Toevoegen"}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            {preview ? "Foto Wijzigen" : "Foto Toevoegen"}
+          </Button>
+          
+          {preview && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleRemoveImage}
+              className="flex items-center gap-2 text-red-600 hover:text-red-700"
+            >
+              <X className="h-4 w-4" />
+              Verwijderen
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
