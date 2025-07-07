@@ -1,4 +1,3 @@
-
 import { SettingsForm } from "@/components/SettingsForm";
 import { SystemConfiguration } from "@/components/SystemConfiguration";
 import { SettingsHeader } from "@/components/settings/SettingsHeader";
@@ -48,9 +47,9 @@ const Settings = () => {
     }
   };
 
-  const handleSaveSettings = (settings: SystemSettings) => {
+  const handleSaveSettings = async (settings: SystemSettings) => {
     console.log('Saving settings:', settings);
-    // TODO: Implement settings save logic
+    // This will now be handled by the SettingsForm component itself
   };
 
   // Don't render if user doesn't have permission
@@ -77,7 +76,7 @@ const Settings = () => {
         
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
           <div className="w-full">
-            <SettingsForm onSave={handleSaveSettings} />
+            <SettingsForm />
           </div>
           <div className="w-full">
             <SystemConfiguration />

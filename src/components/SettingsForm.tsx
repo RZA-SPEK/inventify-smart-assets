@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,26 +8,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Plus, X, Save, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { SystemSettings } from "@/hooks/useSettings";
+import { useSettings, SystemSettings } from "@/hooks/useSettings";
 
-interface SettingsFormProps {
-  onSave: (settings: SystemSettings) => void;
-  initialSettings?: SystemSettings;
-}
-
-export const SettingsForm = ({ onSave, initialSettings }: SettingsFormProps) => {
+export const SettingsForm = () => {
   const { toast } = useToast();
+  const { settings: currentSettings, saveSettings, resetSettings, isLoading, loadSettings } = useSettings();
   
-  const defaultSettings: SystemSettings = {
-    categories: ["ICT", "Facilitair", "Catering", "Logistics"],
-    statuses: ["In gebruik", "In voorraad", "Defect", "Onderhoud", "Deleted"],
-    assetTypes: ["Laptop", "Telefoon", "Headset", "Bureau", "Monitor", "Printer", "Kabel", "Toetsenbord", "Muis"],
-    locations: ["Kantoor Amsterdam", "Kantoor Utrecht", "ICT Magazijn", "Facilitair Magazijn", "Hoofdkantoor"],
-    brands: ["Dell", "Apple", "HP", "Lenovo", "Samsung", "IKEA", "Jabra", "Logitech", "Microsoft"],
-    maintenanceTypes: ["Preventief", "Correctief", "Noodonderhoud", "Kalibratie", "Schoonmaak", "Software Update"]
-  };
-
-  const [settings, setSettings] = useState<SystemSettings>(initialSettings || defaultSettings);
+  const [settings, setSettings] = useState<SystemSettings>(currentSettings);
   const [hasChanges, setHasChanges] = useState(false);
 
   const [newValues, setNewValues] = useState({
@@ -38,6 +25,12 @@ export const SettingsForm = ({ onSave, initialSettings }: SettingsFormProps) => 
     brand: "",
     maintenanceType: ""
   });
+
+  // Update local settings when current settings change
+  useEffect(() => {
+    setSettings(currentSettings);
+    setHasChanges(false);
+  }, [currentSettings]);
 
   const addItem = (field: keyof SystemSettings, newItem: string) => {
     if (!newItem.trim()) return;
@@ -72,22 +65,58 @@ export const SettingsForm = ({ onSave, initialSettings }: SettingsFormProps) => 
     setHasChanges(true);
   };
 
-  const handleSave = () => {
-    onSave(settings);
-    setHasChanges(false);
-    toast({
-      title: "Instellingen opgeslagen",
-      description: "Alle wijzigingen zijn succesvol opgeslagen"
-    });
+  const handleSave = async () => {
+    try {
+      const result = await saveSettings(settings);
+      if (result.success) {
+        setHasChanges(false);
+        toast({
+          title: "Instellingen opgeslagen",
+          description: "Alle wijzigingen zijn succesvol opgeslagen"
+        });
+      } else {
+        toast({
+          title: "Fout bij opslaan",
+          description: result.error || "Er is een fout opgetreden bij het opslaan",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast({
+        title: "Fout bij opslaan",
+        description: "Er is een onverwachte fout opgetreden",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleReset = () => {
-    setSettings(defaultSettings);
-    setHasChanges(true);
-    toast({
-      title: "Instellingen gereset",
-      description: "Alle instellingen zijn teruggezet naar de standaardwaarden"
-    });
+  const handleReset = async () => {
+    try {
+      const result = await resetSettings();
+      if (result.success) {
+        setHasChanges(false);
+        toast({
+          title: "Instellingen gereset",
+          description: "Alle instellingen zijn teruggezet naar de standaardwaarden"
+        });
+        // Reload settings to ensure we have the latest data
+        await loadSettings();
+      } else {
+        toast({
+          title: "Fout bij resetten",
+          description: result.error || "Er is een fout opgetreden bij het resetten",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error resetting settings:', error);
+      toast({
+        title: "Fout bij resetten",
+        description: "Er is een onverwachte fout opgetreden",
+        variant: "destructive"
+      });
+    }
   };
 
   const renderSettingsSection = (
@@ -156,6 +185,7 @@ export const SettingsForm = ({ onSave, initialSettings }: SettingsFormProps) => 
             onClick={handleReset} 
             variant="outline" 
             className="flex items-center gap-2"
+            disabled={isLoading}
           >
             <RotateCcw className="h-4 w-4" />
             Reset
@@ -163,10 +193,10 @@ export const SettingsForm = ({ onSave, initialSettings }: SettingsFormProps) => 
           <Button 
             onClick={handleSave} 
             className="flex items-center gap-2"
-            disabled={!hasChanges}
+            disabled={!hasChanges || isLoading}
           >
             <Save className="h-4 w-4" />
-            Opslaan
+            {isLoading ? 'Bezig...' : 'Opslaan'}
           </Button>
         </div>
       </div>
