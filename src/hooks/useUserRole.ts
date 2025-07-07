@@ -11,7 +11,7 @@ const roleCache = new Map<string, UserRole>();
 const activeFetches = new Set<string>();
 
 export const useUserRole = () => {
-  const [currentRole, setCurrentRole] = useState<UserRole>("ICT Admin"); // Default to ICT Admin
+  const [currentRole, setCurrentRole] = useState<UserRole>("Gebruiker"); // Default to Gebruiker instead of ICT Admin
   const [loading, setLoading] = useState(true);
   const { user, session } = useAuth();
   const location = useLocation();
@@ -22,7 +22,7 @@ export const useUserRole = () => {
   useEffect(() => {
     // Don't fetch anything on auth page
     if (isAuthPage) {
-      setCurrentRole("ICT Admin");
+      setCurrentRole("Gebruiker");
       setLoading(false);
       return;
     }
@@ -31,7 +31,7 @@ export const useUserRole = () => {
       // If no user or session, set default and stop loading
       if (!user || !session) {
         console.log("No user or session, setting default role");
-        setCurrentRole("ICT Admin");
+        setCurrentRole("Gebruiker");
         setLoading(false);
         return;
       }
@@ -55,17 +55,29 @@ export const useUserRole = () => {
       try {
         console.log("Fetching role for user:", user.id);
         
-        // Since we're getting persistent errors, let's just default to ICT Admin
-        // and skip all database calls for now
-        console.log("Skipping database calls due to persistent errors, defaulting to ICT Admin");
-        setCurrentRole("ICT Admin");
-        roleCache.set(user.id, "ICT Admin");
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user role:', error);
+          // Default to Gebruiker on error
+          setCurrentRole("Gebruiker");
+          roleCache.set(user.id, "Gebruiker");
+        } else {
+          const role = (data?.role as UserRole) || "Gebruiker";
+          console.log("Fetched role from database:", role);
+          setCurrentRole(role);
+          roleCache.set(user.id, role);
+        }
         
       } catch (error) {
         console.log("Unexpected error in fetchUserRole:", error);
-        // On any error, default to ICT Admin
-        setCurrentRole("ICT Admin");
-        roleCache.set(user.id, "ICT Admin");
+        // On any error, default to Gebruiker
+        setCurrentRole("Gebruiker");
+        roleCache.set(user.id, "Gebruiker");
       } finally {
         activeFetches.delete(user.id);
         setLoading(false);
@@ -77,7 +89,7 @@ export const useUserRole = () => {
       fetchUserRole();
     } else if (!user || !session) {
       // Reset for logged out state
-      setCurrentRole("ICT Admin");
+      setCurrentRole("Gebruiker");
       setLoading(false);
     } else {
       // Default state
