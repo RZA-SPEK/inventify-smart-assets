@@ -69,7 +69,8 @@ const AssetDetails = () => {
           purchasePrice: data.purchase_price || 0,
           penaltyAmount: data.penalty_amount || 0,
           category: data.category as Asset['category'],
-          image: data.image_url || ''
+          image: data.image_url || '',
+          comments: data.comments || ''
         };
 
         setAsset(transformedAsset);
@@ -276,6 +277,15 @@ const AssetDetails = () => {
                 </div>
               </div>
             </div>
+
+            {asset.comments && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Opmerkingen</h3>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-gray-700 whitespace-pre-wrap">{asset.comments}</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

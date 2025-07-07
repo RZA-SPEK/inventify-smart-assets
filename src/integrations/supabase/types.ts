@@ -21,6 +21,7 @@ export type Database = {
           assigned_to_location: string | null
           brand: string | null
           category: string | null
+          comments: string | null
           created_at: string | null
           id: string
           image_url: string | null
@@ -40,6 +41,7 @@ export type Database = {
           assigned_to_location?: string | null
           brand?: string | null
           category?: string | null
+          comments?: string | null
           created_at?: string | null
           id?: string
           image_url?: string | null
@@ -59,6 +61,7 @@ export type Database = {
           assigned_to_location?: string | null
           brand?: string | null
           category?: string | null
+          comments?: string | null
           created_at?: string | null
           id?: string
           image_url?: string | null

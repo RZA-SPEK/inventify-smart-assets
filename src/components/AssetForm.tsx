@@ -30,7 +30,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     assignedToLocation: "",
     image: "",
     purchasePrice: "",
-    penaltyAmount: ""
+    penaltyAmount: "",
+    comments: ""
   });
 
   // Use useCallback to prevent unnecessary re-renders
@@ -54,7 +55,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
         assignedToLocation: asset.assignedToLocation || "",
         image: asset.image || "",
         purchasePrice: asset.purchasePrice?.toString() || "",
-        penaltyAmount: asset.penaltyAmount?.toString() || ""
+        penaltyAmount: asset.penaltyAmount?.toString() || "",
+        comments: asset.comments || ""
       };
       setFormData(initialData);
     }
@@ -72,7 +74,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
       assetTag: formData.assetTag || undefined,
       purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
       penaltyAmount: formData.penaltyAmount ? parseFloat(formData.penaltyAmount) : 0,
-      serialNumber: formData.serialNumber || undefined
+      serialNumber: formData.serialNumber || undefined,
+      comments: formData.comments || undefined
     };
     
     console.log("Final submit data:", submitData);

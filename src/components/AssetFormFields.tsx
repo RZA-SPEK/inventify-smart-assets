@@ -6,6 +6,7 @@ import { AssignmentSelector } from "./AssignmentSelector";
 import { AssetFormBasicFields } from "./AssetFormBasicFields";
 import { AssetFormIdentificationFields } from "./AssetFormIdentificationFields";
 import { AssetFormPriceFields } from "./AssetFormPriceFields";
+import { AssetCommentsField } from "./AssetCommentsField";
 
 interface AssetFormFieldsProps {
   formData: {
@@ -23,6 +24,7 @@ interface AssetFormFieldsProps {
     image: string;
     purchasePrice: string;
     penaltyAmount: string;
+    comments: string;
   };
   onFormDataChange: (data: any) => void;
   onShowScanner: () => void;
@@ -77,6 +79,11 @@ export const AssetFormFields = ({
       <AssignmentSelector
         assignedTo={formData.assignedTo}
         onAssignedToChange={(value) => handleFieldChange('assignedTo', value)}
+      />
+
+      <AssetCommentsField
+        value={formData.comments}
+        onChange={(value) => handleFieldChange('comments', value)}
       />
     </>
   );

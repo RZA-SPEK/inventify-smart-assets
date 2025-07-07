@@ -68,7 +68,8 @@ const AssetEdit = () => {
           purchasePrice: data.purchase_price || 0,
           penaltyAmount: data.penalty_amount || 0,
           category: data.category as Asset['category'],
-          image: data.image_url || ''
+          image: data.image_url || '',
+          comments: data.comments || ''
         };
 
         setAsset(transformedAsset);
@@ -106,7 +107,8 @@ const AssetEdit = () => {
           purchase_price: updatedAsset.purchasePrice || null,
           penalty_amount: updatedAsset.penaltyAmount || 0,
           category: updatedAsset.category,
-          image_url: updatedAsset.image || null
+          image_url: updatedAsset.image || null,
+          comments: updatedAsset.comments || null
         })
         .eq('id', id);
 

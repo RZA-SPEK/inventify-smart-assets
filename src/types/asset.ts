@@ -16,4 +16,5 @@ export interface Asset {
   penaltyAmount?: number;
   category: "ICT" | "Facilitair" | "Catering" | "Logistics";
   image?: string;
+  comments?: string;
 }
