@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -132,10 +133,10 @@ export const SettingsForm = () => {
         <CardTitle className="text-lg sm:text-xl">{title}</CardTitle>
         <CardDescription className="text-sm">{description}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-wrap gap-2">
+      <CardContent className="space-y-6">
+        <div className="flex flex-wrap gap-3">
           {settings[field].map((item) => (
-            <Badge key={item} variant="secondary" className="flex items-center gap-1 text-xs sm:text-sm">
+            <Badge key={item} variant="secondary" className="flex items-center gap-2 text-xs sm:text-sm py-2 px-3">
               <span className="break-words">{item}</span>
               <X 
                 className="h-3 w-3 cursor-pointer hover:text-destructive flex-shrink-0" 
@@ -145,8 +146,8 @@ export const SettingsForm = () => {
           ))}
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-2">
-          <div className="flex-1">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1 space-y-2">
             <Label htmlFor={`new-${newValueField}`} className="text-sm">Nieuwe {title.toLowerCase()}</Label>
             <Input
               id={`new-${newValueField}`}
@@ -166,7 +167,7 @@ export const SettingsForm = () => {
           </div>
           <Button
             onClick={() => addItem(field, newValues[newValueField])}
-            className="mt-6 sm:mt-6 self-end"
+            className="mt-8 sm:mt-8 self-end"
             size="sm"
           >
             <Plus className="h-4 w-4" />
@@ -177,13 +178,13 @@ export const SettingsForm = () => {
   );
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+        <div className="space-y-2">
           <h2 className="text-xl sm:text-2xl font-bold">Systeem Instellingen</h2>
           <p className="text-muted-foreground text-sm sm:text-base">Beheer alle configureerbare opties voor het asset management systeem</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Button 
             onClick={handleReset} 
             variant="outline" 
@@ -207,27 +208,27 @@ export const SettingsForm = () => {
       </div>
 
       {hasChanges && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 sm:p-5">
           <p className="text-yellow-800 text-xs sm:text-sm">
             Je hebt niet-opgeslagen wijzigingen. Vergeet niet om op "Opslaan" te klikken.
           </p>
         </div>
       )}
 
-      <Tabs defaultValue="categories" className="space-y-4" orientation={isMobile ? "horizontal" : "horizontal"}>
+      <Tabs defaultValue="categories" className="space-y-6" orientation={isMobile ? "horizontal" : "horizontal"}>
         <div className="overflow-x-auto">
-          <TabsList className={`${isMobile ? 'flex w-max min-w-full' : 'grid w-full grid-cols-4 lg:grid-cols-7'} h-auto`}>
-            <TabsTrigger value="categories" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3">Categorieën</TabsTrigger>
-            <TabsTrigger value="statuses" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3">Statussen</TabsTrigger>
-            <TabsTrigger value="types" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3">Asset Types</TabsTrigger>
-            <TabsTrigger value="locations" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3">Locaties</TabsTrigger>
-            <TabsTrigger value="specific-locations" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3">Specifieke Locaties</TabsTrigger>
-            <TabsTrigger value="brands" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3">Merken</TabsTrigger>
-            <TabsTrigger value="maintenance" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3">Onderhoud</TabsTrigger>
+          <TabsList className={`${isMobile ? 'flex w-max min-w-full' : 'grid w-full grid-cols-4 lg:grid-cols-7'} h-auto p-1`}>
+            <TabsTrigger value="categories" className="text-xs sm:text-sm whitespace-nowrap px-3 sm:px-4 py-2">Categorieën</TabsTrigger>
+            <TabsTrigger value="statuses" className="text-xs sm:text-sm whitespace-nowrap px-3 sm:px-4 py-2">Statussen</TabsTrigger>
+            <TabsTrigger value="types" className="text-xs sm:text-sm whitespace-nowrap px-3 sm:px-4 py-2">Asset Types</TabsTrigger>
+            <TabsTrigger value="locations" className="text-xs sm:text-sm whitespace-nowrap px-3 sm:px-4 py-2">Locaties</TabsTrigger>
+            <TabsTrigger value="specific-locations" className="text-xs sm:text-sm whitespace-nowrap px-3 sm:px-4 py-2">Specifieke Locaties</TabsTrigger>
+            <TabsTrigger value="brands" className="text-xs sm:text-sm whitespace-nowrap px-3 sm:px-4 py-2">Merken</TabsTrigger>
+            <TabsTrigger value="maintenance" className="text-xs sm:text-sm whitespace-nowrap px-3 sm:px-4 py-2">Onderhoud</TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="categories">
+        <TabsContent value="categories" className="mt-6">
           {renderSettingsSection(
             "Categorieën",
             "categories",
@@ -236,7 +237,7 @@ export const SettingsForm = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="statuses">
+        <TabsContent value="statuses" className="mt-6">
           {renderSettingsSection(
             "Statussen",
             "statuses",
@@ -245,7 +246,7 @@ export const SettingsForm = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="types">
+        <TabsContent value="types" className="mt-6">
           {renderSettingsSection(
             "Asset Types",
             "assetTypes",
@@ -254,7 +255,7 @@ export const SettingsForm = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="locations">
+        <TabsContent value="locations" className="mt-6">
           {renderSettingsSection(
             "Locaties",
             "locations",
@@ -263,7 +264,7 @@ export const SettingsForm = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="specific-locations">
+        <TabsContent value="specific-locations" className="mt-6">
           {renderSettingsSection(
             "Specifieke Locaties",
             "specificLocations",
@@ -272,7 +273,7 @@ export const SettingsForm = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="brands">
+        <TabsContent value="brands" className="mt-6">
           {renderSettingsSection(
             "Merken",
             "brands",
@@ -281,7 +282,7 @@ export const SettingsForm = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="maintenance">
+        <TabsContent value="maintenance" className="mt-6">
           {renderSettingsSection(
             "Onderhoud Types",
             "maintenanceTypes",
