@@ -8,6 +8,7 @@ import { ArrowLeft, Edit, Calendar, Tag, User, MapPin } from "lucide-react";
 import { Asset } from "@/types/asset";
 import { AssetImage } from "@/components/AssetImage";
 import { ReservationDialog } from "@/components/ReservationDialog";
+import { AssetDeleteDialog } from "@/components/AssetDeleteDialog";
 import { getAssetIcon, getStatusColor } from "@/utils/assetUtils";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
@@ -85,6 +86,45 @@ const AssetDetails = () => {
     }
   };
 
+  const handleDeleteAsset = async (reason: string) => {
+    if (!asset) return;
+    
+    try {
+      console.log('Deleting asset:', asset.id, reason);
+      
+      const { error } = await supabase
+        .from('assets')
+        .update({ status: 'Deleted' })
+        .eq('id', asset.id);
+
+      if (error) {
+        console.error('Error deleting asset:', error);
+        toast({
+          title: "Fout bij verwijderen",
+          description: "Er is een fout opgetreden bij het verwijderen van het asset.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Asset verwijderd",
+        description: `${asset.brand} ${asset.model} is gemarkeerd als verwijderd. Reden: ${reason}`,
+        variant: "destructive",
+      });
+      
+      // Navigate back to assets list after successful deletion
+      navigate("/assets");
+    } catch (error) {
+      console.error('Error deleting asset:', error);
+      toast({
+        title: "Fout bij verwijderen",
+        description: "Er is een onverwachte fout opgetreden.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -149,10 +189,16 @@ const AssetDetails = () => {
               </div>
               <div className="flex space-x-2">
                 {canManageAssets && (
-                  <Button onClick={() => navigate(`/assets/${asset.id}/edit`)}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Bewerken
-                  </Button>
+                  <>
+                    <Button onClick={() => navigate(`/assets/${asset.id}/edit`)}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Bewerken
+                    </Button>
+                    <AssetDeleteDialog
+                      onDelete={handleDeleteAsset}
+                      canDelete={asset.status !== "Deleted"}
+                    />
+                  </>
                 )}
                 {asset.status === "In voorraad" && (
                   <Button 
