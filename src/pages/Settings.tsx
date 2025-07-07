@@ -1,3 +1,4 @@
+
 import { SettingsForm } from "@/components/SettingsForm";
 import { SystemConfiguration } from "@/components/SystemConfiguration";
 import { SettingsHeader } from "@/components/settings/SettingsHeader";
@@ -74,11 +75,11 @@ const Settings = () => {
       <div className="container mx-auto mobile-spacing py-4 sm:py-6 max-w-7xl">
         <SettingsHeader currentRole={currentRole} />
         
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
-          <div className="w-full">
+        <div className="flex flex-col space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8">
+          <div className="w-full order-1">
             <SettingsForm />
           </div>
-          <div className="w-full">
+          <div className="w-full order-2">
             <SystemConfiguration />
           </div>
         </div>

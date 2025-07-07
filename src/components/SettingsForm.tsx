@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,10 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, X, Save, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings, SystemSettings } from "@/hooks/useSettings";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const SettingsForm = () => {
   const { toast } = useToast();
   const { settings: currentSettings, saveSettings, resetSettings, isLoading, loadSettings } = useSettings();
+  const isMobile = useIsMobile();
   
   const [settings, setSettings] = useState<SystemSettings>(currentSettings);
   const [hasChanges, setHasChanges] = useState(false);
@@ -128,25 +129,25 @@ export const SettingsForm = () => {
   ) => (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardTitle className="text-lg sm:text-xl">{title}</CardTitle>
+        <CardDescription className="text-sm">{description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-2">
           {settings[field].map((item) => (
-            <Badge key={item} variant="secondary" className="flex items-center gap-1">
-              {item}
+            <Badge key={item} variant="secondary" className="flex items-center gap-1 text-xs sm:text-sm">
+              <span className="break-words">{item}</span>
               <X 
-                className="h-3 w-3 cursor-pointer hover:text-destructive" 
+                className="h-3 w-3 cursor-pointer hover:text-destructive flex-shrink-0" 
                 onClick={() => removeItem(field, item)}
               />
             </Badge>
           ))}
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <div className="flex-1">
-            <Label htmlFor={`new-${newValueField}`}>Nieuwe {title.toLowerCase()}</Label>
+            <Label htmlFor={`new-${newValueField}`} className="text-sm">Nieuwe {title.toLowerCase()}</Label>
             <Input
               id={`new-${newValueField}`}
               value={newValues[newValueField]}
@@ -160,11 +161,12 @@ export const SettingsForm = () => {
                   addItem(field, newValues[newValueField]);
                 }
               }}
+              className="text-sm"
             />
           </div>
           <Button
             onClick={() => addItem(field, newValues[newValueField])}
-            className="mt-6"
+            className="mt-6 sm:mt-6 self-end"
             size="sm"
           >
             <Plus className="h-4 w-4" />
@@ -175,26 +177,28 @@ export const SettingsForm = () => {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Systeem Instellingen</h2>
-          <p className="text-muted-foreground">Beheer alle configureerbare opties voor het asset management systeem</p>
+          <h2 className="text-xl sm:text-2xl font-bold">Systeem Instellingen</h2>
+          <p className="text-muted-foreground text-sm sm:text-base">Beheer alle configureerbare opties voor het asset management systeem</p>
         </div>
         <div className="flex gap-2">
           <Button 
             onClick={handleReset} 
             variant="outline" 
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 text-sm"
             disabled={isLoading}
+            size={isMobile ? "sm" : "default"}
           >
             <RotateCcw className="h-4 w-4" />
             Reset
           </Button>
           <Button 
             onClick={handleSave} 
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 text-sm"
             disabled={!hasChanges || isLoading}
+            size={isMobile ? "sm" : "default"}
           >
             <Save className="h-4 w-4" />
             {isLoading ? 'Bezig...' : 'Opslaan'}
@@ -203,23 +207,25 @@ export const SettingsForm = () => {
       </div>
 
       {hasChanges && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-yellow-800 text-sm">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
+          <p className="text-yellow-800 text-xs sm:text-sm">
             Je hebt niet-opgeslagen wijzigingen. Vergeet niet om op "Opslaan" te klikken.
           </p>
         </div>
       )}
 
-      <Tabs defaultValue="categories" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7">
-          <TabsTrigger value="categories">Categorieën</TabsTrigger>
-          <TabsTrigger value="statuses">Statussen</TabsTrigger>
-          <TabsTrigger value="types">Asset Types</TabsTrigger>
-          <TabsTrigger value="locations">Locaties</TabsTrigger>
-          <TabsTrigger value="specific-locations">Specifieke Locaties</TabsTrigger>
-          <TabsTrigger value="brands">Merken</TabsTrigger>
-          <TabsTrigger value="maintenance">Onderhoud</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="categories" className="space-y-4" orientation={isMobile ? "horizontal" : "horizontal"}>
+        <div className="overflow-x-auto">
+          <TabsList className={`${isMobile ? 'flex w-max min-w-full' : 'grid w-full grid-cols-4 lg:grid-cols-7'} h-auto`}>
+            <TabsTrigger value="categories" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3">Categorieën</TabsTrigger>
+            <TabsTrigger value="statuses" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3">Statussen</TabsTrigger>
+            <TabsTrigger value="types" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3">Asset Types</TabsTrigger>
+            <TabsTrigger value="locations" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3">Locaties</TabsTrigger>
+            <TabsTrigger value="specific-locations" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3">Specifieke Locaties</TabsTrigger>
+            <TabsTrigger value="brands" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3">Merken</TabsTrigger>
+            <TabsTrigger value="maintenance" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3">Onderhoud</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="categories">
           {renderSettingsSection(

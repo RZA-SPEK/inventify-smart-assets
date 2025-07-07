@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SystemConfig {
   companyName: string;
@@ -29,6 +29,7 @@ interface SystemConfig {
 
 export const SystemConfiguration = () => {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   const [config, setConfig] = useState<SystemConfig>({
     companyName: "MVDS Asset Management",
@@ -64,44 +65,54 @@ export const SystemConfiguration = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Systeem Configuratie</h2>
-          <p className="text-muted-foreground">Beheer algemene systeeminstellingen en standaardwaarden</p>
+          <h2 className="text-xl sm:text-2xl font-bold">Systeem Configuratie</h2>
+          <p className="text-muted-foreground text-sm sm:text-base">Beheer algemene systeeminstellingen en standaardwaarden</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleReset} className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            onClick={handleReset} 
+            className="flex items-center gap-2 text-sm"
+            size={isMobile ? "sm" : "default"}
+          >
             <RefreshCw className="h-4 w-4" />
             Reset
           </Button>
-          <Button onClick={handleSave} className="flex items-center gap-2">
+          <Button 
+            onClick={handleSave} 
+            className="flex items-center gap-2 text-sm"
+            size={isMobile ? "sm" : "default"}
+          >
             <Save className="h-4 w-4" />
             Opslaan
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Algemene Instellingen</CardTitle>
-            <CardDescription>Basis configuratie voor het systeem</CardDescription>
+            <CardTitle className="text-lg sm:text-xl">Algemene Instellingen</CardTitle>
+            <CardDescription className="text-sm">Basis configuratie voor het systeem</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="companyName">Bedrijfsnaam</Label>
+              <Label htmlFor="companyName" className="text-sm">Bedrijfsnaam</Label>
               <Input
                 id="companyName"
                 value={config.companyName}
                 onChange={(e) => setConfig(prev => ({ ...prev, companyName: e.target.value }))}
+                className="text-sm"
               />
             </div>
 
             <div>
-              <Label htmlFor="defaultCategory">Standaard Categorie</Label>
+              <Label htmlFor="defaultCategory" className="text-sm">Standaard Categorie</Label>
               <Select value={config.defaultCategory} onValueChange={(value) => setConfig(prev => ({ ...prev, defaultCategory: value }))}>
-                <SelectTrigger>
+                <SelectTrigger className="text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -114,9 +125,9 @@ export const SystemConfiguration = () => {
             </div>
 
             <div>
-              <Label htmlFor="defaultStatus">Standaard Status</Label>
+              <Label htmlFor="defaultStatus" className="text-sm">Standaard Status</Label>
               <Select value={config.defaultStatus} onValueChange={(value) => setConfig(prev => ({ ...prev, defaultStatus: value }))}>
-                <SelectTrigger>
+                <SelectTrigger className="text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -131,8 +142,8 @@ export const SystemConfiguration = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Asset Tag Instellingen</CardTitle>
-            <CardDescription>Configuratie voor automatische asset tag generatie</CardDescription>
+            <CardTitle className="text-lg sm:text-xl">Asset Tag Instellingen</CardTitle>
+            <CardDescription className="text-sm">Configuratie voor automatische asset tag generatie</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -141,16 +152,17 @@ export const SystemConfiguration = () => {
                 checked={config.autoGenerateAssetTags}
                 onCheckedChange={(checked) => setConfig(prev => ({ ...prev, autoGenerateAssetTags: checked }))}
               />
-              <Label htmlFor="autoGenerateAssetTags">Automatisch Asset Tags Genereren</Label>
+              <Label htmlFor="autoGenerateAssetTags" className="text-sm">Automatisch Asset Tags Genereren</Label>
             </div>
 
             <div>
-              <Label htmlFor="assetTagPrefix">Asset Tag Prefix</Label>
+              <Label htmlFor="assetTagPrefix" className="text-sm">Asset Tag Prefix</Label>
               <Input
                 id="assetTagPrefix"
                 value={config.assetTagPrefix}
                 onChange={(e) => setConfig(prev => ({ ...prev, assetTagPrefix: e.target.value }))}
                 placeholder="MVDS-"
+                className="text-sm"
               />
             </div>
           </CardContent>
@@ -158,8 +170,8 @@ export const SystemConfiguration = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Notificatie Instellingen</CardTitle>
-            <CardDescription>Configureer wanneer notificaties worden verzonden</CardDescription>
+            <CardTitle className="text-lg sm:text-xl">Notificatie Instellingen</CardTitle>
+            <CardDescription className="text-sm">Configureer wanneer notificaties worden verzonden</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -168,26 +180,28 @@ export const SystemConfiguration = () => {
                 checked={config.enableNotifications}
                 onCheckedChange={(checked) => setConfig(prev => ({ ...prev, enableNotifications: checked }))}
               />
-              <Label htmlFor="enableNotifications">Notificaties Inschakelen</Label>
+              <Label htmlFor="enableNotifications" className="text-sm">Notificaties Inschakelen</Label>
             </div>
 
             <div>
-              <Label htmlFor="maintenanceReminderDays">Onderhoud Herinnering (dagen vooraf)</Label>
+              <Label htmlFor="maintenanceReminderDays" className="text-sm">Onderhoud Herinnering (dagen vooraf)</Label>
               <Input
                 id="maintenanceReminderDays"
                 type="number"
                 value={config.maintenanceReminderDays}
                 onChange={(e) => setConfig(prev => ({ ...prev, maintenanceReminderDays: parseInt(e.target.value) }))}
+                className="text-sm"
               />
             </div>
 
             <div>
-              <Label htmlFor="warrantyReminderDays">Garantie Herinnering (dagen vooraf)</Label>
+              <Label htmlFor="warrantyReminderDays" className="text-sm">Garantie Herinnering (dagen vooraf)</Label>
               <Input
                 id="warrantyReminderDays"
                 type="number"
                 value={config.warrantyReminderDays}
                 onChange={(e) => setConfig(prev => ({ ...prev, warrantyReminderDays: parseInt(e.target.value) }))}
+                className="text-sm"
               />
             </div>
           </CardContent>
@@ -195,17 +209,18 @@ export const SystemConfiguration = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Financiële Instellingen</CardTitle>
-            <CardDescription>Standaard waarden voor financiële berekeningen</CardDescription>
+            <CardTitle className="text-lg sm:text-xl">Financiële Instellingen</CardTitle>
+            <CardDescription className="text-sm">Standaard waarden voor financiële berekeningen</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="defaultDepreciationRate">Standaard Afschrijvingspercentage (%)</Label>
+              <Label htmlFor="defaultDepreciationRate" className="text-sm">Standaard Afschrijvingspercentage (%)</Label>
               <Input
                 id="defaultDepreciationRate"
                 type="number"
                 value={config.defaultDepreciationRate}
                 onChange={(e) => setConfig(prev => ({ ...prev, defaultDepreciationRate: parseFloat(e.target.value) }))}
+                className="text-sm"
               />
             </div>
           </CardContent>
@@ -213,8 +228,8 @@ export const SystemConfiguration = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Email Instellingen</CardTitle>
-            <CardDescription>Configuratie voor email notificaties</CardDescription>
+            <CardTitle className="text-lg sm:text-xl">Email Instellingen</CardTitle>
+            <CardDescription className="text-sm">Configuratie voor email notificaties</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -223,16 +238,17 @@ export const SystemConfiguration = () => {
                 checked={config.emailNotifications}
                 onCheckedChange={(checked) => setConfig(prev => ({ ...prev, emailNotifications: checked }))}
               />
-              <Label htmlFor="emailNotifications">Email Notificaties</Label>
+              <Label htmlFor="emailNotifications" className="text-sm">Email Notificaties</Label>
             </div>
 
             <div>
-              <Label htmlFor="emailServer">Email Server</Label>
+              <Label htmlFor="emailServer" className="text-sm">Email Server</Label>
               <Input
                 id="emailServer"
                 value={config.emailServer}
                 onChange={(e) => setConfig(prev => ({ ...prev, emailServer: e.target.value }))}
                 placeholder="smtp.company.com"
+                className="text-sm"
               />
             </div>
           </CardContent>
@@ -240,27 +256,29 @@ export const SystemConfiguration = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Bestand Instellingen</CardTitle>
-            <CardDescription>Configuratie voor bestand uploads</CardDescription>
+            <CardTitle className="text-lg sm:text-xl">Bestand Instellingen</CardTitle>
+            <CardDescription className="text-sm">Configuratie voor bestand uploads</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="maxFileSize">Maximum Bestandsgrootte (MB)</Label>
+              <Label htmlFor="maxFileSize" className="text-sm">Maximum Bestandsgrootte (MB)</Label>
               <Input
                 id="maxFileSize"
                 type="number"
                 value={config.maxFileSize}
                 onChange={(e) => setConfig(prev => ({ ...prev, maxFileSize: parseInt(e.target.value) }))}
+                className="text-sm"
               />
             </div>
 
             <div>
-              <Label htmlFor="allowedFileTypes">Toegestane Bestandstypen</Label>
+              <Label htmlFor="allowedFileTypes" className="text-sm">Toegestane Bestandstypen</Label>
               <Input
                 id="allowedFileTypes"
                 value={config.allowedFileTypes}
                 onChange={(e) => setConfig(prev => ({ ...prev, allowedFileTypes: e.target.value }))}
                 placeholder="jpg,jpeg,png,pdf,doc,docx"
+                className="text-sm"
               />
             </div>
           </CardContent>
