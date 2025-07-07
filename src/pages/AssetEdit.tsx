@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,12 +12,18 @@ const AssetEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { canManageAssets } = useUserRole();
+  const { canManageAssets, loading: roleLoading } = useUserRole();
   const [asset, setAsset] = useState<Asset | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('AssetEdit: Component mounted, id:', id, 'canManageAssets:', canManageAssets);
+    console.log('AssetEdit: Component mounted, id:', id, 'canManageAssets:', canManageAssets, 'roleLoading:', roleLoading);
+    
+    // Wait for role to be loaded before making permission decisions
+    if (roleLoading) {
+      console.log('AssetEdit: Still loading user role, waiting...');
+      return;
+    }
     
     if (!canManageAssets) {
       console.log('AssetEdit: User cannot manage assets, redirecting to assets list');
@@ -29,7 +34,7 @@ const AssetEdit = () => {
     if (id) {
       fetchAsset();
     }
-  }, [id, canManageAssets, navigate]);
+  }, [id, canManageAssets, navigate, roleLoading]);
 
   const fetchAsset = async () => {
     try {
@@ -147,6 +152,18 @@ const AssetEdit = () => {
     console.log('AssetEdit: Cancel clicked, navigating back to asset details');
     navigate(`/assets/${id}`);
   };
+
+  // Show loading while role is being determined
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Laden...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!canManageAssets) {
     return (
