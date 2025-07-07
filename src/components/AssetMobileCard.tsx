@@ -41,8 +41,9 @@ export const AssetMobileCard = ({
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('Edit button clicked for asset:', asset.id);
-    onEdit(asset);
+    console.log('Edit button clicked for asset:', asset.id, 'User role:', currentRole);
+    // Navigate directly to edit page instead of calling onEdit
+    navigate(`/assets/${asset.id}/edit`);
   };
 
   const handleReserveClick = (e: React.MouseEvent) => {
