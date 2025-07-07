@@ -1,141 +1,179 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Clock, User, Package, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useToast } from "@/hooks/use-toast";
 
 interface ActivityItem {
   id: string;
+  type: 'asset' | 'reservation' | 'user';
   action: string;
-  table_name: string;
-  created_at: string;
-  record_id: string;
+  description: string;
+  timestamp: string;
+  user?: string;
+  status?: string;
 }
 
 export const RecentActivity = () => {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { canViewSettings, loading: roleLoading } = useUserRole();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Always try to fetch, regardless of role permissions for now
-    if (!roleLoading) {
-      fetchRecentActivity();
-    }
-  }, [roleLoading]);
+    fetchRecentActivity();
+  }, []);
 
   const fetchRecentActivity = async () => {
     try {
-      console.log("Attempting to fetch recent activity...");
-      
-      const { data, error } = await supabase
-        .from('security_audit_log')
-        .select('id, action, table_name, created_at, record_id')
+      // Fetch recent assets
+      const { data: assets } = await supabase
+        .from('assets')
+        .select('id, type, brand, model, status, created_at')
         .order('created_at', { ascending: false })
         .limit(5);
 
-      if (error) {
-        console.error('Error fetching recent activity:', error);
-        
-        // Handle the specific "role admin does not exist" error
-        if (error.message && error.message.includes('role "admin" does not exist')) {
-          console.log('Database role error detected, showing empty state');
-          setError('Database configuratie wordt bijgewerkt. Probeer over een paar minuten opnieuw.');
-        } else {
-          setError('Kan recente activiteit niet laden');
-        }
-        setActivities([]);
-      } else {
-        console.log('Successfully fetched recent activity:', data?.length || 0, 'entries');
-        setActivities(data || []);
-        setError(null);
-      }
+      // Fetch recent reservations
+      const { data: reservations } = await supabase
+        .from('reservations')
+        .select('id, requester_name, status, created_at, asset_id')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      const recentActivities: ActivityItem[] = [];
+
+      // Add asset activities
+      (assets || []).forEach(asset => {
+        recentActivities.push({
+          id: `asset-${asset.id}`,
+          type: 'asset',
+          action: 'Toegevoegd',
+          description: `${asset.brand} ${asset.model} (${asset.type})`,
+          timestamp: asset.created_at,
+          status: asset.status
+        });
+      });
+
+      // Add reservation activities
+      (reservations || []).forEach(reservation => {
+        recentActivities.push({
+          id: `reservation-${reservation.id}`,
+          type: 'reservation',
+          action: 'Reservering',
+          description: `Reservering aangevraagd door ${reservation.requester_name}`,
+          timestamp: reservation.created_at,
+          user: reservation.requester_name,
+          status: reservation.status
+        });
+      });
+
+      // Sort by timestamp (most recent first)
+      recentActivities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+      setActivities(recentActivities.slice(0, 10));
     } catch (error) {
-      console.error('Unexpected error fetching recent activity:', error);
-      setError('Onverwachte fout bij laden van activiteit');
-      setActivities([]);
+      console.error('Error fetching recent activity:', error);
+      toast({
+        title: "Fout bij laden",
+        description: "Kon recente activiteit niet laden.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const getActivityDescription = (activity: ActivityItem) => {
-    const action = activity.action.toLowerCase();
-    const table = activity.table_name;
-    
-    switch (table) {
-      case 'assets':
-        if (action.includes('insert')) return 'Asset toegevoegd';
-        if (action.includes('update')) return 'Asset bijgewerkt';
-        if (action.includes('delete')) return 'Asset verwijderd';
-        break;
-      case 'reservations':
-        if (action.includes('insert')) return 'Nieuwe reservering';
-        if (action.includes('update')) return 'Reservering bijgewerkt';
-        break;
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'asset':
+        return <Package className="h-4 w-4" />;
+      case 'reservation':
+        return <Calendar className="h-4 w-4" />;
+      case 'user':
+        return <User className="h-4 w-4" />;
       default:
-        return `${action} in ${table}`;
+        return <Clock className="h-4 w-4" />;
     }
-    return action;
   };
 
-  const getActivityColor = (activity: ActivityItem) => {
-    const action = activity.action.toLowerCase();
-    if (action.includes('insert')) return 'bg-blue-50';
-    if (action.includes('update')) return 'bg-green-50';
-    if (action.includes('delete')) return 'bg-red-50';
-    return 'bg-gray-50';
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'available':
+      case 'in voorraad':
+        return "bg-green-100 text-green-800";
+      case 'in gebruik':
+      case 'assigned':
+        return "bg-blue-100 text-blue-800";
+      case 'pending':
+        return "bg-yellow-100 text-yellow-800";
+      case 'approved':
+        return "bg-green-100 text-green-800";
+      case 'rejected':
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
   };
 
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatTimeAgo = (timestamp: string) => {
+    const date = new Date(timestamp);
     const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
     
-    if (diffInHours < 1) return "Nu";
-    if (diffInHours < 24) return `${diffInHours} uur geleden`;
-    return `${Math.floor(diffInHours / 24)} dag${Math.floor(diffInHours / 24) > 1 ? 'en' : ''} geleden`;
+    if (diffInMinutes < 1) return "Nu";
+    if (diffInMinutes < 60) return `${diffInMinutes}m geleden`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}u geleden`;
+    return `${Math.floor(diffInMinutes / 1440)}d geleden`;
   };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Recente Activiteit</CardTitle>
-        <CardDescription>Laatste wijzigingen in het systeem</CardDescription>
+        <CardDescription>Laatste wijzigingen en activiteiten</CardDescription>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-center py-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-sm text-gray-600">Laden...</p>
-          </div>
-        ) : error ? (
-          <div className="text-center py-4">
-            <div className="text-yellow-600 bg-yellow-50 p-3 rounded-lg">
-              <p className="font-medium">Tijdelijke database issue</p>
-              <p className="text-sm mt-1">{error}</p>
-            </div>
+          <div className="flex items-center justify-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
           </div>
         ) : activities.length === 0 ? (
-          <div className="text-center py-4 text-gray-500">
-            <p>Geen recente activiteit beschikbaar</p>
-            <p className="text-sm mt-2">Activiteiten worden getoond zodra ze beschikbaar zijn</p>
+          <div className="text-center py-6 text-gray-500">
+            Geen recente activiteit
           </div>
         ) : (
           <div className="space-y-4">
             {activities.map((activity) => (
-              <div
-                key={activity.id}
-                className={`flex items-center justify-between p-3 ${getActivityColor(activity)} rounded-lg`}
-              >
-                <div>
-                  <p className="font-medium">{getActivityDescription(activity)}</p>
-                  <p className="text-sm text-gray-600">Record ID: {activity.record_id}</p>
+              <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <div className="flex-shrink-0 mt-1">
+                  {getActivityIcon(activity.type)}
                 </div>
-                <span className="text-xs text-gray-500">
-                  {formatTimeAgo(activity.created_at)}
-                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-900">
+                      {activity.action}
+                    </p>
+                    <div className="flex items-center space-x-2">
+                      {activity.status && (
+                        <Badge className={getStatusColor(activity.status)}>
+                          {activity.status}
+                        </Badge>
+                      )}
+                      <span className="text-xs text-gray-500">
+                        {formatTimeAgo(activity.timestamp)}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 truncate">
+                    {activity.description}
+                  </p>
+                  {activity.user && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      door {activity.user}
+                    </p>
+                  )}
+                </div>
               </div>
             ))}
           </div>

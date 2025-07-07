@@ -41,6 +41,7 @@ const Users = () => {
 
   const fetchUsers = async () => {
     try {
+      console.log('Fetching users from database...');
       const { data, error } = await supabase
         .from('profiles')
         .select('id, email, full_name, role, created_at')
@@ -51,6 +52,7 @@ const Users = () => {
         return;
       }
 
+      console.log('Users fetched successfully:', data?.length || 0, 'items');
       setUsers(data || []);
     } catch (error) {
       console.error('Error fetching users:', error);

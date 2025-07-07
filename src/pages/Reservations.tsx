@@ -1,141 +1,191 @@
+
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Search, Clock, CheckCircle, XCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Calendar, Clock, User, Package, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Reservation {
   id: string;
   asset_id: string;
-  requester_id: string;
   requester_name: string;
-  purpose: string;
   requested_date: string;
   return_date: string;
-  status: string;
+  purpose: string;
+  status: 'pending' | 'approved' | 'rejected';
   created_at: string;
-  assets?: {
+  asset?: {
+    brand: string;
+    model: string;
     type: string;
-    serial_number: string;
   };
 }
 
 const Reservations = () => {
+  const { canManageAssets } = useUserRole();
+  const { toast } = useToast();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const { canManageAssets, loading: roleLoading } = useUserRole();
 
   useEffect(() => {
-    // Only fetch if role is loaded
-    if (!roleLoading) {
-      fetchReservations();
-    }
-  }, [roleLoading]);
+    fetchReservations();
+  }, []);
 
   const fetchReservations = async () => {
     try {
+      console.log('Fetching reservations...');
+      
       const { data, error } = await supabase
         .from('reservations')
         .select(`
           *,
-          assets (
-            type,
-            serial_number
+          assets:asset_id (
+            brand,
+            model,
+            type
           )
         `)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching reservations:', error);
+        toast({
+          title: "Fout bij laden",
+          description: "Er is een fout opgetreden bij het laden van reserveringen.",
+          variant: "destructive",
+        });
         return;
       }
 
-      setReservations(data || []);
+      console.log('Reservations fetched:', data?.length || 0);
+      
+      // Transform the data to match our interface
+      const transformedReservations: Reservation[] = (data || []).map(reservation => ({
+        id: reservation.id,
+        asset_id: reservation.asset_id,
+        requester_name: reservation.requester_name,
+        requested_date: reservation.requested_date,
+        return_date: reservation.return_date,
+        purpose: reservation.purpose,
+        status: reservation.status,
+        created_at: reservation.created_at,
+        asset: reservation.assets ? {
+          brand: reservation.assets.brand,
+          model: reservation.assets.model,
+          type: reservation.assets.type
+        } : undefined
+      }));
+
+      setReservations(transformedReservations);
     } catch (error) {
       console.error('Error fetching reservations:', error);
+      toast({
+        title: "Fout bij laden",
+        description: "Er is een onverwachte fout opgetreden.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusUpdate = async (reservationId: string, newStatus: string) => {
+  const handleApprove = async (reservationId: string) => {
     try {
-      const updates: any = {
-        status: newStatus,
-        updated_at: new Date().toISOString(),
-      };
-
       const { error } = await supabase
         .from('reservations')
-        .update(updates)
+        .update({ status: 'approved' })
         .eq('id', reservationId);
 
       if (error) {
-        console.error('Error updating reservation:', error);
+        console.error('Error approving reservation:', error);
+        toast({
+          title: "Fout",
+          description: "Er is een fout opgetreden bij het goedkeuren van de reservering.",
+          variant: "destructive",
+        });
         return;
       }
 
-      // Refresh the list
-      fetchReservations();
+      // Update local state
+      setReservations(prev => prev.map(r => 
+        r.id === reservationId ? { ...r, status: 'approved' as const } : r
+      ));
+
+      toast({
+        title: "Reservering goedgekeurd",
+        description: "De reservering is succesvol goedgekeurd.",
+      });
     } catch (error) {
-      console.error('Error updating reservation:', error);
+      console.error('Error approving reservation:', error);
+    }
+  };
+
+  const handleReject = async (reservationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .update({ status: 'rejected' })
+        .eq('id', reservationId);
+
+      if (error) {
+        console.error('Error rejecting reservation:', error);
+        toast({
+          title: "Fout",
+          description: "Er is een fout opgetreden bij het afwijzen van de reservering.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update local state
+      setReservations(prev => prev.map(r => 
+        r.id === reservationId ? { ...r, status: 'rejected' as const } : r
+      ));
+
+      toast({
+        title: "Reservering afgewezen",
+        description: "De reservering is afgewezen.",
+        variant: "destructive",
+      });
+    } catch (error) {
+      console.error('Error rejecting reservation:', error);
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
       case 'approved':
-        return 'bg-green-100 text-green-800';
+        return "bg-green-100 text-green-800";
       case 'rejected':
-        return 'bg-red-100 text-red-800';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800';
+        return "bg-red-100 text-red-800";
+      case 'pending':
+        return "bg-yellow-100 text-yellow-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Clock className="h-4 w-4" />;
       case 'approved':
         return <CheckCircle className="h-4 w-4" />;
       case 'rejected':
         return <XCircle className="h-4 w-4" />;
-      case 'completed':
-        return <CheckCircle className="h-4 w-4" />;
+      case 'pending':
+        return <AlertCircle className="h-4 w-4" />;
       default:
         return <Clock className="h-4 w-4" />;
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('nl-NL', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
+    return new Date(dateString).toLocaleDateString('nl-NL');
   };
 
-  const filteredReservations = reservations.filter(reservation => {
-    const matchesSearch = reservation.requester_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reservation.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (reservation.assets?.type.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesStatus = selectedStatus === "all" || reservation.status === selectedStatus;
-    return matchesSearch && matchesStatus;
-  });
-
-  // Show loading state
-  if (roleLoading || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -150,112 +200,101 @@ const Reservations = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Reserveringen</h1>
-          <p className="text-gray-600 mt-1">Overzicht van alle asset reserveringen</p>
+          <h1 className="text-2xl font-bold text-gray-900">Reserveringen</h1>
+          <p className="text-gray-600 mt-1">Beheer asset reserveringen en aanvragen</p>
         </div>
 
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Filters</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Zoeken</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Zoek op naam, doel of asset..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Status</label>
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecteer status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle statussen</SelectItem>
-                    <SelectItem value="pending">In afwachting</SelectItem>
-                    <SelectItem value="approved">Goedgekeurd</SelectItem>
-                    <SelectItem value="rejected">Afgewezen</SelectItem>
-                    <SelectItem value="completed">Voltooid</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Calendar className="h-5 w-5" />
-              <span>Reserveringen</span>
-            </CardTitle>
-            <CardDescription>
-              {filteredReservations.length} reservering{filteredReservations.length !== 1 ? 'en' : ''} gevonden
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {filteredReservations.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                Geen reserveringen gevonden
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredReservations.map((reservation) => (
-                  <div
-                    key={reservation.id}
-                    className="flex flex-col lg:flex-row lg:items-center justify-between p-4 bg-gray-50 rounded-lg space-y-4 lg:space-y-0"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <Badge className={`flex items-center space-x-1 ${getStatusColor(reservation.status)}`}>
-                          {getStatusIcon(reservation.status)}
-                          <span className="capitalize">{reservation.status}</span>
-                        </Badge>
-                        <span className="font-medium">{reservation.requester_name}</span>
-                      </div>
-                      
-                      <div className="space-y-1 text-sm text-gray-600">
-                        <div><strong>Asset:</strong> {reservation.assets?.type} ({reservation.assets?.serial_number})</div>
-                        <div><strong>Doel:</strong> {reservation.purpose}</div>
-                        <div><strong>Periode:</strong> {formatDate(reservation.requested_date)} - {formatDate(reservation.return_date)}</div>
-                        <div><strong>Aangevraagd:</strong> {formatDate(reservation.created_at)}</div>
+        {reservations.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-8">
+              <Calendar className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Geen reserveringen</h3>
+              <p className="mt-2 text-gray-500">Er zijn nog geen reserveringen aangevraagd.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {reservations.map((reservation) => (
+              <Card key={reservation.id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center space-x-2">
+                      <Package className="h-5 w-5 text-gray-400" />
+                      <div>
+                        <CardTitle className="text-lg">
+                          {reservation.asset ? 
+                            `${reservation.asset.brand} ${reservation.asset.model}` : 
+                            'Asset niet gevonden'
+                          }
+                        </CardTitle>
+                        <CardDescription>
+                          {reservation.asset?.type}
+                        </CardDescription>
                       </div>
                     </div>
-                    
-                    {canManageAssets && reservation.status === 'pending' && (
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          onClick={() => handleStatusUpdate(reservation.id, 'approved')}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          Goedkeuren
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleStatusUpdate(reservation.id, 'rejected')}
-                          className="border-red-300 text-red-600 hover:bg-red-50"
-                        >
-                          Afwijzen
-                        </Button>
-                      </div>
-                    )}
+                    <div className="flex items-center space-x-2">
+                      <Badge className={getStatusColor(reservation.status)}>
+                        {getStatusIcon(reservation.status)}
+                        <span className="ml-1 capitalize">{reservation.status}</span>
+                      </Badge>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <User className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm text-gray-600">Aanvrager:</span>
+                        <span className="text-sm font-medium">{reservation.requester_name}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm text-gray-600">Periode:</span>
+                        <span className="text-sm font-medium">
+                          {formatDate(reservation.requested_date)} - {formatDate(reservation.return_date)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div>
+                        <span className="text-sm text-gray-600">Doel:</span>
+                        <p className="text-sm font-medium">{reservation.purpose}</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm text-gray-600">Aangevraagd op:</span>
+                        <span className="text-sm font-medium">{formatDate(reservation.created_at)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {canManageAssets && reservation.status === 'pending' && (
+                    <div className="mt-4 flex space-x-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleApprove(reservation.id)}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Goedkeuren
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleReject(reservation.id)}
+                        className="text-red-600 border-red-600 hover:bg-red-50"
+                      >
+                        <XCircle className="h-4 w-4 mr-1" />
+                        Afwijzen
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
