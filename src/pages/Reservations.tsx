@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,7 +61,7 @@ const Reservations = () => {
 
       console.log('Reservations fetched:', data?.length || 0);
       
-      // Transform the data to match our interface
+      // Transform the data to match our interface with proper status typing
       const transformedReservations: Reservation[] = (data || []).map(reservation => ({
         id: reservation.id,
         asset_id: reservation.asset_id,
@@ -70,7 +69,7 @@ const Reservations = () => {
         requested_date: reservation.requested_date,
         return_date: reservation.return_date,
         purpose: reservation.purpose,
-        status: reservation.status,
+        status: (reservation.status || 'pending') as 'pending' | 'approved' | 'rejected',
         created_at: reservation.created_at,
         asset: reservation.assets ? {
           brand: reservation.assets.brand,

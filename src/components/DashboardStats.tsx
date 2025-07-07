@@ -9,8 +9,8 @@ interface DashboardStatsProps {
 
 export const DashboardStats = ({ assets }: DashboardStatsProps) => {
   const totalAssets = assets.length;
-  const availableAssets = assets.filter(asset => asset.status === "In voorraad" || asset.status === "available").length;
-  const assignedAssets = assets.filter(asset => asset.status === "In gebruik" || asset.status === "assigned").length;
+  const availableAssets = assets.filter(asset => asset.status === "In voorraad").length;
+  const assignedAssets = assets.filter(asset => asset.status === "In gebruik").length;
   const maintenanceAssets = assets.filter(asset => asset.status === "Onderhoud").length;
 
   const stats = [
