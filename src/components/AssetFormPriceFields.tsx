@@ -25,7 +25,7 @@ export const AssetFormPriceFields = ({ formData, onFormDataChange }: AssetFormPr
         <Input
           id="purchasePrice"
           type="text"
-          value={formData.purchasePrice}
+          value={formData.purchasePrice || ""}
           onChange={(e) => handlePriceChange('purchasePrice', e.target.value)}
           placeholder="0.00"
         />
@@ -36,7 +36,7 @@ export const AssetFormPriceFields = ({ formData, onFormDataChange }: AssetFormPr
         <Input
           id="penaltyAmount"
           type="text"
-          value={formData.penaltyAmount}
+          value={formData.penaltyAmount || ""}
           onChange={(e) => handlePriceChange('penaltyAmount', e.target.value)}
           placeholder="0.00"
         />

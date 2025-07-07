@@ -32,7 +32,7 @@ export const AssetFormBasicFields = ({ formData, onFormDataChange }: AssetFormBa
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="type">Asset Type</Label>
-          <Select value={formData.type} onValueChange={(value) => handleFieldChange('type', value)}>
+          <Select value={formData.type || ""} onValueChange={(value) => handleFieldChange('type', value)}>
             <SelectTrigger>
               <SelectValue placeholder="Selecteer asset type" />
             </SelectTrigger>
@@ -48,7 +48,7 @@ export const AssetFormBasicFields = ({ formData, onFormDataChange }: AssetFormBa
 
         <div className="space-y-2">
           <Label htmlFor="category">Categorie</Label>
-          <Select value={formData.category} onValueChange={(value: Asset["category"]) => handleFieldChange('category', value)}>
+          <Select value={formData.category || ""} onValueChange={(value: Asset["category"]) => handleFieldChange('category', value)}>
             <SelectTrigger>
               <SelectValue placeholder="Selecteer categorie" />
             </SelectTrigger>
@@ -66,7 +66,7 @@ export const AssetFormBasicFields = ({ formData, onFormDataChange }: AssetFormBa
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="brand">Merk</Label>
-          <Select value={formData.brand} onValueChange={(value) => handleFieldChange('brand', value)}>
+          <Select value={formData.brand || ""} onValueChange={(value) => handleFieldChange('brand', value)}>
             <SelectTrigger>
               <SelectValue placeholder="Selecteer merk" />
             </SelectTrigger>
@@ -84,7 +84,7 @@ export const AssetFormBasicFields = ({ formData, onFormDataChange }: AssetFormBa
           <Label htmlFor="model">Model (optioneel)</Label>
           <Input
             id="model"
-            value={formData.model}
+            value={formData.model || ""}
             onChange={(e) => handleFieldChange('model', e.target.value)}
             placeholder="Voer model in"
           />
@@ -97,7 +97,7 @@ export const AssetFormBasicFields = ({ formData, onFormDataChange }: AssetFormBa
           <Input
             id="purchaseDate"
             type="date"
-            value={formData.purchaseDate}
+            value={formData.purchaseDate || ""}
             onChange={(e) => handleFieldChange('purchaseDate', e.target.value)}
             required
           />
@@ -105,7 +105,7 @@ export const AssetFormBasicFields = ({ formData, onFormDataChange }: AssetFormBa
 
         <div className="space-y-2">
           <Label htmlFor="status">Status</Label>
-          <Select value={formData.status} onValueChange={(value: Asset["status"]) => handleFieldChange('status', value)}>
+          <Select value={formData.status || ""} onValueChange={(value: Asset["status"]) => handleFieldChange('status', value)}>
             <SelectTrigger>
               <SelectValue placeholder="Selecteer status" />
             </SelectTrigger>

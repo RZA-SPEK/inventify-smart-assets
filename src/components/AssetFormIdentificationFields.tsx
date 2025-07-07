@@ -44,7 +44,7 @@ export const AssetFormIdentificationFields = ({
         <div className="flex flex-col sm:flex-row gap-2">
           <Input
             id="serialNumber"
-            value={formData.serialNumber}
+            value={formData.serialNumber || ""}
             onChange={(e) => handleSerialNumberChange(e.target.value)}
             className="flex-1"
             placeholder="Voer serienummer in of scan"
@@ -67,7 +67,7 @@ export const AssetFormIdentificationFields = ({
         <div className="flex flex-col sm:flex-row gap-2">
           <Input
             id="assetTag"
-            value={formData.assetTag}
+            value={formData.assetTag || ""}
             onChange={(e) => handleAssetTagChange(e.target.value)}
             placeholder="MVDS-XXX123 of laat leeg"
             className="flex-1"
