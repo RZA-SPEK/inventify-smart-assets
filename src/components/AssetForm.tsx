@@ -36,15 +36,17 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
 
   // Use useCallback to prevent unnecessary re-renders
   const updateFormData = useCallback((newData: any) => {
-    console.log('updateFormData called with:', newData);
+    console.log('AssetForm: updateFormData called with:', newData);
     setFormData(prevData => {
       const updatedData = { ...prevData, ...newData };
-      console.log('Form data updated:', updatedData);
+      console.log('AssetForm: Form data updated:', updatedData);
       return updatedData;
     });
   }, []);
 
   useEffect(() => {
+    console.log('AssetForm: useEffect triggered with asset:', asset);
+    
     if (asset) {
       const initialData = {
         type: asset.type || "",
@@ -63,7 +65,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
         penaltyAmount: asset.penaltyAmount?.toString() || "",
         comments: asset.comments || ""
       };
-      console.log('Setting initial form data from asset:', initialData);
+      console.log('AssetForm: Setting initial form data from asset:', initialData);
       setFormData(initialData);
     } else {
       // Reset form data when creating a new asset
@@ -84,18 +86,18 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
         penaltyAmount: "",
         comments: ""
       };
-      console.log('Resetting form data for new asset:', resetData);
+      console.log('AssetForm: Resetting form data for new asset:', resetData);
       setFormData(resetData);
     }
   }, [asset]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting form data:", formData);
+    console.log("AssetForm: Submitting form data:", formData);
     
     // Ensure type is included and not empty
     if (!formData.type || formData.type.trim() === "") {
-      console.error("Asset type is required but missing:", formData.type);
+      console.error("AssetForm: Asset type is required but missing:", formData.type);
       return;
     }
     
@@ -117,12 +119,12 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
       comments: formData.comments || undefined
     };
     
-    console.log("Final submit data with type:", submitData);
+    console.log("AssetForm: Final submit data:", submitData);
     onSave(submitData);
   };
 
   const handleBarcodeScanned = (scannedData: string) => {
-    console.log("Barcode scanned:", scannedData, "Mode:", scannerMode);
+    console.log("AssetForm: Barcode scanned:", scannedData, "Mode:", scannerMode);
     if (scannerMode === 'serial') {
       updateFormData({ serialNumber: scannedData });
     } else if (scannerMode === 'assetTag') {

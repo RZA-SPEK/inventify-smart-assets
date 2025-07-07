@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -57,7 +58,7 @@ const AssetEdit = () => {
       }
 
       if (data) {
-        console.log('AssetEdit: Asset fetched successfully:', data);
+        console.log('AssetEdit: Raw asset data from database:', data);
         
         // Transform database response to match Asset interface
         const transformedAsset: Asset = {
@@ -80,7 +81,7 @@ const AssetEdit = () => {
           comments: data.comments || ''
         };
 
-        console.log('AssetEdit: Transformed asset:', transformedAsset);
+        console.log('AssetEdit: Transformed asset for form:', transformedAsset);
         setAsset(transformedAsset);
       }
     } catch (error) {
@@ -97,28 +98,33 @@ const AssetEdit = () => {
 
   const handleSave = async (updatedAsset: Omit<Asset, "id">) => {
     try {
-      console.log('AssetEdit: Updating asset:', updatedAsset);
+      console.log('AssetEdit: Updating asset with data:', updatedAsset);
       
+      // Transform form data back to database format
+      const dbData = {
+        type: updatedAsset.type,
+        brand: updatedAsset.brand || null,
+        model: updatedAsset.model || null,
+        serial_number: updatedAsset.serialNumber || null,
+        asset_tag: updatedAsset.assetTag || null,
+        status: updatedAsset.status,
+        location: updatedAsset.location,
+        assigned_to: updatedAsset.assignedTo || null,
+        assigned_to_location: updatedAsset.assignedToLocation || null,
+        purchase_date: updatedAsset.purchaseDate,
+        warranty_expiry: updatedAsset.warrantyExpiry || null,
+        purchase_price: updatedAsset.purchasePrice || null,
+        penalty_amount: updatedAsset.penaltyAmount || 0,
+        category: updatedAsset.category,
+        image_url: updatedAsset.image || null,
+        comments: updatedAsset.comments || null
+      };
+
+      console.log('AssetEdit: Database update payload:', dbData);
+
       const { error } = await supabase
         .from('assets')
-        .update({
-          type: updatedAsset.type,
-          brand: updatedAsset.brand || null,
-          model: updatedAsset.model || null,
-          serial_number: updatedAsset.serialNumber || null,
-          asset_tag: updatedAsset.assetTag || null,
-          status: updatedAsset.status,
-          location: updatedAsset.location,
-          assigned_to: updatedAsset.assignedTo || null,
-          assigned_to_location: updatedAsset.assignedToLocation || null,
-          purchase_date: updatedAsset.purchaseDate,
-          warranty_expiry: updatedAsset.warrantyExpiry || null,
-          purchase_price: updatedAsset.purchasePrice || null,
-          penalty_amount: updatedAsset.penaltyAmount || 0,
-          category: updatedAsset.category,
-          image_url: updatedAsset.image || null,
-          comments: updatedAsset.comments || null
-        })
+        .update(dbData)
         .eq('id', id);
 
       if (error) {
