@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -126,6 +125,24 @@ export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationsh
 
   const fetchAvailableAssets = async () => {
     try {
+      // First, get all linked asset IDs
+      const { data: linkedAssets, error: linkedError } = await supabase
+        .from('asset_relationships')
+        .select('parent_asset_id, child_asset_id');
+
+      if (linkedError) {
+        console.error('Error fetching linked assets:', linkedError);
+        return;
+      }
+
+      // Create a set of all linked asset IDs
+      const linkedAssetIds = new Set<string>();
+      linkedAssets?.forEach(rel => {
+        linkedAssetIds.add(rel.parent_asset_id);
+        linkedAssetIds.add(rel.child_asset_id);
+      });
+
+      // Fetch all assets excluding the current asset and linked assets
       const { data, error } = await supabase
         .from('assets')
         .select('*')
@@ -137,8 +154,11 @@ export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationsh
         return;
       }
 
+      // Filter out assets that are already linked
+      const unlinkedAssets = (data || []).filter(asset => !linkedAssetIds.has(asset.id));
+
       // Transform database response to match Asset interface
-      const transformedAssets: Asset[] = (data || []).map(transformDatabaseAssetToAsset);
+      const transformedAssets: Asset[] = unlinkedAssets.map(transformDatabaseAssetToAsset);
 
       setAvailableAssets(transformedAssets);
     } catch (error) {
@@ -185,7 +205,8 @@ export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationsh
       setRelationshipType("related");
       setRelationshipDescription("");
       setShowAddDialog(false);
-      fetchRelationships();
+      // Refresh both relationships and available assets
+      Promise.all([fetchRelationships(), fetchAvailableAssets()]);
     } catch (error) {
       console.error('Error adding relationship:', error);
     }
@@ -213,7 +234,8 @@ export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationsh
         description: "De asset koppeling is succesvol verwijderd.",
       });
 
-      fetchRelationships();
+      // Refresh both relationships and available assets
+      Promise.all([fetchRelationships(), fetchAvailableAssets()]);
     } catch (error) {
       console.error('Error deleting relationship:', error);
     }
@@ -258,12 +280,18 @@ export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationsh
                       <SelectValue placeholder="Selecteer een asset om te koppelen" />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableAssets.map((asset) => (
-                        <SelectItem key={asset.id} value={asset.id}>
-                          {asset.type} - {asset.brand} {asset.model} 
-                          {asset.assetTag && ` (${asset.assetTag})`}
-                        </SelectItem>
-                      ))}
+                      {availableAssets.length === 0 ? (
+                        <div className="p-2 text-sm text-gray-500">
+                          Geen beschikbare assets om te koppelen
+                        </div>
+                      ) : (
+                        availableAssets.map((asset) => (
+                          <SelectItem key={asset.id} value={asset.id}>
+                            {asset.type} - {asset.brand} {asset.model} 
+                            {asset.assetTag && ` (${asset.assetTag})`}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -301,7 +329,7 @@ export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationsh
                   <Button variant="outline" onClick={() => setShowAddDialog(false)}>
                     Annuleren
                   </Button>
-                  <Button onClick={handleAddRelationship}>
+                  <Button onClick={handleAddRelationship} disabled={!selectedAssetId}>
                     Koppelen
                   </Button>
                 </div>
