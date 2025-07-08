@@ -81,7 +81,7 @@ const Assets = () => {
         reservable: dbAsset.reservable || false
       }));
 
-      // Filter assets based on user role
+      // Filter assets based on user role - only for non-admin users
       let filteredForRole = transformedAssets;
       if (!canManageAssets) {
         // For regular users, show only reservable assets or assets assigned to them
@@ -89,6 +89,7 @@ const Assets = () => {
           asset.reservable || asset.status === "In gebruik"
         );
       }
+      // For admin users (canManageAssets = true), show ALL assets including non-reservable ones
 
       setAssets(filteredForRole);
     } catch (error) {
