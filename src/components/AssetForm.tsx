@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     image: "",
     purchasePrice: "",
     penaltyAmount: "",
-    comments: ""
+    comments: "",
+    reservable: true
   });
 
   // Use useCallback to prevent unnecessary re-renders
@@ -63,7 +63,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
         image: asset.image || "",
         purchasePrice: asset.purchasePrice?.toString() || "",
         penaltyAmount: asset.penaltyAmount?.toString() || "",
-        comments: asset.comments || ""
+        comments: asset.comments || "",
+        reservable: asset.reservable !== undefined ? asset.reservable : true
       };
       console.log('AssetForm: Setting initial form data from asset:', initialData);
       setFormData(initialData);
@@ -84,7 +85,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
         image: "",
         purchasePrice: "",
         penaltyAmount: "",
-        comments: ""
+        comments: "",
+        reservable: true
       };
       console.log('AssetForm: Resetting form data for new asset:', resetData);
       setFormData(resetData);
@@ -116,7 +118,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
       image: formData.image || undefined,
       purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
       penaltyAmount: formData.penaltyAmount ? parseFloat(formData.penaltyAmount) : 0,
-      comments: formData.comments || undefined
+      comments: formData.comments || undefined,
+      reservable: formData.reservable
     };
     
     console.log("AssetForm: Final submit data:", submitData);

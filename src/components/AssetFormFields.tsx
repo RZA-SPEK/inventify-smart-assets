@@ -7,6 +7,7 @@ import { AssetFormBasicFields } from "./AssetFormBasicFields";
 import { AssetFormIdentificationFields } from "./AssetFormIdentificationFields";
 import { AssetFormPriceFields } from "./AssetFormPriceFields";
 import { AssetCommentsField } from "./AssetCommentsField";
+import { ReservableField } from "./ReservableField";
 
 interface AssetFormFieldsProps {
   formData: {
@@ -25,6 +26,7 @@ interface AssetFormFieldsProps {
     purchasePrice: string;
     penaltyAmount: string;
     comments: string;
+    reservable: boolean;
   };
   onFormDataChange: (data: any) => void;
   onShowScanner: () => void;
@@ -67,6 +69,11 @@ export const AssetFormFields = ({
       <AssetFormPriceFields
         formData={formData}
         onFormDataChange={onFormDataChange}
+      />
+
+      <ReservableField
+        checked={formData.reservable}
+        onCheckedChange={(checked) => handleFieldChange('reservable', checked)}
       />
 
       <LocationSelector

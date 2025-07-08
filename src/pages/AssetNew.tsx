@@ -48,7 +48,9 @@ const AssetNew = () => {
           purchase_price: assetData.purchasePrice || null,
           penalty_amount: assetData.penaltyAmount || 0,
           category: assetData.category,
-          image_url: assetData.image || null
+          image_url: assetData.image || null,
+          comments: assetData.comments || null,
+          reservable: assetData.reservable !== undefined ? assetData.reservable : true
         })
         .select()
         .single();
