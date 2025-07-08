@@ -6,12 +6,13 @@ import { useLocation } from "react-router-dom";
 
 export type UserRole = "ICT Admin" | "Facilitair Admin" | "Gebruiker";
 
-// Global cache to prevent duplicate fetches
-const roleCache = new Map<string, UserRole>();
+// Enhanced global cache with timestamp for cache invalidation
+const roleCache = new Map<string, { role: UserRole; timestamp: number }>();
 const activeFetches = new Set<string>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export const useUserRole = () => {
-  const [currentRole, setCurrentRole] = useState<UserRole>("Gebruiker"); // Default to Gebruiker instead of ICT Admin
+  const [currentRole, setCurrentRole] = useState<UserRole>("Gebruiker");
   const [loading, setLoading] = useState(true);
   const { user, session } = useAuth();
   const location = useLocation();
@@ -36,11 +37,11 @@ export const useUserRole = () => {
         return;
       }
 
-      // Check cache first
-      if (roleCache.has(user.id)) {
-        const cachedRole = roleCache.get(user.id)!;
-        console.log("Using cached role:", cachedRole);
-        setCurrentRole(cachedRole);
+      // Check cache first with timestamp validation
+      const cachedData = roleCache.get(user.id);
+      if (cachedData && (Date.now() - cachedData.timestamp < CACHE_DURATION)) {
+        console.log("Using cached role:", cachedData.role);
+        setCurrentRole(cachedData.role);
         setLoading(false);
         return;
       }
@@ -64,20 +65,22 @@ export const useUserRole = () => {
         if (error) {
           console.error('Error fetching user role:', error);
           // Default to Gebruiker on error
-          setCurrentRole("Gebruiker");
-          roleCache.set(user.id, "Gebruiker");
+          const defaultRole = "Gebruiker";
+          setCurrentRole(defaultRole);
+          roleCache.set(user.id, { role: defaultRole, timestamp: Date.now() });
         } else {
           const role = (data?.role as UserRole) || "Gebruiker";
           console.log("Fetched role from database:", role);
           setCurrentRole(role);
-          roleCache.set(user.id, role);
+          roleCache.set(user.id, { role, timestamp: Date.now() });
         }
         
       } catch (error) {
         console.log("Unexpected error in fetchUserRole:", error);
         // On any error, default to Gebruiker
-        setCurrentRole("Gebruiker");
-        roleCache.set(user.id, "Gebruiker");
+        const defaultRole = "Gebruiker";
+        setCurrentRole(defaultRole);
+        roleCache.set(user.id, { role: defaultRole, timestamp: Date.now() });
       } finally {
         activeFetches.delete(user.id);
         setLoading(false);

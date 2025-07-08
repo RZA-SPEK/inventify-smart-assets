@@ -35,11 +35,9 @@ const Assets = () => {
   } = useAssetFilters(assets);
 
   useEffect(() => {
-    // Fetch assets for all authenticated users
-    if (!roleLoading) {
-      fetchAssets();
-    }
-  }, [roleLoading]);
+    // Start fetching assets immediately, don't wait for role
+    fetchAssets();
+  }, []);
 
   const fetchAssets = async () => {
     try {
@@ -177,7 +175,8 @@ const Assets = () => {
     setSelectedAsset(null);
   };
 
-  if (roleLoading || loading) {
+  // Show loading only if both role and assets are loading
+  if ((roleLoading || loading) && assets.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
