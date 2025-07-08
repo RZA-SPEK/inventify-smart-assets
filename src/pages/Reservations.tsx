@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, User, Package, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Calendar, Clock, User, Package, CheckCircle, XCircle, AlertCircle, Trash2 } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -154,6 +155,35 @@ const Reservations = () => {
     }
   };
 
+  const handleDelete = async (reservationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .delete()
+        .eq('id', reservationId);
+
+      if (error) {
+        console.error('Error deleting reservation:', error);
+        toast({
+          title: "Fout",
+          description: "Er is een fout opgetreden bij het verwijderen van de reservering.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Remove from local state
+      setReservations(prev => prev.filter(r => r.id !== reservationId));
+
+      toast({
+        title: "Reservering verwijderd",
+        description: "De reservering is succesvol verwijderd.",
+      });
+    } catch (error) {
+      console.error('Error deleting reservation:', error);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved':
@@ -268,25 +298,59 @@ const Reservations = () => {
                     </div>
                   </div>
                   
-                  {canManageAssets && reservation.status === 'pending' && (
+                  {canManageAssets && (
                     <div className="mt-4 flex space-x-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleApprove(reservation.id)}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                        Goedkeuren
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleReject(reservation.id)}
-                        className="text-red-600 border-red-600 hover:bg-red-50"
-                      >
-                        <XCircle className="h-4 w-4 mr-1" />
-                        Afwijzen
-                      </Button>
+                      {reservation.status === 'pending' && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => handleApprove(reservation.id)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Goedkeuren
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleReject(reservation.id)}
+                            className="text-red-600 border-red-600 hover:bg-red-50"
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Afwijzen
+                          </Button>
+                        </>
+                      )}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 border-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Verwijderen
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Reservering verwijderen</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Weet u zeker dat u deze reservering wilt verwijderen? 
+                              Deze actie kan niet ongedaan worden gemaakt.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(reservation.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Verwijderen
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   )}
                 </CardContent>
