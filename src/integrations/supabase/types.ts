@@ -14,6 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      asset_images: {
+        Row: {
+          asset_id: string
+          created_at: string
+          description: string | null
+          id: string
+          image_order: number | null
+          image_url: string
+        }
+        Insert: {
+          asset_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_order?: number | null
+          image_url: string
+        }
+        Update: {
+          asset_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_order?: number | null
+          image_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_images_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_relationships: {
+        Row: {
+          child_asset_id: string
+          created_at: string
+          description: string | null
+          id: string
+          parent_asset_id: string
+          relationship_type: string
+        }
+        Insert: {
+          child_asset_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          parent_asset_id: string
+          relationship_type?: string
+        }
+        Update: {
+          child_asset_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          parent_asset_id?: string
+          relationship_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_relationships_child_asset_id_fkey"
+            columns: ["child_asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_relationships_parent_asset_id_fkey"
+            columns: ["parent_asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assets: {
         Row: {
           asset_tag: string | null
