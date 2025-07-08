@@ -50,6 +50,9 @@ export const AssetFormBasicFields = ({ formData, onFormDataChange }: AssetFormBa
               ))}
             </SelectContent>
           </Select>
+          {(!formData.type || formData.type.trim() === '') && (
+            <p className="text-sm text-red-600">Asset type is verplicht</p>
+          )}
         </div>
 
         <div className="space-y-2">

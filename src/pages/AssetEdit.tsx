@@ -63,7 +63,7 @@ const AssetEdit = () => {
         // Transform database response to match Asset interface
         const transformedAsset: Asset = {
           id: data.id,
-          type: data.type,
+          type: data.type || '', // Ensure type is never null/undefined
           brand: data.brand || '',
           model: data.model || '',
           serialNumber: data.serial_number || '',
@@ -101,9 +101,19 @@ const AssetEdit = () => {
     try {
       console.log('AssetEdit: Updating asset with data:', updatedAsset);
       
+      // Validate required fields
+      if (!updatedAsset.type || updatedAsset.type.trim() === '') {
+        toast({
+          title: "Validatiefout",
+          description: "Asset type is verplicht.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Transform form data back to database format
       const dbData = {
-        type: updatedAsset.type,
+        type: updatedAsset.type, // Ensure type is included
         brand: updatedAsset.brand || null,
         model: updatedAsset.model || null,
         serial_number: updatedAsset.serialNumber || null,
