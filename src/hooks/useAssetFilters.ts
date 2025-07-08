@@ -20,7 +20,15 @@ export const useAssetFilters = (assets: Asset[]) => {
   };
 
   const filteredAssets = useMemo(() => {
-    return assets.filter(asset => {
+    console.log('useAssetFilters: Filtering assets', {
+      totalAssets: assets.length,
+      searchTerm,
+      statusFilter,
+      categoryFilter,
+      typeFilter
+    });
+
+    const filtered = assets.filter(asset => {
       const matchesSearch = searchTerm === "" || 
         asset.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -34,8 +42,25 @@ export const useAssetFilters = (assets: Asset[]) => {
       const matchesCategory = categoryFilter === "all" || asset.category === categoryFilter;
       const matchesType = typeFilter === "all" || asset.type === typeFilter;
 
-      return matchesSearch && matchesStatus && matchesCategory && matchesType;
+      const matches = matchesSearch && matchesStatus && matchesCategory && matchesType;
+      
+      if (!matches) {
+        console.log('Asset filtered out:', asset.id, {
+          matchesSearch,
+          matchesStatus,
+          matchesCategory,
+          matchesType,
+          assetType: asset.type,
+          assetStatus: asset.status,
+          assetCategory: asset.category
+        });
+      }
+
+      return matches;
     });
+
+    console.log('useAssetFilters: Filtered result:', filtered.length, 'assets');
+    return filtered;
   }, [assets, searchTerm, statusFilter, categoryFilter, typeFilter]);
 
   return {

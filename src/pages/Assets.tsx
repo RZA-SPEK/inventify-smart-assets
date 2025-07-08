@@ -57,7 +57,8 @@ const Assets = () => {
         return;
       }
 
-      console.log('Assets fetched successfully:', data?.length || 0, 'items');
+      console.log('Raw assets from database:', data?.length || 0, 'items');
+      console.log('Raw asset data:', data);
 
       // Transform database response to match Asset interface
       const transformedAssets: Asset[] = (data || []).map(dbAsset => ({
@@ -81,16 +82,24 @@ const Assets = () => {
         reservable: dbAsset.reservable || false
       }));
 
+      console.log('Transformed assets:', transformedAssets.length, 'items');
+      console.log('User role - canManageAssets:', canManageAssets, 'currentRole:', currentRole);
+
       // Filter assets based on user role - only for non-admin users
       let filteredForRole = transformedAssets;
       if (!canManageAssets) {
+        console.log('Filtering assets for non-admin user');
         // For regular users, show only reservable assets or assets assigned to them
         filteredForRole = transformedAssets.filter(asset => 
           asset.reservable || asset.status === "In gebruik"
         );
+        console.log('Filtered assets for non-admin:', filteredForRole.length, 'items');
+      } else {
+        console.log('Admin user - showing ALL assets including non-reservable ones');
       }
       // For admin users (canManageAssets = true), show ALL assets including non-reservable ones
 
+      console.log('Final assets to display:', filteredForRole.length, 'items');
       setAssets(filteredForRole);
     } catch (error) {
       console.error('Error fetching assets:', error);
@@ -198,6 +207,17 @@ const Assets = () => {
       </div>
     );
   }
+
+  console.log('Rendering Assets page with:', {
+    totalAssets: assets.length,
+    filteredAssets: filteredAssets.length,
+    canManageAssets,
+    currentRole,
+    searchTerm,
+    statusFilter,
+    categoryFilter,
+    typeFilter
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
