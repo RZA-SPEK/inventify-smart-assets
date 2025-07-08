@@ -17,4 +17,5 @@ export interface Asset {
   category: "ICT" | "Facilitair" | "Catering" | "Logistics";
   image?: string;
   comments?: string;
+  reservable?: boolean;
 }

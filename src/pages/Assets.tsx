@@ -76,10 +76,21 @@ const Assets = () => {
         purchasePrice: dbAsset.purchase_price || 0,
         penaltyAmount: dbAsset.penalty_amount || 0,
         category: dbAsset.category as Asset['category'],
-        image: dbAsset.image_url || ''
+        image: dbAsset.image_url || '',
+        comments: dbAsset.comments || '',
+        reservable: dbAsset.reservable || false
       }));
 
-      setAssets(transformedAssets);
+      // Filter assets based on user role
+      let filteredForRole = transformedAssets;
+      if (!canManageAssets) {
+        // For regular users, show only reservable assets or assets assigned to them
+        filteredForRole = transformedAssets.filter(asset => 
+          asset.reservable || asset.status === "In gebruik"
+        );
+      }
+
+      setAssets(filteredForRole);
     } catch (error) {
       console.error('Error fetching assets:', error);
       toast({

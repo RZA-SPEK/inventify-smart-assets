@@ -30,6 +30,7 @@ export type Database = {
           penalty_amount: number | null
           purchase_date: string | null
           purchase_price: number | null
+          reservable: boolean
           serial_number: string | null
           status: string | null
           type: string
@@ -50,6 +51,7 @@ export type Database = {
           penalty_amount?: number | null
           purchase_date?: string | null
           purchase_price?: number | null
+          reservable?: boolean
           serial_number?: string | null
           status?: string | null
           type: string
@@ -70,6 +72,7 @@ export type Database = {
           penalty_amount?: number | null
           purchase_date?: string | null
           purchase_price?: number | null
+          reservable?: boolean
           serial_number?: string | null
           status?: string | null
           type?: string

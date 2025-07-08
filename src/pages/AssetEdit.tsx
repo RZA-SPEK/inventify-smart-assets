@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -78,7 +77,8 @@ const AssetEdit = () => {
           penaltyAmount: data.penalty_amount || 0,
           category: data.category as Asset['category'],
           image: data.image_url || '',
-          comments: data.comments || ''
+          comments: data.comments || '',
+          reservable: data.reservable || false
         };
 
         console.log('AssetEdit: Transformed asset for form:', transformedAsset);
@@ -117,7 +117,8 @@ const AssetEdit = () => {
         penalty_amount: updatedAsset.penaltyAmount || 0,
         category: updatedAsset.category,
         image_url: updatedAsset.image || null,
-        comments: updatedAsset.comments || null
+        comments: updatedAsset.comments || null,
+        reservable: updatedAsset.reservable || false
       };
 
       console.log('AssetEdit: Database update payload:', dbData);
