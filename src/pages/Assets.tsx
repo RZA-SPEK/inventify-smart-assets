@@ -35,9 +35,8 @@ const Assets = () => {
   } = useAssetFilters(assets);
 
   useEffect(() => {
-    // Start fetching assets immediately, don't wait for role
     fetchAssets();
-  }, []);
+  }, [canManageAssets]);
 
   const fetchAssets = async () => {
     try {
@@ -83,21 +82,32 @@ const Assets = () => {
       }));
 
       console.log('Transformed assets:', transformedAssets.length, 'items');
-      console.log('User role - canManageAssets:', canManageAssets, 'currentRole:', currentRole);
+      console.log('Current role check - canManageAssets:', canManageAssets, 'currentRole:', currentRole, 'roleLoading:', roleLoading);
 
-      // Filter assets based on user role - only for non-admin users
+      // Only filter for role if we're certain about the role (not loading)
       let filteredForRole = transformedAssets;
-      if (!canManageAssets) {
-        console.log('Filtering assets for non-admin user');
-        // For regular users, show only reservable assets or assets assigned to them
-        filteredForRole = transformedAssets.filter(asset => 
-          asset.reservable || asset.status === "In gebruik"
-        );
-        console.log('Filtered assets for non-admin:', filteredForRole.length, 'items');
+      
+      // Wait for role to be loaded before applying role-based filtering
+      if (!roleLoading) {
+        if (!canManageAssets) {
+          console.log('Filtering assets for non-admin user');
+          // For regular users, show only reservable assets or assets assigned to them
+          filteredForRole = transformedAssets.filter(asset => 
+            asset.reservable || asset.status === "In gebruik"
+          );
+          console.log('Filtered assets for non-admin:', filteredForRole.length, 'items');
+        } else {
+          console.log('Admin user - showing ALL assets including non-reservable ones');
+          console.log('All assets details:', transformedAssets.map(a => ({ 
+            id: a.id, 
+            type: a.type, 
+            reservable: a.reservable, 
+            status: a.status 
+          })));
+        }
       } else {
-        console.log('Admin user - showing ALL assets including non-reservable ones');
+        console.log('Role still loading, showing all assets temporarily');
       }
-      // For admin users (canManageAssets = true), show ALL assets including non-reservable ones
 
       console.log('Final assets to display:', filteredForRole.length, 'items');
       setAssets(filteredForRole);
@@ -213,6 +223,7 @@ const Assets = () => {
     filteredAssets: filteredAssets.length,
     canManageAssets,
     currentRole,
+    roleLoading,
     searchTerm,
     statusFilter,
     categoryFilter,
