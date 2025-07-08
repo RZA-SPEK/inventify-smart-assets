@@ -21,6 +21,7 @@ interface AssetRelationship {
   created_at: string;
   child_asset?: Asset;
   parent_asset?: Asset;
+  direction?: 'parent' | 'child';
 }
 
 interface AssetRelationshipsProps {
@@ -48,6 +49,29 @@ export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationsh
   useEffect(() => {
     Promise.all([fetchRelationships(), fetchAvailableAssets()]);
   }, [assetId]);
+
+  const transformDatabaseAssetToAsset = (dbAsset: any): Asset => {
+    return {
+      id: dbAsset.id,
+      type: dbAsset.type,
+      brand: dbAsset.brand || '',
+      model: dbAsset.model || '',
+      serialNumber: dbAsset.serial_number || '',
+      assetTag: dbAsset.asset_tag || '',
+      status: dbAsset.status as Asset['status'],
+      location: dbAsset.location || '',
+      assignedTo: dbAsset.assigned_to || '',
+      assignedToLocation: dbAsset.assigned_to_location || '',
+      purchaseDate: dbAsset.purchase_date || '',
+      warrantyExpiry: dbAsset.warranty_expiry || '',
+      purchasePrice: dbAsset.purchase_price || 0,
+      penaltyAmount: dbAsset.penalty_amount || 0,
+      category: dbAsset.category as Asset['category'],
+      image: dbAsset.image_url || '',
+      comments: dbAsset.comments || '',
+      reservable: dbAsset.reservable || false
+    };
+  };
 
   const fetchRelationships = async () => {
     try {
@@ -79,9 +103,17 @@ export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationsh
         return;
       }
 
-      const allRelationships = [
-        ...(parentData || []).map(rel => ({ ...rel, direction: 'parent' as const })),
-        ...(childData || []).map(rel => ({ ...rel, direction: 'child' as const }))
+      const allRelationships: AssetRelationship[] = [
+        ...(parentData || []).map(rel => ({
+          ...rel,
+          direction: 'parent' as const,
+          child_asset: rel.child_asset ? transformDatabaseAssetToAsset(rel.child_asset) : undefined
+        })),
+        ...(childData || []).map(rel => ({
+          ...rel,
+          direction: 'child' as const,
+          parent_asset: rel.parent_asset ? transformDatabaseAssetToAsset(rel.parent_asset) : undefined
+        }))
       ];
 
       setRelationships(allRelationships);
@@ -106,26 +138,7 @@ export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationsh
       }
 
       // Transform database response to match Asset interface
-      const transformedAssets: Asset[] = (data || []).map(dbAsset => ({
-        id: dbAsset.id,
-        type: dbAsset.type,
-        brand: dbAsset.brand || '',
-        model: dbAsset.model || '',
-        serialNumber: dbAsset.serial_number || '',
-        assetTag: dbAsset.asset_tag || '',
-        status: dbAsset.status as Asset['status'],
-        location: dbAsset.location || '',
-        assignedTo: dbAsset.assigned_to || '',
-        assignedToLocation: dbAsset.assigned_to_location || '',
-        purchaseDate: dbAsset.purchase_date || '',
-        warrantyExpiry: dbAsset.warranty_expiry || '',
-        purchasePrice: dbAsset.purchase_price || 0,
-        penaltyAmount: dbAsset.penalty_amount || 0,
-        category: dbAsset.category as Asset['category'],
-        image: dbAsset.image_url || '',
-        comments: dbAsset.comments || '',
-        reservable: dbAsset.reservable || false
-      }));
+      const transformedAssets: Asset[] = (data || []).map(transformDatabaseAssetToAsset);
 
       setAvailableAssets(transformedAssets);
     } catch (error) {
