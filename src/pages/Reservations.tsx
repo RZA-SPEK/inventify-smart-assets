@@ -221,8 +221,8 @@ const Reservations = () => {
                           <Calendar className="h-4 w-4 text-gray-500" />
                           <span className="font-medium">Periode:</span>
                           <span>
-                            {format(new Date(reservation.requested_date), 'dd MMM yyyy', { locale: nl })} - {' '}
-                            {format(new Date(reservation.return_date), 'dd MMM yyyy', { locale: nl })}
+                            {format(new Date(reservation.requested_date), 'dd-MM-yyyy', { locale: nl })} - {' '}
+                            {format(new Date(reservation.return_date), 'dd-MM-yyyy', { locale: nl })}
                           </span>
                         </div>
                         {(reservation.start_time || reservation.end_time) && (
@@ -231,8 +231,8 @@ const Reservations = () => {
                             <span className="font-medium">Tijd:</span>
                             <span>
                               {reservation.start_time && reservation.end_time
-                                ? `${reservation.start_time} - ${reservation.end_time}`
-                                : reservation.start_time || reservation.end_time || 'Hele dag'
+                                ? `${reservation.start_time.slice(0, 5)} - ${reservation.end_time.slice(0, 5)}`
+                                : reservation.start_time?.slice(0, 5) || reservation.end_time?.slice(0, 5) || 'Hele dag'
                               }
                             </span>
                           </div>

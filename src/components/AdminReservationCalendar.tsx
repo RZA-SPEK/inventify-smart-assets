@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from "date-fns";
+import { nl } from "date-fns/locale";
 import { Calendar as CalendarIcon, Clock, User, Package } from "lucide-react";
 
 interface Reservation {
@@ -109,7 +110,7 @@ export const AdminReservationCalendar = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CalendarIcon className="h-5 w-5" />
-            Reserveringen op {format(selectedDate, 'dd MMMM yyyy')}
+            Reserveringen op {format(selectedDate, 'dd MMMM yyyy', { locale: nl })}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -146,7 +147,7 @@ export const AdminReservationCalendar = () => {
                     {reservation.start_time && reservation.end_time && (
                       <div className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {reservation.start_time} - {reservation.end_time}
+                        {reservation.start_time.slice(0, 5)} - {reservation.end_time.slice(0, 5)}
                       </div>
                     )}
                   </div>
@@ -156,7 +157,7 @@ export const AdminReservationCalendar = () => {
                   )}
                   
                   <div className="text-xs text-gray-500">
-                    Periode: {format(parseISO(reservation.requested_date), 'dd/MM')} - {format(parseISO(reservation.return_date), 'dd/MM')}
+                    Periode: {format(parseISO(reservation.requested_date), 'dd-MM-yyyy', { locale: nl })} - {format(parseISO(reservation.return_date), 'dd-MM-yyyy', { locale: nl })}
                   </div>
                 </div>
               ))}
@@ -175,7 +176,7 @@ export const AdminReservationCalendar = () => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Week van {format(start, 'dd MMM')} - {format(end, 'dd MMM yyyy')}</CardTitle>
+          <CardTitle>Week van {format(start, 'dd MMM', { locale: nl })} - {format(end, 'dd MMM yyyy', { locale: nl })}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-7 gap-2">
@@ -183,7 +184,7 @@ export const AdminReservationCalendar = () => {
               const dayReservations = getReservationsForDate(day);
               return (
                 <div key={day.toISOString()} className="border rounded p-2 min-h-[120px]">
-                  <div className="font-medium text-sm mb-2">{format(day, 'dd MMM')}</div>
+                  <div className="font-medium text-sm mb-2">{format(day, 'dd MMM', { locale: nl })}</div>
                   <div className="space-y-1">
                     {dayReservations.slice(0, 3).map((reservation) => (
                       <div key={reservation.id} className="text-xs p-1 bg-blue-100 rounded truncate">

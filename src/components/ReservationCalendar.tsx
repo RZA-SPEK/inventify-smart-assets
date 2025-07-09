@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO, isSameDay } from "date-fns";
+import { nl } from "date-fns/locale";
 import { Clock, AlertCircle } from "lucide-react";
 
 interface Reservation {
@@ -163,6 +164,7 @@ export const ReservationCalendar = ({
             modifiersStyles={modifiersStyles}
             disabled={(date) => date < new Date()}
             className="rounded-md border"
+            locale={nl}
           />
           
           <div className="mt-4 flex gap-2">
@@ -224,7 +226,7 @@ export const ReservationCalendar = ({
       {selectedDate && (
         <Card>
           <CardHeader>
-            <CardTitle>Reserveringen op {format(selectedDate, 'dd MMMM yyyy')}</CardTitle>
+            <CardTitle>Reserveringen op {format(selectedDate, 'dd MMMM yyyy', { locale: nl })}</CardTitle>
           </CardHeader>
           <CardContent>
             {getReservationsForDate(selectedDate).length === 0 ? (
@@ -237,7 +239,7 @@ export const ReservationCalendar = ({
                       <span className="font-medium">{reservation.requester_name}</span>
                       {reservation.start_time && reservation.end_time && (
                         <span className="text-sm text-gray-600 ml-2">
-                          {reservation.start_time} - {reservation.end_time}
+                          {reservation.start_time.slice(0, 5)} - {reservation.end_time.slice(0, 5)}
                         </span>
                       )}
                     </div>
