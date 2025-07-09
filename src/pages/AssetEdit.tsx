@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,25 +21,22 @@ const AssetEdit = () => {
   useEffect(() => {
     console.log('AssetEdit: Component mounted, id:', id, 'canManageAssets:', canManageAssets, 'roleLoading:', roleLoading);
     
-    // Wait for role to be loaded before making permission decisions
-    if (roleLoading) {
-      console.log('AssetEdit: Still loading user role, waiting...');
-      return;
-    }
-    
-    if (!canManageAssets) {
-      console.log('AssetEdit: User cannot manage assets, redirecting to assets list');
-      navigate("/assets");
-      return;
-    }
-
     if (id) {
       fetchAsset();
     } else {
       setError("No asset ID provided");
       setLoading(false);
     }
-  }, [id, canManageAssets, navigate, roleLoading]);
+  }, [id]);
+
+  // Separate effect for role-based navigation to avoid premature redirects
+  useEffect(() => {
+    // Only check permissions after role is loaded AND we have asset data
+    if (!roleLoading && !loading && !canManageAssets) {
+      console.log('AssetEdit: User cannot manage assets, redirecting to assets list');
+      navigate("/assets");
+    }
+  }, [canManageAssets, roleLoading, loading, navigate]);
 
   const fetchAsset = async () => {
     if (!id) {
@@ -193,18 +191,21 @@ const AssetEdit = () => {
     navigate(`/assets/${id}`);
   };
 
-  // Show loading while role is being determined
-  if (roleLoading) {
+  // Show loading while role is being determined OR asset is being fetched
+  if (roleLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Laden...</p>
+          <p className="mt-2 text-gray-600">
+            {roleLoading ? "Gebruikersrechten laden..." : "Asset laden..."}
+          </p>
         </div>
       </div>
     );
   }
 
+  // Only show permission error after role is loaded
   if (!canManageAssets) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -214,17 +215,6 @@ const AssetEdit = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Terug naar Assets
           </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Asset laden...</p>
         </div>
       </div>
     );
