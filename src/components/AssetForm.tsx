@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Asset } from "@/types/asset";
@@ -18,8 +17,10 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
   
   // Initialize form data with default values
   const getInitialFormData = useCallback(() => {
+    console.log('AssetForm: Getting initial form data for asset:', asset);
+    
     if (asset) {
-      return {
+      const formData = {
         type: asset.type || "",
         brand: asset.brand || "",
         model: asset.model || "",
@@ -37,9 +38,11 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
         comments: asset.comments || "",
         reservable: asset.reservable !== undefined ? asset.reservable : true
       };
+      console.log('AssetForm: Form data from existing asset:', formData);
+      return formData;
     }
     
-    return {
+    const defaultData = {
       type: "",
       brand: "",
       model: "",
@@ -57,13 +60,15 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
       comments: "",
       reservable: true
     };
+    console.log('AssetForm: Default form data for new asset:', defaultData);
+    return defaultData;
   }, [asset]);
 
   const [formData, setFormData] = useState(getInitialFormData);
 
   // Update form data when asset changes
   useEffect(() => {
-    console.log('AssetForm: Asset changed, updating form data. Asset:', asset);
+    console.log('AssetForm: Asset prop changed, updating form data. Asset:', asset);
     const newFormData = getInitialFormData();
     console.log('AssetForm: New form data:', newFormData);
     setFormData(newFormData);
@@ -86,6 +91,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     // Ensure type is included and not empty
     if (!formData.type || formData.type.trim() === "") {
       console.error("AssetForm: Asset type is required but missing:", formData.type);
+      alert("Asset type is verplicht. Selecteer een type voordat u het formulier indient.");
       return;
     }
     
