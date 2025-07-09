@@ -28,7 +28,9 @@ export const useUserRole = () => {
         if (error) {
           setCurrentRole('Gebruiker');
         } else {
-          setCurrentRole(data?.role || 'Gebruiker');
+          // Cast the role to UserRole type, with fallback to 'Gebruiker'
+          const role = data?.role as UserRole;
+          setCurrentRole(role && ['ICT Admin', 'Facilitair Admin', 'Gebruiker'].includes(role) ? role : 'Gebruiker');
         }
       } catch (error) {
         setCurrentRole('Gebruiker');
