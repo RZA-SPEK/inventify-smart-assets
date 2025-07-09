@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -49,12 +48,16 @@ const MainNavigation = () => {
       icon: Box,
       current: location.pathname === "/assets" || location.pathname === "/",
     },
-    {
-      name: "Reserveringen",
-      href: "/reservations",
-      icon: Calendar,
-      current: location.pathname === "/reservations",
-    },
+    ...(canManageAssets
+      ? [
+          {
+            name: "Reserveringen",
+            href: "/reservations",
+            icon: Calendar,
+            current: location.pathname === "/reservations",
+          },
+        ]
+      : []),
     {
       name: "Mijn Reserveringen",
       href: "/my-reservations",
