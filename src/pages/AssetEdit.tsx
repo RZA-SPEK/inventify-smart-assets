@@ -17,6 +17,7 @@ const AssetEdit = () => {
   const [asset, setAsset] = useState<Asset | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [permissionChecked, setPermissionChecked] = useState(false);
 
   useEffect(() => {
     console.log('AssetEdit: Component mounted, id:', id, 'canManageAssets:', canManageAssets, 'roleLoading:', roleLoading);
@@ -29,14 +30,18 @@ const AssetEdit = () => {
     }
   }, [id]);
 
-  // Separate effect for role-based navigation to avoid premature redirects
+  // Handle permission checking after role is loaded
   useEffect(() => {
-    // Only check permissions after role is loaded AND we have asset data
-    if (!roleLoading && !loading && !canManageAssets) {
-      console.log('AssetEdit: User cannot manage assets, redirecting to assets list');
-      navigate("/assets");
+    if (!roleLoading) {
+      console.log('AssetEdit: Role loaded, canManageAssets:', canManageAssets);
+      setPermissionChecked(true);
+      
+      if (!canManageAssets) {
+        console.log('AssetEdit: User cannot manage assets, redirecting to assets list');
+        navigate("/assets");
+      }
     }
-  }, [canManageAssets, roleLoading, loading, navigate]);
+  }, [canManageAssets, roleLoading, navigate]);
 
   const fetchAsset = async () => {
     if (!id) {
@@ -205,8 +210,8 @@ const AssetEdit = () => {
     );
   }
 
-  // Only show permission error after role is loaded
-  if (!canManageAssets) {
+  // Only show permission error after role is loaded and permission is checked
+  if (permissionChecked && !canManageAssets) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -220,6 +225,7 @@ const AssetEdit = () => {
     );
   }
 
+  // Show error state
   if (error || !asset) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -234,6 +240,18 @@ const AssetEdit = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Terug naar Assets
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Only render the form if we have permissions and asset data
+  if (!permissionChecked || !asset) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Laden...</p>
         </div>
       </div>
     );
