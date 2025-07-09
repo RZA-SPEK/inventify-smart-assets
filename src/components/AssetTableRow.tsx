@@ -11,6 +11,7 @@ interface AssetTableRowProps {
   currentRole: string;
   onEdit: (asset: Asset) => void;
   onDelete: (assetId: string, reason: string) => void;
+  onPermanentDelete?: (assetId: string, reason: string) => void;
   onReserve: (asset: Asset) => void;
   getAssetIcon: (type: string) => React.ReactNode;
   getStatusColor: (status: string) => string;
@@ -22,6 +23,7 @@ export const AssetTableRow = ({
   currentRole,
   onEdit,
   onDelete,
+  onPermanentDelete,
   onReserve,
   getAssetIcon,
   getStatusColor,
