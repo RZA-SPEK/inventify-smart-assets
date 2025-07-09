@@ -70,24 +70,24 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto mobile-spacing py-4 sm:py-6 max-w-7xl">
-        <div className="mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1 text-sm sm:text-base">Overzicht van alle asset management activiteiten</p>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mt-2 text-sm sm:text-base">Overzicht van alle asset management activiteiten</p>
         </div>
 
-        <div className="mb-4 sm:mb-6">
+        <div className="mb-6 sm:mb-8">
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : (
             <DashboardStats assets={assets} />
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
           <div className="w-full">
             <RecentActivity />
           </div>
