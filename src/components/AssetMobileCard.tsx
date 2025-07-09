@@ -17,6 +17,7 @@ interface AssetMobileCardProps {
   onReserve: (asset: Asset) => void;
   getAssetIcon: (type: string) => React.ReactElement;
   getStatusColor: (status: string) => string;
+  getCategoryDisplayName: (category: string) => string;
 }
 
 export const AssetMobileCard = ({
@@ -28,6 +29,7 @@ export const AssetMobileCard = ({
   onReserve,
   getAssetIcon,
   getStatusColor,
+  getCategoryDisplayName,
 }: AssetMobileCardProps) => {
   const canManageAssets = currentRole === "ICT Admin" || currentRole === "Facilitair Admin";
   const canDelete = asset.status !== "Deleted";
