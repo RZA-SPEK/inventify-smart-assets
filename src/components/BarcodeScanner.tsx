@@ -69,9 +69,9 @@ export const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
       
       // Enhanced configuration for better barcode support
       const config = {
-        fps: isMobile ? 5 : 10,
-        qrbox: { width: isMobile ? 200 : 250, height: isMobile ? 200 : 250 },
-        aspectRatio: 1,
+        fps: isMobile ? 8 : 15,
+        qrbox: { width: isMobile ? 250 : 300, height: isMobile ? 150 : 200 },
+        aspectRatio: isMobile ? 1.67 : 1.5,
         disableFlip: false,
         supportedScanTypes: [
           Html5QrcodeScanType.SCAN_TYPE_CAMERA
@@ -84,17 +84,25 @@ export const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
           Html5QrcodeSupportedFormats.EAN_13,
           Html5QrcodeSupportedFormats.EAN_8,
           Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.CODABAR,
+          Html5QrcodeSupportedFormats.ITF,
+          Html5QrcodeSupportedFormats.RSS_14,
+          Html5QrcodeSupportedFormats.RSS_EXPANDED
         ],
-        // Mobile-specific camera settings
-        ...(isMobile && {
-          videoConstraints: {
-            facingMode: "environment" // Use back camera on mobile
-          }
-        })
+        // Enhanced camera settings
+        videoConstraints: {
+          facingMode: isMobile ? "environment" : "user",
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        // Additional settings for better recognition
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true
+        }
       };
 
-      addDebugInfo(`Scanner config: ${JSON.stringify(config)}`);
+      addDebugInfo(`Scanner config: FPS=${config.fps}, QRBox=${JSON.stringify(config.qrbox)}`);
 
       scannerRef.current = new Html5QrcodeScanner(
         "barcode-reader",
@@ -109,15 +117,20 @@ export const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
           addDebugInfo(`Successfully scanned: ${decodedText}`);
           setSuccessMessage("Barcode succesvol gescand!");
           
+          // Clean up any extra whitespace or formatting
+          const cleanedText = decodedText.trim();
+          
           setTimeout(() => {
-            onScan(decodedText);
+            onScan(cleanedText);
             cleanup();
             onClose();
           }, 1000);
         },
         (error: string) => {
-          // Don't log every scanning attempt error, only real errors
-          if (!error.includes("NotFoundException") && !error.includes("No MultiFormat Readers")) {
+          // Only log significant errors, not scanning attempts
+          if (!error.includes("NotFoundException") && 
+              !error.includes("No MultiFormat Readers") &&
+              !error.includes("No barcode or QR code detected")) {
             addDebugInfo(`Scan error: ${error}`);
           }
         }
@@ -151,7 +164,13 @@ export const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
   const requestCameraPermission = async () => {
     try {
       addDebugInfo("Requesting camera permission...");
-      await navigator.mediaDevices.getUserMedia({ video: true });
+      await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: isMobileDevice() ? "environment" : "user",
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      });
       setError("");
       initializeScanner();
     } catch (err) {
@@ -220,7 +239,15 @@ export const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
           )}
 
           <div className="text-sm text-gray-600 text-center">
-            Richt de camera op een barcode of QR-code om te scannen
+            <div className="mb-2">
+              <strong>Tips voor betere scanning:</strong>
+            </div>
+            <ul className="text-xs space-y-1">
+              <li>• Zorg voor goede belichting</li>
+              <li>• Houd de barcode stabiel in beeld</li>
+              <li>• Probeer verschillende afstanden</li>
+              <li>• Zorg dat de barcode volledig zichtbaar is</li>
+            </ul>
           </div>
         </CardContent>
       </Card>
