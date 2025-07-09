@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -204,146 +205,159 @@ export const UserReservations = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="responsive-container responsive-section">
         <div className="text-center">Laden...</div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Mijn Reserveringen</h1>
-        <p className="text-gray-600">Beheer uw asset reserveringen</p>
-      </div>
+    <div className="responsive-container responsive-section">
+      <div className="responsive-spacing">
+        <div className="flex flex-col responsive-gap">
+          <div>
+            <h1 className="responsive-text-3xl font-bold text-foreground">Mijn Reserveringen</h1>
+            <p className="responsive-text-base text-muted-foreground mt-2">Beheer uw asset reserveringen</p>
+          </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Uw Reserveringen</CardTitle>
-          <CardDescription>
-            {reservations.filter(r => r.status === "pending").length} van {reservations.length} reserveringen wachten op goedkeuring
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {reservations.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              U heeft nog geen reserveringen aangevraagd.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Asset</TableHead>
-                    <TableHead>Periode</TableHead>
-                    <TableHead>Doel</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Aangemaakt</TableHead>
-                    <TableHead>Acties</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {reservations.map((reservation) => (
-                    <TableRow key={reservation.id}>
-                      <TableCell className="font-medium">{getAssetName(reservation)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm">
-                            {new Date(reservation.requested_date).toLocaleDateString()} - {new Date(reservation.return_date).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm truncate max-w-[200px]" title={reservation.purpose}>
-                          {reservation.purpose}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(reservation.status)}>
-                          {getStatusText(reservation.status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-500">
-                        {new Date(reservation.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          {canEdit(reservation) && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleAction(reservation, "edit")}
-                              className="text-blue-600 hover:text-blue-700"
-                            >
-                              <Edit3 className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {canExtend(reservation) && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleAction(reservation, "extend")}
-                              className="text-green-600 hover:text-green-700"
-                            >
-                              <Clock className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          <Card className="responsive-card">
+            <CardHeader className="responsive-padding">
+              <CardTitle className="responsive-text-xl">Uw Reserveringen</CardTitle>
+              <CardDescription className="responsive-text-base">
+                {reservations.filter(r => r.status === "pending").length} van {reservations.length} reserveringen wachten op goedkeuring
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="responsive-padding">
+              {reservations.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground responsive-text-base">
+                  U heeft nog geen reserveringen aangevraagd.
+                </div>
+              ) : (
+                <div className="table-container">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="responsive-text-sm">Asset</TableHead>
+                        <TableHead className="responsive-text-sm mobile-hidden">Periode</TableHead>
+                        <TableHead className="responsive-text-sm mobile-hidden">Doel</TableHead>
+                        <TableHead className="responsive-text-sm">Status</TableHead>
+                        <TableHead className="responsive-text-sm desktop-only">Aangemaakt</TableHead>
+                        <TableHead className="responsive-text-sm">Acties</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {reservations.map((reservation) => (
+                        <TableRow key={reservation.id} className="hover:bg-muted/50">
+                          <TableCell className="font-medium responsive-text-sm">
+                            <div className="truncate max-w-[200px]" title={getAssetName(reservation)}>
+                              {getAssetName(reservation)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="mobile-hidden">
+                            <div className="flex items-center responsive-gap text-muted-foreground">
+                              <Calendar className="h-4 w-4" />
+                              <span className="responsive-text-sm">
+                                {new Date(reservation.requested_date).toLocaleDateString()} - {new Date(reservation.return_date).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="mobile-hidden">
+                            <span className="responsive-text-sm truncate max-w-[150px] block" title={reservation.purpose}>
+                              {reservation.purpose}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={`${getStatusColor(reservation.status)} responsive-text-sm`}>
+                              {getStatusText(reservation.status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="desktop-only responsive-text-sm text-muted-foreground">
+                            {new Date(reservation.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex responsive-gap">
+                              {canEdit(reservation) && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleAction(reservation, "edit")}
+                                  className="text-blue-600 hover:text-blue-700 touch-target"
+                                >
+                                  <Edit3 className="h-4 w-4" />
+                                  <span className="mobile-hidden ml-2">Bewerk</span>
+                                </Button>
+                              )}
+                              {canExtend(reservation) && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleAction(reservation, "extend")}
+                                  className="text-green-600 hover:text-green-700 touch-target"
+                                >
+                                  <Clock className="h-4 w-4" />
+                                  <span className="mobile-hidden ml-2">Verleng</span>
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Edit/Extend Dialog */}
       {selectedReservation && actionType && (
         <Dialog open={true} onOpenChange={closeDialog}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="dialog-content responsive-padding">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="responsive-text-lg">
                 {actionType === "edit" && "Reservering Bewerken"}
                 {actionType === "extend" && "Reservering Verlengen"}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="responsive-text-base">
                 Asset: {getAssetName(selectedReservation)}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4">
+            <div className="responsive-spacing">
               {actionType === "edit" && (
                 <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="requestedDate">Startdatum</Label>
+                  <div className="responsive-grid-1-2 responsive-gap">
+                    <div className="responsive-spacing">
+                      <Label htmlFor="requestedDate" className="responsive-text-sm">Startdatum</Label>
                       <Input
                         id="requestedDate"
                         type="date"
                         value={editData.requestedDate}
                         onChange={(e) => setEditData({ ...editData, requestedDate: e.target.value })}
+                        className="touch-padding"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="returnDate">Einddatum</Label>
+                    <div className="responsive-spacing">
+                      <Label htmlFor="returnDate" className="responsive-text-sm">Einddatum</Label>
                       <Input
                         id="returnDate"
                         type="date"
                         value={editData.returnDate}
                         onChange={(e) => setEditData({ ...editData, returnDate: e.target.value })}
+                        className="touch-padding"
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="purpose">Doel van gebruik</Label>
+                  <div className="responsive-spacing">
+                    <Label htmlFor="purpose" className="responsive-text-sm">Doel van gebruik</Label>
                     <Textarea
                       id="purpose"
                       value={editData.purpose}
                       onChange={(e) => setEditData({ ...editData, purpose: e.target.value })}
                       placeholder="Beschrijf waarvoor u dit asset nodig heeft..."
+                      className="touch-padding"
                     />
                   </div>
                 </>
@@ -352,13 +366,13 @@ export const UserReservations = () => {
               {actionType === "extend" && (
                 <>
                   <div>
-                    <Label>Huidige periode</Label>
-                    <p className="text-sm text-gray-600">
+                    <Label className="responsive-text-sm">Huidige periode</Label>
+                    <p className="responsive-text-sm text-muted-foreground">
                       {new Date(selectedReservation.requested_date).toLocaleDateString()} - {new Date(selectedReservation.return_date).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="extensionDays">Aantal extra dagen</Label>
+                  <div className="responsive-spacing">
+                    <Label htmlFor="extensionDays" className="responsive-text-sm">Aantal extra dagen</Label>
                     <Input
                       id="extensionDays"
                       type="number"
@@ -367,26 +381,28 @@ export const UserReservations = () => {
                       value={editData.extensionDays}
                       onChange={(e) => setEditData({ ...editData, extensionDays: e.target.value })}
                       placeholder="Aantal dagen"
+                      className="touch-padding"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="extensionReason">Reden voor verlenging</Label>
+                  <div className="responsive-spacing">
+                    <Label htmlFor="extensionReason" className="responsive-text-sm">Reden voor verlenging</Label>
                     <Textarea
                       id="extensionReason"
                       value={editData.extensionReason}
                       onChange={(e) => setEditData({ ...editData, extensionReason: e.target.value })}
                       placeholder="Waarom heeft u extra tijd nodig?"
+                      className="touch-padding"
                     />
                   </div>
                 </>
               )}
             </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={closeDialog}>
+            <DialogFooter className="responsive-flex responsive-gap">
+              <Button variant="outline" onClick={closeDialog} className="touch-target">
                 Annuleren
               </Button>
-              <Button onClick={handleSave}>
+              <Button onClick={handleSave} className="touch-target">
                 {actionType === "edit" && "Opslaan"}
                 {actionType === "extend" && "Verlenging Aanvragen"}
               </Button>
