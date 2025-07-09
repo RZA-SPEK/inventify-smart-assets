@@ -13,6 +13,7 @@ import {
   ListChecks,
   Plus,
   LayoutDashboard,
+  Menu,
 } from "lucide-react";
 import {
   Sheet,
@@ -101,7 +102,7 @@ const MainNavigation = () => {
 
   const handleNavigation = (href: string) => {
     navigate(href);
-    setIsMenuOpen(false); // Close the menu after navigation
+    setIsMenuOpen(false);
   };
 
   const handleLogout = async () => {
@@ -115,69 +116,127 @@ const MainNavigation = () => {
   };
 
   return (
-    <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-      <SheetTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="mr-2 md:hidden"
-          aria-label="Menu"
-        >
-          <Home className="h-4 w-4" />
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="left" className="w-full sm:w-64 p-0">
-        <ScrollArea className="h-full">
-          <div className="flex flex-col space-y-4 p-4">
-            <SheetHeader className="pb-4 pl-6">
-              <SheetTitle>Menu</SheetTitle>
-            </SheetHeader>
-            <Separator />
-            <div className="flex items-center space-x-2 pl-6">
-              <Avatar>
+    <>
+      {/* Desktop Navigation */}
+      <nav className="hidden md:flex bg-white border-b border-gray-200 px-4 py-3">
+        <div className="flex items-center justify-between w-full max-w-7xl mx-auto">
+          <div className="flex items-center space-x-8">
+            <h1 className="text-xl font-semibold text-gray-900">Asset Management</h1>
+            <div className="flex items-center space-x-1">
+              {navItems.map((item) => (
+                <Button
+                  key={item.name}
+                  variant="ghost"
+                  className={`flex items-center space-x-2 px-3 py-2 ${
+                    item.current
+                      ? "bg-blue-50 text-blue-700 font-medium"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }`}
+                  onClick={() => handleNavigation(item.href)}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.name}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Avatar className="h-8 w-8">
                 <AvatarImage src={user?.user_metadata?.avatar_url as string} />
                 <AvatarFallback>
                   {user?.email?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col space-y-1">
-                <span className="font-semibold">{user?.user_metadata?.full_name}</span>
-                <span className="text-sm text-muted-foreground">
-                  {user?.email}
-                </span>
+              <div className="hidden lg:block">
+                <div className="text-sm font-medium text-gray-900">
+                  {user?.user_metadata?.full_name || user?.email}
+                </div>
               </div>
             </div>
-            <Separator />
-            <div className="flex flex-col space-y-1 mt-2">
-              {navItems.map((item) => (
-                <Button
-                  key={item.name}
-                  variant="ghost"
-                  className={`justify-start pl-8 ${
-                    location.pathname === item.href
-                      ? "font-semibold text-primary"
-                      : "text-muted-foreground"
-                  }`}
-                  onClick={() => handleNavigation(item.href)}
-                >
-                  <item.icon className="mr-2 h-4 w-4" />
-                  <span>{item.name}</span>
-                </Button>
-              ))}
-            </div>
-            <Separator />
             <Button
               variant="ghost"
-              className="justify-start pl-8 text-red-500"
+              size="sm"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
               onClick={handleLogout}
             >
-              <Power className="mr-2 h-4 w-4" />
-              <span>Uitloggen</span>
+              <Power className="h-4 w-4 mr-2" />
+              Uitloggen
             </Button>
           </div>
-        </ScrollArea>
-      </SheetContent>
-    </Sheet>
+        </div>
+      </nav>
+
+      {/* Mobile Navigation */}
+      <nav className="md:hidden bg-white border-b border-gray-200 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-semibold text-gray-900">Asset Management</h1>
+          <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Menu"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-full sm:w-64 p-0">
+              <ScrollArea className="h-full">
+                <div className="flex flex-col space-y-4 p-4">
+                  <SheetHeader className="pb-4 pl-6">
+                    <SheetTitle>Menu</SheetTitle>
+                  </SheetHeader>
+                  <Separator />
+                  <div className="flex items-center space-x-2 pl-6">
+                    <Avatar>
+                      <AvatarImage src={user?.user_metadata?.avatar_url as string} />
+                      <AvatarFallback>
+                        {user?.email?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col space-y-1">
+                      <span className="font-semibold">{user?.user_metadata?.full_name}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {user?.email}
+                      </span>
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="flex flex-col space-y-1 mt-2">
+                    {navItems.map((item) => (
+                      <Button
+                        key={item.name}
+                        variant="ghost"
+                        className={`justify-start pl-8 ${
+                          location.pathname === item.href
+                            ? "font-semibold text-primary"
+                            : "text-muted-foreground"
+                        }`}
+                        onClick={() => handleNavigation(item.href)}
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        <span>{item.name}</span>
+                      </Button>
+                    ))}
+                  </div>
+                  <Separator />
+                  <Button
+                    variant="ghost"
+                    className="justify-start pl-8 text-red-500"
+                    onClick={handleLogout}
+                  >
+                    <Power className="mr-2 h-4 w-4" />
+                    <span>Uitloggen</span>
+                  </Button>
+                </div>
+              </ScrollArea>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </nav>
+    </>
   );
 };
 
