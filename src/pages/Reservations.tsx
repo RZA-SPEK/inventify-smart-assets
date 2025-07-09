@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Clock, User, Package } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Reservation {
   id: string;
@@ -27,6 +29,8 @@ interface Reservation {
 const Reservations = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updatingReservations, setUpdatingReservations] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
 
   const fetchReservations = async () => {
     try {
@@ -49,12 +53,23 @@ const Reservations = () => {
       setReservations(data || []);
     } catch (error) {
       console.error('Error fetching reservations:', error);
+      toast({
+        title: "Fout",
+        description: "Kon reserveringen niet laden.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const updateReservationStatus = async (id: string, status: string) => {
+    if (updatingReservations.has(id)) {
+      return; // Prevent multiple simultaneous updates
+    }
+
+    setUpdatingReservations(prev => new Set(prev).add(id));
+    
     try {
       console.log('Updating reservation', id, 'to status', status);
       const { error } = await supabase
@@ -68,15 +83,29 @@ const Reservations = () => {
       }
 
       console.log('Reservation updated successfully');
-      fetchReservations();
+      
+      const statusText = status === 'approved' ? 'goedgekeurd' : 'afgewezen';
+      toast({
+        title: "Reservering bijgewerkt",
+        description: `Reservering is ${statusText}.`,
+      });
+      
+      await fetchReservations();
     } catch (error) {
       console.error('Error updating reservation:', error);
+      toast({
+        title: "Fout",
+        description: "Kon reservering niet bijwerken.",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingReservations(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
     }
   };
-
-  useEffect(() => {
-    fetchReservations();
-  }, []);
 
   const getStatusColor = (status: string | null) => {
     switch (status) {
@@ -109,6 +138,14 @@ const Reservations = () => {
         return status || 'In afwachting';
     }
   };
+
+  const isPendingReservation = (status: string | null) => {
+    return status === 'pending' || status === 'in_afwachting' || !status;
+  };
+
+  useEffect(() => {
+    fetchReservations();
+  }, []);
 
   if (loading) {
     return (
@@ -194,22 +231,24 @@ const Reservations = () => {
                     )}
                   </div>
                   
-                  {(reservation.status === 'pending' || reservation.status === 'in_afwachting' || !reservation.status) && (
+                  {isPendingReservation(reservation.status) && (
                     <div className="flex gap-2 mt-4">
                       <Button
                         size="sm"
                         onClick={() => updateReservationStatus(reservation.id, 'approved')}
                         className="bg-green-600 hover:bg-green-700"
+                        disabled={updatingReservations.has(reservation.id)}
                       >
-                        Goedkeuren
+                        {updatingReservations.has(reservation.id) ? 'Bezig...' : 'Goedkeuren'}
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => updateReservationStatus(reservation.id, 'rejected')}
                         className="border-red-300 text-red-700 hover:bg-red-50"
+                        disabled={updatingReservations.has(reservation.id)}
                       >
-                        Afwijzen
+                        {updatingReservations.has(reservation.id) ? 'Bezig...' : 'Afwijzen'}
                       </Button>
                     </div>
                   )}
