@@ -1,65 +1,43 @@
 
-import { useState, useMemo } from "react";
-import { Asset } from "@/types/asset";
+import { useMemo, useState } from 'react';
+import type { Asset } from '@/types/asset';
 
 export const useAssetFilters = (assets: Asset[]) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
-
-  const assetTypes = useMemo(() => {
-    return Array.from(new Set(assets.map(asset => asset.type))).sort();
-  }, [assets]);
-
-  const clearFilters = () => {
-    setSearchTerm("");
-    setStatusFilter("all");
-    setCategoryFilter("all");
-    setTypeFilter("all");
-  };
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
 
   const filteredAssets = useMemo(() => {
-    console.log('useAssetFilters: Filtering assets', {
-      totalAssets: assets.length,
-      searchTerm,
-      statusFilter,
-      categoryFilter,
-      typeFilter
-    });
+    let filtered = assets;
 
-    const filtered = assets.filter(asset => {
-      const matchesSearch = searchTerm === "" || 
-        asset.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (asset.assignedTo && asset.assignedTo.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (asset.assetTag && asset.assetTag.toLowerCase().includes(searchTerm.toLowerCase()));
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(asset =>
+        asset.type?.toLowerCase().includes(searchLower) ||
+        asset.brand?.toLowerCase().includes(searchLower) ||
+        asset.model?.toLowerCase().includes(searchLower) ||
+        asset.serial_number?.toLowerCase().includes(searchLower) ||
+        asset.asset_tag?.toLowerCase().includes(searchLower)
+      );
+    }
 
-      const matchesStatus = statusFilter === "all" || asset.status === statusFilter;
-      const matchesCategory = categoryFilter === "all" || asset.category === categoryFilter;
-      const matchesType = typeFilter === "all" || asset.type === typeFilter;
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(asset => asset.status === statusFilter);
+    }
 
-      const matches = matchesSearch && matchesStatus && matchesCategory && matchesType;
-      
-      if (!matches) {
-        console.log('Asset filtered out:', asset.id, {
-          matchesSearch,
-          matchesStatus,
-          matchesCategory,
-          matchesType,
-          assetType: asset.type,
-          assetStatus: asset.status,
-          assetCategory: asset.category
-        });
-      }
+    // Apply category filter
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(asset => asset.category === categoryFilter);
+    }
 
-      return matches;
-    });
+    // Apply type filter
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter(asset => asset.type === typeFilter);
+    }
 
-    console.log('useAssetFilters: Filtered result:', filtered.length, 'assets');
     return filtered;
   }, [assets, searchTerm, statusFilter, categoryFilter, typeFilter]);
 
@@ -72,8 +50,6 @@ export const useAssetFilters = (assets: Asset[]) => {
     setCategoryFilter,
     typeFilter,
     setTypeFilter,
-    assetTypes,
-    clearFilters,
     filteredAssets
   };
 };

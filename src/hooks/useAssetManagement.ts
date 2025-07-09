@@ -1,70 +1,80 @@
 
-import { useState } from "react";
-import { Asset } from "@/types/asset";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useUserRole } from './useUserRole';
+import type { Asset } from '@/types/asset';
 
-export const useAssetManagement = (initialAssets: Asset[]) => {
-  const { toast } = useToast();
-  const [assets, setAssets] = useState<Asset[]>(initialAssets);
-  const [showForm, setShowForm] = useState(false);
-  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+export const useAssetManagement = () => {
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { canManageAssets, currentRole, loading: roleLoading } = useUserRole();
 
-  const handleAddAsset = (newAsset: Omit<Asset, "id">) => {
-    const asset: Asset = {
-      ...newAsset,
-      id: Date.now().toString(),
-    };
-    setAssets([...assets, asset]);
-    setShowForm(false);
-    toast({
-      title: "Asset toegevoegd",
-      description: `${asset.brand} ${asset.model} is succesvol toegevoegd.`,
-    });
+  const fetchAssets = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error: fetchError } = await supabase
+        .from('assets')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      const transformedAssets = (data || []).map(asset => ({
+        ...asset,
+        purchase_date: asset.purchase_date || undefined,
+        warranty_expiry: asset.warranty_expiry || undefined,
+        purchase_price: asset.purchase_price || undefined,
+        penalty_amount: asset.penalty_amount || undefined,
+        reservable: asset.reservable || false,
+      }));
+
+      // Filter assets based on user role
+      let finalAssets = transformedAssets;
+      
+      if (!roleLoading) {
+        if (canManageAssets) {
+          // Admin users see all assets
+          finalAssets = transformedAssets;
+        } else {
+          // Regular users only see reservable assets
+          finalAssets = transformedAssets.filter(asset => asset.reservable === true);
+        }
+      }
+
+      setAssets(finalAssets);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Er is een onbekende fout opgetreden';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEditAsset = (updatedAsset: Asset) => {
-    setAssets(assets.map(asset => 
-      asset.id === updatedAsset.id ? updatedAsset : asset
-    ));
-    setEditingAsset(null);
-    setShowForm(false);
-    toast({
-      title: "Asset bijgewerkt",
-      description: `${updatedAsset.brand} ${updatedAsset.model} is succesvol bijgewerkt.`,
-    });
+  const deleteAsset = async (id: string) => {
+    const { error } = await supabase
+      .from('assets')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      throw error;
+    }
   };
 
-  const handleDeleteAsset = (id: string, reason: string) => {
-    const asset = assets.find(a => a.id === id);
-    setAssets(assets.map(a => 
-      a.id === id ? { ...a, status: "Deleted" as const } : a
-    ));
-    toast({
-      title: "Asset verwijderd",
-      description: `${asset?.brand} ${asset?.model} is gemarkeerd als verwijderd. Reden: ${reason}`,
-      variant: "destructive",
-    });
-  };
-
-  const handleEditClick = (asset: Asset) => {
-    setEditingAsset(asset);
-    setShowForm(true);
-  };
-
-  const handleFormCancel = () => {
-    setShowForm(false);
-    setEditingAsset(null);
-  };
+  useEffect(() => {
+    fetchAssets();
+  }, [canManageAssets, roleLoading]);
 
   return {
     assets,
-    showForm,
-    setShowForm,
-    editingAsset,
-    handleAddAsset,
-    handleEditAsset,
-    handleDeleteAsset,
-    handleEditClick,
-    handleFormCancel
+    loading,
+    error,
+    refetch: fetchAssets,
+    deleteAsset
   };
 };
