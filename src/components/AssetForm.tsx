@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -15,40 +16,11 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
   const [showScanner, setShowScanner] = useState(false);
   const [showAssetTagScanner, setShowAssetTagScanner] = useState(false);
   const [scannerMode, setScannerMode] = useState<'serial' | 'assetTag'>('serial');
-  const [formData, setFormData] = useState({
-    type: "",
-    brand: "",
-    model: "",
-    serialNumber: "",
-    assetTag: "",
-    purchaseDate: "",
-    status: "In voorraad" as Asset["status"],
-    location: "",
-    category: "ICT" as Asset["category"],
-    assignedTo: "",
-    assignedToLocation: "",
-    image: "",
-    purchasePrice: "",
-    penaltyAmount: "",
-    comments: "",
-    reservable: true
-  });
-
-  // Use useCallback to prevent unnecessary re-renders
-  const updateFormData = useCallback((newData: any) => {
-    console.log('AssetForm: updateFormData called with:', newData);
-    setFormData(prevData => {
-      const updatedData = { ...prevData, ...newData };
-      console.log('AssetForm: Form data updated:', updatedData);
-      return updatedData;
-    });
-  }, []);
-
-  useEffect(() => {
-    console.log('AssetForm: useEffect triggered with asset:', asset);
-    
+  
+  // Initialize form data with default values
+  const getInitialFormData = useCallback(() => {
     if (asset) {
-      const initialData = {
+      return {
         type: asset.type || "",
         brand: asset.brand || "",
         model: asset.model || "",
@@ -66,32 +38,47 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
         comments: asset.comments || "",
         reservable: asset.reservable !== undefined ? asset.reservable : true
       };
-      console.log('AssetForm: Setting initial form data from asset:', initialData);
-      setFormData(initialData);
-    } else {
-      // Reset form data when creating a new asset
-      const resetData = {
-        type: "",
-        brand: "",
-        model: "",
-        serialNumber: "",
-        assetTag: "",
-        purchaseDate: "",
-        status: "In voorraad" as Asset["status"],
-        location: "",
-        category: "ICT" as Asset["category"],
-        assignedTo: "",
-        assignedToLocation: "",
-        image: "",
-        purchasePrice: "",
-        penaltyAmount: "",
-        comments: "",
-        reservable: true
-      };
-      console.log('AssetForm: Resetting form data for new asset:', resetData);
-      setFormData(resetData);
     }
+    
+    return {
+      type: "",
+      brand: "",
+      model: "",
+      serialNumber: "",
+      assetTag: "",
+      purchaseDate: "",
+      status: "In voorraad" as Asset["status"],
+      location: "",
+      category: "ICT" as Asset["category"],
+      assignedTo: "",
+      assignedToLocation: "",
+      image: "",
+      purchasePrice: "",
+      penaltyAmount: "",
+      comments: "",
+      reservable: true
+    };
   }, [asset]);
+
+  const [formData, setFormData] = useState(getInitialFormData);
+
+  // Update form data when asset changes
+  useEffect(() => {
+    console.log('AssetForm: Asset changed, updating form data. Asset:', asset);
+    const newFormData = getInitialFormData();
+    console.log('AssetForm: New form data:', newFormData);
+    setFormData(newFormData);
+  }, [asset, getInitialFormData]);
+
+  // Use useCallback to prevent unnecessary re-renders
+  const updateFormData = useCallback((newData: any) => {
+    console.log('AssetForm: updateFormData called with:', newData);
+    setFormData(prevData => {
+      const updatedData = { ...prevData, ...newData };
+      console.log('AssetForm: Form data updated from:', prevData, 'to:', updatedData);
+      return updatedData;
+    });
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,6 +165,8 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     const generatedTag = `${prefix}${formattedNumber}`;
     updateFormData({ assetTag: generatedTag });
   };
+
+  console.log('AssetForm: Rendering with form data:', formData);
 
   return (
     <>

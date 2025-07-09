@@ -38,6 +38,8 @@ const AssetEdit = () => {
   }, [id, canManageAssets, navigate, roleLoading]);
 
   const fetchAsset = async () => {
+    if (!id) return;
+    
     try {
       console.log('AssetEdit: Fetching asset with ID:', id);
       
@@ -98,6 +100,8 @@ const AssetEdit = () => {
   };
 
   const handleSave = async (updatedAsset: Omit<Asset, "id">) => {
+    if (!id) return;
+    
     try {
       console.log('AssetEdit: Updating asset with data:', updatedAsset);
       
@@ -218,6 +222,8 @@ const AssetEdit = () => {
       </div>
     );
   }
+
+  console.log('AssetEdit: Rendering form with asset:', asset);
 
   return (
     <div className="min-h-screen bg-gray-50">
