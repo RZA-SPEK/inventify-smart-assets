@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +14,7 @@ interface ActivityLogEntry {
   table_name: string;
   created_at: string;
   record_id: string | null;
+  user_id: string | null;
   user_email?: string;
   user_name?: string;
   asset_info?: {
@@ -101,11 +101,29 @@ const ActivityLog = () => {
           }
         }
 
-        // Instead of trying to guess the user, just show "Systeem" for now
-        // The audit log doesn't currently store which user performed the action
-        // This would need to be enhanced at the database trigger level to properly track users
-        enrichedActivity.user_name = 'Systeem';
-        enrichedActivity.user_email = undefined;
+        // Get user information if we have a user_id
+        if (activity.user_id) {
+          try {
+            const { data: userData } = await supabase
+              .from('profiles')
+              .select('email, full_name')
+              .eq('id', activity.user_id)
+              .single();
+            
+            if (userData) {
+              enrichedActivity.user_email = userData.email || undefined;
+              enrichedActivity.user_name = userData.full_name || userData.email || undefined;
+            }
+          } catch (error) {
+            console.log('Could not fetch user info for:', activity.user_id);
+            // If we can't find the profile, show "Onbekende gebruiker"
+            enrichedActivity.user_name = 'Onbekende gebruiker';
+          }
+        } else {
+          // No user_id means it was a system action or from before the enhancement
+          enrichedActivity.user_name = 'Systeem';
+          enrichedActivity.user_email = undefined;
+        }
 
         return enrichedActivity;
       })
@@ -193,7 +211,7 @@ const ActivityLog = () => {
     if (activity.user_email) {
       return activity.user_email;
     }
-    return 'Systeem';
+    return 'Onbekende gebruiker';
   };
 
   const formatTimestamp = (timestamp: string) => {

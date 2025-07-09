@@ -268,6 +268,7 @@ export type Database = {
           id: string
           record_id: string | null
           table_name: string
+          user_id: string | null
         }
         Insert: {
           action: string
@@ -275,6 +276,7 @@ export type Database = {
           id?: string
           record_id?: string | null
           table_name: string
+          user_id?: string | null
         }
         Update: {
           action?: string
@@ -282,6 +284,7 @@ export type Database = {
           id?: string
           record_id?: string | null
           table_name?: string
+          user_id?: string | null
         }
         Relationships: []
       }
