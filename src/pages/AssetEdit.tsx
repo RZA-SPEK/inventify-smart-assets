@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -134,7 +133,7 @@ const AssetEdit = () => {
         return;
       }
       
-      // Transform form data back to database format
+      // Transform form data back to database format with proper null handling
       const dbData = {
         type: updatedAsset.type,
         brand: updatedAsset.brand || null,
@@ -166,7 +165,7 @@ const AssetEdit = () => {
         console.error('AssetEdit: Error updating asset:', error);
         toast({
           title: "Fout bij bijwerken",
-          description: "Er is een fout opgetreden bij het bijwerken van het asset.",
+          description: `Er is een fout opgetreden bij het bijwerken: ${error.message}`,
           variant: "destructive",
         });
         return;

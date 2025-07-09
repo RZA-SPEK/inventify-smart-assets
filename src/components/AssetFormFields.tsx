@@ -8,6 +8,8 @@ import { AssetFormIdentificationFields } from "./AssetFormIdentificationFields";
 import { AssetFormPriceFields } from "./AssetFormPriceFields";
 import { AssetCommentsField } from "./AssetCommentsField";
 import { ReservableField } from "./ReservableField";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 interface AssetFormFieldsProps {
   formData: {
@@ -17,6 +19,7 @@ interface AssetFormFieldsProps {
     serialNumber: string;
     assetTag: string;
     purchaseDate: string;
+    warrantyExpiry: string;
     status: Asset["status"];
     location: string;
     category: Asset["category"];
@@ -65,6 +68,16 @@ export const AssetFormFields = ({
         onShowAssetTagScanner={onShowAssetTagScanner}
         onGenerateAssetTag={onGenerateAssetTag}
       />
+
+      <div className="space-y-2">
+        <Label htmlFor="warrantyExpiry">Garantie vervaldatum</Label>
+        <Input
+          id="warrantyExpiry"
+          type="date"
+          value={formData.warrantyExpiry || ""}
+          onChange={(e) => handleFieldChange('warrantyExpiry', e.target.value)}
+        />
+      </div>
 
       <AssetFormPriceFields
         formData={formData}

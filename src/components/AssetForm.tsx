@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Asset } from "@/types/asset";
@@ -15,6 +14,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
   const [showScanner, setShowScanner] = useState(false);
   const [showAssetTagScanner, setShowAssetTagScanner] = useState(false);
   const [scannerMode, setScannerMode] = useState<'serial' | 'assetTag'>('serial');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Initialize form data with default values
   const getInitialFormData = useCallback(() => {
@@ -87,8 +87,14 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
     });
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isSubmitting) {
+      console.log('AssetForm: Already submitting, ignoring...');
+      return;
+    }
+    
     console.log("AssetForm: Submitting form data:", formData);
     
     // Ensure type is included and not empty
@@ -98,28 +104,36 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
       return;
     }
     
-    const submitData: Omit<Asset, "id"> = {
-      type: formData.type,
-      brand: formData.brand || "",
-      model: formData.model || "",
-      serialNumber: formData.serialNumber || "",
-      assetTag: formData.assetTag || "",
-      status: formData.status,
-      location: formData.location || "",
-      category: formData.category,
-      assignedTo: formData.assignedTo === "unassigned" ? "" : formData.assignedTo,
-      assignedToLocation: formData.assignedToLocation === "unassigned" ? "" : formData.assignedToLocation,
-      purchaseDate: formData.purchaseDate || "",
-      warrantyExpiry: formData.warrantyExpiry || "",
-      image: formData.image || "",
-      purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : 0,
-      penaltyAmount: formData.penaltyAmount ? parseFloat(formData.penaltyAmount) : 0,
-      comments: formData.comments || "",
-      reservable: formData.reservable
-    };
+    setIsSubmitting(true);
     
-    console.log("AssetForm: Final submit data:", submitData);
-    onSave(submitData);
+    try {
+      const submitData: Omit<Asset, "id"> = {
+        type: formData.type.trim(),
+        brand: formData.brand.trim() || "",
+        model: formData.model.trim() || "",
+        serialNumber: formData.serialNumber.trim() || "",
+        assetTag: formData.assetTag.trim() || "",
+        status: formData.status,
+        location: formData.location.trim() || "",
+        category: formData.category,
+        assignedTo: formData.assignedTo === "unassigned" ? "" : (formData.assignedTo.trim() || ""),
+        assignedToLocation: formData.assignedToLocation === "unassigned" ? "" : (formData.assignedToLocation.trim() || ""),
+        purchaseDate: formData.purchaseDate || "",
+        warrantyExpiry: formData.warrantyExpiry || "",
+        image: formData.image || "",
+        purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : 0,
+        penaltyAmount: formData.penaltyAmount ? parseFloat(formData.penaltyAmount) : 0,
+        comments: formData.comments.trim() || "",
+        reservable: formData.reservable
+      };
+      
+      console.log("AssetForm: Final submit data:", submitData);
+      await onSave(submitData);
+    } catch (error) {
+      console.error("AssetForm: Error during submission:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleBarcodeScanned = (scannedData: string) => {
@@ -190,11 +204,21 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
           />
 
           <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
-            <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onCancel} 
+              className="w-full sm:w-auto"
+              disabled={isSubmitting}
+            >
               Annuleren
             </Button>
-            <Button type="submit" className="w-full sm:w-auto">
-              {asset ? "Bijwerken" : "Toevoegen"}
+            <Button 
+              type="submit" 
+              className="w-full sm:w-auto"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Opslaan..." : (asset ? "Bijwerken" : "Toevoegen")}
             </Button>
           </div>
         </form>
