@@ -9,29 +9,38 @@ import { getAssetIcon, getStatusColor, getCategoryDisplayName } from "@/utils/as
 
 interface AssetListProps {
   assets: Asset[];
-  currentRole: string;
-  onEdit: (asset: Asset) => void;
-  onDelete: (id: string, reason: string) => void;
-  onPermanentDelete?: (id: string, reason: string) => void;
-  onReserve: (asset: Asset) => void;
+  canManageAssets: boolean;
+  onViewAsset: (id: string) => void;
+  onEditAsset: (id: string) => void;
+  onDeleteAsset: (id: string) => Promise<void>;
 }
 
 export const AssetList = ({ 
   assets, 
-  currentRole, 
-  onEdit, 
-  onDelete, 
-  onPermanentDelete,
-  onReserve 
+  canManageAssets, 
+  onViewAsset, 
+  onEditAsset, 
+  onDeleteAsset 
 }: AssetListProps) => {
-  const isAdmin = currentRole === "ICT Admin" || currentRole === "Facilitair Admin";
+  const handleEdit = (asset: Asset) => {
+    onEditAsset(asset.id);
+  };
+
+  const handleDelete = async (id: string, reason: string) => {
+    await onDeleteAsset(id);
+  };
+
+  const handleReserve = (asset: Asset) => {
+    // TODO: Implement reservation logic
+    console.log('Reserve asset:', asset);
+  };
   
   return (
     <Card>
       <CardHeader>
         <CardTitle>Assets ({assets.length})</CardTitle>
         <CardDescription>
-          {isAdmin 
+          {canManageAssets 
             ? "Overzicht van alle bedrijfsassets" 
             : "Beschikbare assets voor reservering"
           }
@@ -43,11 +52,10 @@ export const AssetList = ({
             <AssetMobileCard
               key={asset.id}
               asset={asset}
-              currentRole={currentRole}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onPermanentDelete={onPermanentDelete}
-              onReserve={onReserve}
+              currentRole={canManageAssets ? "ICT Admin" : "Gebruiker"}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onReserve={handleReserve}
               getAssetIcon={getAssetIcon}
               getStatusColor={getStatusColor}
               getCategoryDisplayName={getCategoryDisplayName}
@@ -66,7 +74,7 @@ export const AssetList = ({
                   <TableHead className="w-32">Status</TableHead>
                   <TableHead className="min-w-[120px]">Locatie</TableHead>
                   <TableHead className="min-w-[150px]">Toegewezen</TableHead>
-                  {isAdmin && <TableHead className="w-40">Acties</TableHead>}
+                  {canManageAssets && <TableHead className="w-40">Acties</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -74,11 +82,10 @@ export const AssetList = ({
                   <AssetTableRow
                     key={asset.id}
                     asset={asset}
-                    currentRole={currentRole}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onPermanentDelete={onPermanentDelete}
-                    onReserve={onReserve}
+                    currentRole={canManageAssets ? "ICT Admin" : "Gebruiker"}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onReserve={handleReserve}
                     getAssetIcon={getAssetIcon}
                     getStatusColor={getStatusColor}
                     getCategoryDisplayName={getCategoryDisplayName}

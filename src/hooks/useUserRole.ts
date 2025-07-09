@@ -2,8 +2,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+export type UserRole = 'ICT Admin' | 'Facilitair Admin' | 'Gebruiker';
+
 export const useUserRole = () => {
-  const [currentRole, setCurrentRole] = useState<string>('Gebruiker');
+  const [currentRole, setCurrentRole] = useState<UserRole>('Gebruiker');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,9 +40,9 @@ export const useUserRole = () => {
     fetchUserRole();
   }, []);
 
-  const canManageAssets = currentRole === 'ICT Admin' || currentRole === 'Admin';
-  const canViewSettings = currentRole === 'ICT Admin' || currentRole === 'Admin';
-  const canManageUsers = currentRole === 'ICT Admin' || currentRole === 'Admin';
+  const canManageAssets = currentRole === 'ICT Admin' || currentRole === 'Facilitair Admin';
+  const canViewSettings = currentRole === 'ICT Admin' || currentRole === 'Facilitair Admin';
+  const canManageUsers = currentRole === 'ICT Admin' || currentRole === 'Facilitair Admin';
 
   return {
     currentRole,

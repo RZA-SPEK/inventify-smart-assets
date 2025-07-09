@@ -18,8 +18,8 @@ export const useAssetFilters = (assets: Asset[]) => {
         asset.type?.toLowerCase().includes(searchLower) ||
         asset.brand?.toLowerCase().includes(searchLower) ||
         asset.model?.toLowerCase().includes(searchLower) ||
-        asset.serial_number?.toLowerCase().includes(searchLower) ||
-        asset.asset_tag?.toLowerCase().includes(searchLower)
+        asset.serialNumber?.toLowerCase().includes(searchLower) ||
+        asset.assetTag?.toLowerCase().includes(searchLower)
       );
     }
 

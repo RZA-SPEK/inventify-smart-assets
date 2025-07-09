@@ -4,18 +4,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
 import { useState } from "react";
+import { Asset } from "@/types/asset";
 
 interface AssetFiltersProps {
   searchTerm: string;
   statusFilter: string;
   categoryFilter: string;
   typeFilter: string;
-  onSearchChange: (value: string) => void;
-  onStatusFilterChange: (value: string) => void;
-  onCategoryFilterChange: (value: string) => void;
-  onTypeFilterChange: (value: string) => void;
-  onClearFilters: () => void;
-  assetTypes: string[];
+  setSearchTerm: (value: string) => void;
+  setStatusFilter: (value: string) => void;
+  setCategoryFilter: (value: string) => void;
+  setTypeFilter: (value: string) => void;
+  assets: Asset[];
 }
 
 export const AssetFilters = ({
@@ -23,16 +23,25 @@ export const AssetFilters = ({
   statusFilter,
   categoryFilter,
   typeFilter,
-  onSearchChange,
-  onStatusFilterChange,
-  onCategoryFilterChange,
-  onTypeFilterChange,
-  onClearFilters,
-  assetTypes
+  setSearchTerm,
+  setStatusFilter,
+  setCategoryFilter,
+  setTypeFilter,
+  assets
 }: AssetFiltersProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const hasActiveFilters = statusFilter !== "all" || categoryFilter !== "all" || typeFilter !== "all" || searchTerm !== "";
+
+  const onClearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setCategoryFilter('all');
+    setTypeFilter('all');
+  };
+
+  // Get unique asset types from the assets
+  const assetTypes = Array.from(new Set(assets.map(asset => asset.type).filter(Boolean)));
 
   return (
     <div className="space-y-4">
@@ -43,7 +52,7 @@ export const AssetFilters = ({
           <Input
             placeholder="Zoek in alle velden (type, merk, model, serienummer, asset tag, locatie, toegewezen aan...)"
             value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 w-full"
           />
         </div>
@@ -74,7 +83,7 @@ export const AssetFilters = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 bg-gray-50 rounded-lg">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Status</label>
-            <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Alle statussen" />
               </SelectTrigger>
@@ -91,7 +100,7 @@ export const AssetFilters = ({
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Categorie</label>
-            <Select value={categoryFilter} onValueChange={onCategoryFilterChange}>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Alle categorieën" />
               </SelectTrigger>
@@ -107,7 +116,7 @@ export const AssetFilters = ({
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Type</label>
-            <Select value={typeFilter} onValueChange={onTypeFilterChange}>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Alle types" />
               </SelectTrigger>

@@ -24,13 +24,25 @@ export const useAssetManagement = () => {
         throw fetchError;
       }
 
-      const transformedAssets = (data || []).map(asset => ({
-        ...asset,
-        purchase_date: asset.purchase_date || undefined,
-        warranty_expiry: asset.warranty_expiry || undefined,
-        purchase_price: asset.purchase_price || undefined,
-        penalty_amount: asset.penalty_amount || undefined,
-        reservable: asset.reservable || false,
+      const transformedAssets: Asset[] = (data || []).map(asset => ({
+        id: asset.id,
+        type: asset.type,
+        brand: asset.brand || '',
+        model: asset.model || '',
+        serialNumber: asset.serial_number || '',
+        assetTag: asset.asset_tag || '',
+        status: asset.status as Asset['status'] || 'In voorraad',
+        location: asset.location || '',
+        assignedTo: asset.assigned_to || '',
+        assignedToLocation: asset.assigned_to_location || '',
+        purchaseDate: asset.purchase_date || '',
+        warrantyExpiry: asset.warranty_expiry || '',
+        purchasePrice: asset.purchase_price || 0,
+        penaltyAmount: asset.penalty_amount || 0,
+        category: asset.category as Asset['category'] || 'ICT',
+        image: asset.image_url || '',
+        comments: asset.comments || '',
+        reservable: asset.reservable !== undefined ? asset.reservable : true,
       }));
 
       // Filter assets based on user role
