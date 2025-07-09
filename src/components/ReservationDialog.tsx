@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -275,7 +274,7 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                   <h3 className="font-medium text-green-800 mb-2">Reservering Samenvatting</h3>
                   <div className="space-y-1 text-sm text-green-700">
-                    <p>Datum: {formData.requestedDate.toLocaleDateString('nl-NL')}</p>
+                    <p>Datum: {formData.requestedDate.toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
                     <p>Tijd: {formData.startTime} - {formData.endTime}</p>
                     <p>Asset: {asset.brand} {asset.model}</p>
                     {linkedAssets.length > 0 && (
