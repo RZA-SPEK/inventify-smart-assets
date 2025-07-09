@@ -44,9 +44,9 @@ const MainNavigation = () => {
     },
     {
       name: "Assets",
-      href: "/",
+      href: "/assets",
       icon: Box,
-      current: location.pathname === "/",
+      current: location.pathname === "/assets" || location.pathname === "/",
     },
     {
       name: "Reserveringen",
@@ -56,17 +56,17 @@ const MainNavigation = () => {
     },
     {
       name: "Mijn Reserveringen",
-      href: "/user-reservations",
+      href: "/my-reservations",
       icon: ListChecks,
-      current: location.pathname === "/user-reservations",
+      current: location.pathname === "/my-reservations",
     },
     ...(canManageAssets
       ? [
           {
             name: "Nieuw Asset",
-            href: "/assets/new",
+            href: "/assets/create",
             icon: Plus,
-            current: location.pathname === "/assets/new",
+            current: location.pathname === "/assets/create",
           },
         ]
       : []),
