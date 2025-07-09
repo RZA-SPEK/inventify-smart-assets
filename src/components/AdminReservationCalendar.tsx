@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,7 +56,13 @@ export const AdminReservationCalendar = () => {
         return;
       }
 
-      setReservations(data || []);
+      // Cast the status field to the correct type
+      const typedReservations = (data || []).map(reservation => ({
+        ...reservation,
+        status: reservation.status as 'pending' | 'approved' | 'rejected'
+      }));
+
+      setReservations(typedReservations);
     } catch (error) {
       console.error('Error fetching reservations:', error);
     } finally {

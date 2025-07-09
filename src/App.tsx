@@ -1,16 +1,17 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import Login from './pages/Login';
-import AssetList from './pages/AssetList';
-import AssetDetail from './pages/AssetDetail';
-import CreateAsset from './pages/CreateAsset';
-import EditAsset from './pages/EditAsset';
+import Auth from './pages/Auth';
+import AssetList from './pages/Assets';
+import AssetDetail from './pages/AssetDetails';
+import CreateAsset from './pages/AssetNew';
+import EditAsset from './pages/AssetEdit';
 import Profile from './pages/Profile';
 import Reservations from './pages/Reservations';
 import { UserReservations } from './components/UserReservations';
 import MainNavigation from './components/MainNavigation';
-import ProtectedRoute from './components/ProtectedRoute';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { Toaster } from "@/components/ui/toaster"
 import PasswordReset from './pages/PasswordReset';
 import Notifications from './pages/Notifications';
@@ -25,7 +26,8 @@ function App() {
         <div className="min-h-screen bg-background">
           <Toaster />
           <Routes>
-            <Route path="/login" element={<Login />} />
+            <Route path="/login" element={<Auth />} />
+            <Route path="/auth" element={<Auth />} />
             <Route path="/password-reset" element={<PasswordReset />} />
             <Route 
               path="/" 

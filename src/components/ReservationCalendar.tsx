@@ -57,7 +57,13 @@ export const ReservationCalendar = ({
         return;
       }
 
-      setReservations(data || []);
+      // Cast the status field to the correct type
+      const typedReservations = (data || []).map(reservation => ({
+        ...reservation,
+        status: reservation.status as 'pending' | 'approved' | 'rejected'
+      }));
+
+      setReservations(typedReservations);
     } catch (error) {
       console.error('Error fetching reservations:', error);
     } finally {

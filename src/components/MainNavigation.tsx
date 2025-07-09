@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,11 +25,12 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/integrations/supabase/client";
 
 const MainNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { canManageAssets } = useUserRole();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -102,6 +104,16 @@ const MainNavigation = () => {
     setIsMenuOpen(false); // Close the menu after navigation
   };
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setIsMenuOpen(false);
+      navigate("/auth");
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
   return (
     <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
       <SheetTrigger asChild>
@@ -157,11 +169,7 @@ const MainNavigation = () => {
             <Button
               variant="ghost"
               className="justify-start pl-8 text-red-500"
-              onClick={() => {
-                logout();
-                setIsMenuOpen(false);
-                navigate("/login");
-              }}
+              onClick={handleLogout}
             >
               <Power className="mr-2 h-4 w-4" />
               <span>Uitloggen</span>
