@@ -38,83 +38,98 @@ export const AssetTableRow = ({
 
   return (
     <TableRow className="hover:bg-gray-50">
-      <TableCell className="py-4">
-        <div className="flex items-center space-x-3">
-          <AssetImage
-            image={asset.image}
-            brand={asset.brand}
-            model={asset.model}
-            icon={getAssetIcon(asset.type)}
-            size="sm"
-          />
-          <div>
-            <Link 
-              to={`/assets/${asset.id}`}
-              className="font-medium text-gray-900 hover:text-blue-600"
-            >
-              {asset.type}
-            </Link>
-            <p className="text-sm text-gray-500">{asset.brand} {asset.model}</p>
-          </div>
+      <TableCell className="py-4 w-16">
+        <AssetImage
+          image={asset.image}
+          brand={asset.brand}
+          model={asset.model}
+          icon={getAssetIcon(asset.type)}
+          size="sm"
+        />
+      </TableCell>
+      
+      <TableCell className="py-4 min-w-[200px]">
+        <div className="space-y-1">
+          <Link 
+            to={`/assets/${asset.id}`}
+            className="font-medium text-gray-900 hover:text-blue-600 block truncate"
+          >
+            {asset.type}
+          </Link>
+          <p className="text-sm text-gray-500 truncate">{asset.brand} {asset.model}</p>
         </div>
       </TableCell>
       
-      <TableCell>
-        <span className="font-mono text-sm">{asset.assetTag || "Geen tag"}</span>
+      <TableCell className="py-4 w-24">
+        <span className="font-mono text-sm truncate block">{asset.assetTag || "Geen"}</span>
       </TableCell>
       
-      <TableCell>
+      <TableCell className="py-4 w-32">
         <Badge className={getStatusColor(asset.status)}>
           {asset.status}
         </Badge>
       </TableCell>
       
-      <TableCell className="text-sm text-gray-600">
-        {asset.location}
+      <TableCell className="py-4 min-w-[120px]">
+        <span className="text-sm text-gray-600 truncate block">{asset.location}</span>
       </TableCell>
       
-      <TableCell className="text-sm text-gray-600">
-        {asset.assignedTo || "Niet toegewezen"}
+      <TableCell className="py-4 min-w-[150px]">
+        <span className="text-sm text-gray-600 truncate block">{asset.assignedTo || "Niet toegewezen"}</span>
       </TableCell>
       
-      <TableCell>
-        <div className="flex items-center space-x-2">
-          {canManageAssets && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onEdit(asset)}
-              >
-                <Edit className="h-3 w-3 mr-1" />
-                Bewerken
-              </Button>
-              <AssetDeleteDialog
-                onDelete={(reason) => onDelete(asset.id, reason)}
-                canDelete={canDelete}
-              />
-              {canPermanentDelete && (
-                <AssetPermanentDeleteDialog
-                  onPermanentDelete={(reason) => onPermanentDelete(asset.id, reason)}
-                  canDelete={true}
-                  assetName={`${asset.brand} ${asset.model}`}
-                />
-              )}
-            </>
-          )}
-          
-          {asset.status === "In voorraad" && (
+      {canManageAssets && (
+        <TableCell className="py-4 w-40">
+          <div className="flex items-center space-x-1">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onReserve(asset)}
+              onClick={() => onEdit(asset)}
+              className="h-8 px-2"
             >
-              <Calendar className="h-3 w-3 mr-1" />
-              Reserveren
+              <Edit className="h-3 w-3" />
             </Button>
-          )}
-        </div>
-      </TableCell>
+            
+            <AssetDeleteDialog
+              onDelete={(reason) => onDelete(asset.id, reason)}
+              canDelete={canDelete}
+            />
+            
+            {canPermanentDelete && (
+              <AssetPermanentDeleteDialog
+                onPermanentDelete={(reason) => onPermanentDelete(asset.id, reason)}
+                canDelete={true}
+                assetName={`${asset.brand} ${asset.model}`}
+              />
+            )}
+            
+            {asset.status === "In voorraad" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onReserve(asset)}
+                className="h-8 px-2"
+              >
+                <Calendar className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        </TableCell>
+      )}
+      
+      {!canManageAssets && asset.status === "In voorraad" && (
+        <TableCell className="py-4 w-32">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onReserve(asset)}
+            className="h-8 px-2"
+          >
+            <Calendar className="h-3 w-3 mr-1" />
+            Reserveren
+          </Button>
+        </TableCell>
+      )}
     </TableRow>
   );
 };
