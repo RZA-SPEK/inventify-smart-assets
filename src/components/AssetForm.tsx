@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Asset } from "@/types/asset";
@@ -27,6 +28,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
         serialNumber: asset.serialNumber || "",
         assetTag: asset.assetTag || "",
         purchaseDate: asset.purchaseDate || "",
+        warrantyExpiry: asset.warrantyExpiry || "",
         status: asset.status || "In voorraad" as Asset["status"],
         location: asset.location || "",
         category: asset.category || "ICT" as Asset["category"],
@@ -49,6 +51,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
       serialNumber: "",
       assetTag: "",
       purchaseDate: "",
+      warrantyExpiry: "",
       status: "In voorraad" as Asset["status"],
       location: "",
       category: "ICT" as Asset["category"],
@@ -95,22 +98,23 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
       return;
     }
     
-    const submitData = {
+    const submitData: Omit<Asset, "id"> = {
       type: formData.type,
       brand: formData.brand || "",
       model: formData.model || "",
-      serialNumber: formData.serialNumber || undefined,
-      assetTag: formData.assetTag || undefined,
+      serialNumber: formData.serialNumber || "",
+      assetTag: formData.assetTag || "",
       status: formData.status,
       location: formData.location || "",
       category: formData.category,
       assignedTo: formData.assignedTo === "unassigned" ? "" : formData.assignedTo,
       assignedToLocation: formData.assignedToLocation === "unassigned" ? "" : formData.assignedToLocation,
       purchaseDate: formData.purchaseDate || "",
-      image: formData.image || undefined,
-      purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
+      warrantyExpiry: formData.warrantyExpiry || "",
+      image: formData.image || "",
+      purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : 0,
       penaltyAmount: formData.penaltyAmount ? parseFloat(formData.penaltyAmount) : 0,
-      comments: formData.comments || undefined,
+      comments: formData.comments || "",
       reservable: formData.reservable
     };
     
