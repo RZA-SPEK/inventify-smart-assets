@@ -73,7 +73,7 @@ function App() {
               } 
             />
             <Route 
-              path="/assets/edit/:id" 
+              path="/assets/:id/edit" 
               element={
                 <ProtectedRoute>
                   <MainNavigation />
