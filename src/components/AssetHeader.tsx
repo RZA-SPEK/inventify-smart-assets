@@ -1,15 +1,14 @@
 
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar, History } from "lucide-react";
+import { Calendar, History } from "lucide-react";
 import { NotificationCenter } from "./NotificationCenter";
 import { Link } from "react-router-dom";
 
 interface AssetHeaderProps {
-  onAddAsset: () => void;
   onShowUserReservations: () => void;
 }
 
-export const AssetHeader = ({ onAddAsset, onShowUserReservations }: AssetHeaderProps) => {
+export const AssetHeader = ({ onShowUserReservations }: AssetHeaderProps) => {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
       <div>
@@ -34,14 +33,6 @@ export const AssetHeader = ({ onAddAsset, onShowUserReservations }: AssetHeaderP
             <span className="hidden sm:inline">Activiteit</span>
           </Button>
         </Link>
-        <Button 
-          onClick={onAddAsset}
-          className="flex items-center gap-2"
-          size="sm"
-        >
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Asset Toevoegen</span>
-        </Button>
       </div>
     </div>
   );

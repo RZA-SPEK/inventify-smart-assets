@@ -1,6 +1,5 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Asset } from "@/types/asset";
 import { AssetFormFields } from "./AssetFormFields";
@@ -170,37 +169,26 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
 
   return (
     <>
-      <Dialog open={true} onOpenChange={onCancel}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {asset ? "Asset Bewerken" : "Nieuw Asset Toevoegen"}
-            </DialogTitle>
-            <DialogDescription>
-              Vul de gegevens van het asset in.
-            </DialogDescription>
-          </DialogHeader>
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <AssetFormFields
+            formData={formData}
+            onFormDataChange={updateFormData}
+            onShowScanner={handleShowSerialScanner}
+            onShowAssetTagScanner={handleShowAssetTagScanner}
+            onGenerateAssetTag={generateAssetTag}
+          />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <AssetFormFields
-              formData={formData}
-              onFormDataChange={updateFormData}
-              onShowScanner={handleShowSerialScanner}
-              onShowAssetTagScanner={handleShowAssetTagScanner}
-              onGenerateAssetTag={generateAssetTag}
-            />
-
-            <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
-              <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">
-                Annuleren
-              </Button>
-              <Button type="submit" className="w-full sm:w-auto">
-                {asset ? "Bijwerken" : "Toevoegen"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+          <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
+            <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">
+              Annuleren
+            </Button>
+            <Button type="submit" className="w-full sm:w-auto">
+              {asset ? "Bijwerken" : "Toevoegen"}
+            </Button>
+          </div>
+        </form>
+      </div>
 
       {(showScanner || showAssetTagScanner) && (
         <BarcodeScanner
