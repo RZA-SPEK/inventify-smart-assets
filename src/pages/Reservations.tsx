@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,15 +56,18 @@ const Reservations = () => {
 
   const updateReservationStatus = async (id: string, status: string) => {
     try {
+      console.log('Updating reservation', id, 'to status', status);
       const { error } = await supabase
         .from('reservations')
         .update({ status })
         .eq('id', id);
 
       if (error) {
+        console.error('Error updating reservation:', error);
         throw error;
       }
 
+      console.log('Reservation updated successfully');
       fetchReservations();
     } catch (error) {
       console.error('Error updating reservation:', error);
@@ -78,14 +80,33 @@ const Reservations = () => {
 
   const getStatusColor = (status: string | null) => {
     switch (status) {
+      case 'approved':
       case 'goedgekeurd':
         return 'bg-green-100 text-green-800';
+      case 'rejected':
       case 'afgewezen':
         return 'bg-red-100 text-red-800';
+      case 'pending':
       case 'in_afwachting':
         return 'bg-yellow-100 text-yellow-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status: string | null) => {
+    switch (status) {
+      case 'approved':
+      case 'goedgekeurd':
+        return 'Goedgekeurd';
+      case 'rejected':
+      case 'afgewezen':
+        return 'Afgewezen';
+      case 'pending':
+      case 'in_afwachting':
+        return 'In afwachting';
+      default:
+        return status || 'In afwachting';
     }
   };
 
@@ -131,7 +152,7 @@ const Reservations = () => {
                       }
                     </CardTitle>
                     <Badge className={getStatusColor(reservation.status)}>
-                      {reservation.status || 'in_afwachting'}
+                      {getStatusText(reservation.status)}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -173,11 +194,11 @@ const Reservations = () => {
                     )}
                   </div>
                   
-                  {reservation.status === 'in_afwachting' && (
+                  {(reservation.status === 'pending' || reservation.status === 'in_afwachting' || !reservation.status) && (
                     <div className="flex gap-2 mt-4">
                       <Button
                         size="sm"
-                        onClick={() => updateReservationStatus(reservation.id, 'goedgekeurd')}
+                        onClick={() => updateReservationStatus(reservation.id, 'approved')}
                         className="bg-green-600 hover:bg-green-700"
                       >
                         Goedkeuren
@@ -185,7 +206,7 @@ const Reservations = () => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => updateReservationStatus(reservation.id, 'afgewezen')}
+                        onClick={() => updateReservationStatus(reservation.id, 'rejected')}
                         className="border-red-300 text-red-700 hover:bg-red-50"
                       >
                         Afwijzen
