@@ -1,15 +1,16 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Link2, Plus, X, ArrowRight } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Link2, Plus, X, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Asset } from "@/types/asset";
+import { useNavigate } from "react-router-dom";
 
 interface AssetRelationship {
   id: string;
@@ -17,10 +18,8 @@ interface AssetRelationship {
   child_asset_id: string;
   relationship_type: string;
   description?: string;
-  created_at: string;
-  child_asset?: Asset;
-  parent_asset?: Asset;
   direction?: 'parent' | 'child';
+  related_asset?: Asset;
 }
 
 interface AssetRelationshipsProps {
@@ -29,48 +28,52 @@ interface AssetRelationshipsProps {
 }
 
 const relationshipTypes = [
-  { value: "component", label: "Onderdeel", description: "Dit asset is een onderdeel van het andere" },
-  { value: "accessory", label: "Accessoire", description: "Dit asset is een accessoire van het andere" },
-  { value: "set", label: "Set", description: "Deze assets vormen samen een set" },
-  { value: "related", label: "Gerelateerd", description: "Deze assets zijn aan elkaar gerelateerd" }
+  { value: 'component', label: 'Component', description: 'Dit asset is onderdeel van het andere asset' },
+  { value: 'accessory', label: 'Accessoire', description: 'Dit asset is een accessoire van het andere asset' },
+  { value: 'set', label: 'Set', description: 'Deze assets vormen samen een set' },
+  { value: 'related', label: 'Gerelateerd', description: 'Deze assets zijn aan elkaar gerelateerd' }
 ];
+
+const transformDatabaseAssetToAsset = (dbAsset: any): Asset => {
+  return {
+    id: dbAsset.id,
+    type: dbAsset.type || '',
+    brand: dbAsset.brand || '',
+    model: dbAsset.model || '',
+    serialNumber: dbAsset.serial_number || '',
+    assetTag: dbAsset.asset_tag || '',
+    status: dbAsset.status as Asset['status'],
+    location: dbAsset.location || '',
+    assignedTo: dbAsset.assigned_to || '',
+    assignedToLocation: dbAsset.assigned_to_location || '',
+    purchaseDate: dbAsset.purchase_date || '',
+    warrantyExpiry: dbAsset.warranty_expiry || '',
+    purchasePrice: dbAsset.purchase_price || 0,
+    penaltyAmount: dbAsset.penalty_amount || 0,
+    category: dbAsset.category as Asset['category'],
+    image: dbAsset.image_url || '',
+    comments: dbAsset.comments || '',
+    reservable: dbAsset.reservable !== undefined ? dbAsset.reservable : true
+  };
+};
 
 export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationshipsProps) => {
   const [relationships, setRelationships] = useState<AssetRelationship[]>([]);
   const [availableAssets, setAvailableAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [selectedAssetId, setSelectedAssetId] = useState("");
-  const [relationshipType, setRelationshipType] = useState("related");
-  const [relationshipDescription, setRelationshipDescription] = useState("");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newRelationship, setNewRelationship] = useState({
+    assetId: '',
+    relationshipType: '',
+    description: ''
+  });
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    Promise.all([fetchRelationships(), fetchAvailableAssets()]);
+    fetchRelationships();
+    fetchAvailableAssets();
   }, [assetId]);
-
-  const transformDatabaseAssetToAsset = (dbAsset: any): Asset => {
-    return {
-      id: dbAsset.id,
-      type: dbAsset.type,
-      brand: dbAsset.brand || '',
-      model: dbAsset.model || '',
-      serialNumber: dbAsset.serial_number || '',
-      assetTag: dbAsset.asset_tag || '',
-      status: dbAsset.status as Asset['status'],
-      location: dbAsset.location || '',
-      assignedTo: dbAsset.assigned_to || '',
-      assignedToLocation: dbAsset.assigned_to_location || '',
-      purchaseDate: dbAsset.purchase_date || '',
-      warrantyExpiry: dbAsset.warranty_expiry || '',
-      purchasePrice: dbAsset.purchase_price || 0,
-      penaltyAmount: dbAsset.penalty_amount || 0,
-      category: dbAsset.category as Asset['category'],
-      image: dbAsset.image_url || '',
-      comments: dbAsset.comments || '',
-      reservable: dbAsset.reservable || false
-    };
-  };
 
   const fetchRelationships = async () => {
     try {
@@ -78,7 +81,11 @@ export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationsh
       const { data: parentData, error: parentError } = await supabase
         .from('asset_relationships')
         .select(`
-          *,
+          id,
+          parent_asset_id,
+          child_asset_id,
+          relationship_type,
+          description,
           child_asset:assets!asset_relationships_child_asset_id_fkey(*)
         `)
         .eq('parent_asset_id', assetId);
@@ -87,90 +94,89 @@ export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationsh
       const { data: childData, error: childError } = await supabase
         .from('asset_relationships')
         .select(`
-          *,
+          id,
+          parent_asset_id,
+          child_asset_id,
+          relationship_type,
+          description,
           parent_asset:assets!asset_relationships_parent_asset_id_fkey(*)
         `)
         .eq('child_asset_id', assetId);
 
       if (parentError || childError) {
         console.error('Error fetching relationships:', parentError || childError);
-        toast({
-          title: "Fout bij laden",
-          description: "Er is een fout opgetreden bij het laden van de koppelingen.",
-          variant: "destructive",
-        });
         return;
       }
 
-      const allRelationships: AssetRelationship[] = [
-        ...(parentData || []).map(rel => ({
-          ...rel,
-          direction: 'parent' as const,
-          child_asset: rel.child_asset ? transformDatabaseAssetToAsset(rel.child_asset) : undefined
-        })),
-        ...(childData || []).map(rel => ({
-          ...rel,
-          direction: 'child' as const,
-          parent_asset: rel.parent_asset ? transformDatabaseAssetToAsset(rel.parent_asset) : undefined
-        }))
-      ];
+      const allRelationships: AssetRelationship[] = [];
+
+      // Add parent relationships (current asset is parent)
+      parentData?.forEach(rel => {
+        if (rel.child_asset) {
+          allRelationships.push({
+            ...rel,
+            direction: 'parent',
+            related_asset: transformDatabaseAssetToAsset(rel.child_asset)
+          });
+        }
+      });
+
+      // Add child relationships (current asset is child)
+      childData?.forEach(rel => {
+        if (rel.parent_asset) {
+          allRelationships.push({
+            ...rel,
+            direction: 'child',
+            related_asset: transformDatabaseAssetToAsset(rel.parent_asset)
+          });
+        }
+      });
 
       setRelationships(allRelationships);
     } catch (error) {
       console.error('Error fetching relationships:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
   const fetchAvailableAssets = async () => {
     try {
-      // First, get all linked asset IDs
-      const { data: linkedAssets, error: linkedError } = await supabase
+      // First get all existing relationships to exclude linked assets
+      const { data: existingRelationships } = await supabase
         .from('asset_relationships')
         .select('parent_asset_id, child_asset_id');
 
-      if (linkedError) {
-        console.error('Error fetching linked assets:', linkedError);
-        return;
-      }
-
-      // Create a set of all linked asset IDs
       const linkedAssetIds = new Set<string>();
-      linkedAssets?.forEach(rel => {
+      existingRelationships?.forEach(rel => {
         linkedAssetIds.add(rel.parent_asset_id);
         linkedAssetIds.add(rel.child_asset_id);
       });
 
-      // Fetch all assets excluding the current asset and linked assets
+      // Fetch all assets except current asset and already linked assets
       const { data, error } = await supabase
         .from('assets')
         .select('*')
         .neq('id', assetId)
-        .neq('status', 'Deleted');
+        .not('id', 'in', `(${Array.from(linkedAssetIds).join(',')})`);
 
       if (error) {
         console.error('Error fetching available assets:', error);
         return;
       }
 
-      // Filter out assets that are already linked
-      const unlinkedAssets = (data || []).filter(asset => !linkedAssetIds.has(asset.id));
-
-      // Transform database response to match Asset interface
-      const transformedAssets: Asset[] = unlinkedAssets.map(transformDatabaseAssetToAsset);
-
+      const transformedAssets = (data || []).map(transformDatabaseAssetToAsset);
       setAvailableAssets(transformedAssets);
     } catch (error) {
       console.error('Error fetching available assets:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleAddRelationship = async () => {
-    if (!selectedAssetId) {
+    if (!newRelationship.assetId || !newRelationship.relationshipType) {
       toast({
         title: "Validatiefout",
-        description: "Selecteer eerst een asset om te koppelen.",
+        description: "Selecteer een asset en relatietype.",
         variant: "destructive",
       });
       return;
@@ -181,32 +187,30 @@ export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationsh
         .from('asset_relationships')
         .insert({
           parent_asset_id: assetId,
-          child_asset_id: selectedAssetId,
-          relationship_type: relationshipType,
-          description: relationshipDescription || null
+          child_asset_id: newRelationship.assetId,
+          relationship_type: newRelationship.relationshipType,
+          description: newRelationship.description || null
         });
 
       if (error) {
         console.error('Error adding relationship:', error);
         toast({
           title: "Fout bij toevoegen",
-          description: "Er is een fout opgetreden bij het toevoegen van de koppeling.",
+          description: "Er is een fout opgetreden bij het toevoegen van de relatie.",
           variant: "destructive",
         });
         return;
       }
 
       toast({
-        title: "Koppeling toegevoegd",
-        description: "De asset koppeling is succesvol toegevoegd.",
+        title: "Relatie toegevoegd",
+        description: "De asset relatie is succesvol toegevoegd.",
       });
 
-      setSelectedAssetId("");
-      setRelationshipType("related");
-      setRelationshipDescription("");
-      setShowAddDialog(false);
-      // Refresh both relationships and available assets
-      Promise.all([fetchRelationships(), fetchAvailableAssets()]);
+      setNewRelationship({ assetId: '', relationshipType: '', description: '' });
+      setShowAddForm(false);
+      fetchRelationships();
+      fetchAvailableAssets(); // Refresh available assets
     } catch (error) {
       console.error('Error adding relationship:', error);
     }
@@ -223,26 +227,40 @@ export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationsh
         console.error('Error deleting relationship:', error);
         toast({
           title: "Fout bij verwijderen",
-          description: "Er is een fout opgetreden bij het verwijderen van de koppeling.",
+          description: "Er is een fout opgetreden bij het verwijderen van de relatie.",
           variant: "destructive",
         });
         return;
       }
 
       toast({
-        title: "Koppeling verwijderd",
-        description: "De asset koppeling is succesvol verwijderd.",
+        title: "Relatie verwijderd",
+        description: "De asset relatie is verwijderd.",
       });
 
-      // Refresh both relationships and available assets
-      Promise.all([fetchRelationships(), fetchAvailableAssets()]);
+      fetchRelationships();
+      fetchAvailableAssets(); // Refresh available assets
     } catch (error) {
       console.error('Error deleting relationship:', error);
     }
   };
 
-  const getRelationshipTypeLabel = (type: string) => {
-    return relationshipTypes.find(rt => rt.value === type)?.label || type;
+  const getRelationshipDisplayText = (relationship: AssetRelationship) => {
+    const type = relationshipTypes.find(t => t.value === relationship.relationship_type);
+    if (relationship.direction === 'child') {
+      // Current asset is child, so show inverse relationship
+      switch (relationship.relationship_type) {
+        case 'component':
+          return 'Onderdeel van';
+        case 'accessory':
+          return 'Accessoire van';
+        case 'set':
+          return 'Set met';
+        default:
+          return 'Gerelateerd aan';
+      }
+    }
+    return type?.label || relationship.relationship_type;
   };
 
   if (loading) {
@@ -260,123 +278,116 @@ export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationsh
           <Link2 className="h-5 w-5" />
           Gekoppelde Assets ({relationships.length})
         </h3>
-        {canEdit && (
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Asset koppelen
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Asset koppeling toevoegen</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Asset selecteren</Label>
-                  <Select value={selectedAssetId} onValueChange={setSelectedAssetId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecteer een asset om te koppelen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableAssets.length === 0 ? (
-                        <div className="p-2 text-sm text-gray-500">
-                          Geen beschikbare assets om te koppelen
-                        </div>
-                      ) : (
-                        availableAssets.map((asset) => (
-                          <SelectItem key={asset.id} value={asset.id}>
-                            {asset.type} - {asset.brand} {asset.model} 
-                            {asset.assetTag && ` (${asset.assetTag})`}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Type koppeling</Label>
-                  <Select value={relationshipType} onValueChange={setRelationshipType}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecteer type koppeling" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {relationshipTypes.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          <div>
-                            <div className="font-medium">{type.label}</div>
-                            <div className="text-sm text-gray-500">{type.description}</div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="relationship-description">Beschrijving (optioneel)</Label>
-                  <Input
-                    id="relationship-description"
-                    value={relationshipDescription}
-                    onChange={(e) => setRelationshipDescription(e.target.value)}
-                    placeholder="Beschrijf de koppeling..."
-                  />
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                    Annuleren
-                  </Button>
-                  <Button onClick={handleAddRelationship} disabled={!selectedAssetId}>
-                    Koppelen
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+        {canEdit && availableAssets.length > 0 && (
+          <Button
+            size="sm"
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Koppelen
+          </Button>
         )}
       </div>
+
+      {showAddForm && canEdit && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Nieuwe koppeling toevoegen</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Selecteer Asset</Label>
+              <Select
+                value={newRelationship.assetId}
+                onValueChange={(value) => setNewRelationship({ ...newRelationship, assetId: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Kies een asset..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableAssets.map(asset => (
+                    <SelectItem key={asset.id} value={asset.id}>
+                      {asset.brand} {asset.model} ({asset.type})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Relatietype</Label>
+              <Select
+                value={newRelationship.relationshipType}
+                onValueChange={(value) => setNewRelationship({ ...newRelationship, relationshipType: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Kies relatietype..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {relationshipTypes.map(type => (
+                    <SelectItem key={type.value} value={type.value}>
+                      <div>
+                        <div className="font-medium">{type.label}</div>
+                        <div className="text-sm text-gray-500">{type.description}</div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Beschrijving (optioneel)</Label>
+              <Input
+                value={newRelationship.description}
+                onChange={(e) => setNewRelationship({ ...newRelationship, description: e.target.value })}
+                placeholder="Extra informatie over de relatie..."
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button onClick={handleAddRelationship} disabled={!newRelationship.assetId || !newRelationship.relationshipType}>
+                Toevoegen
+              </Button>
+              <Button variant="outline" onClick={() => setShowAddForm(false)}>
+                Annuleren
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {relationships.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center p-8 text-center">
             <Link2 className="h-12 w-12 text-gray-400 mb-4" />
             <p className="text-gray-500">Geen gekoppelde assets</p>
-            {canEdit && (
+            {canEdit && availableAssets.length === 0 && (
               <p className="text-sm text-gray-400 mt-2">
-                Klik op "Asset koppelen" om assets aan elkaar te koppelen
+                Geen assets beschikbaar voor koppeling
               </p>
             )}
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
-          {relationships.map((relationship) => {
-            const relatedAsset = relationship.direction === 'parent' 
-              ? relationship.child_asset 
-              : relationship.parent_asset;
-            
-            if (!relatedAsset) return null;
-
-            return (
-              <Card key={relationship.id}>
-                <CardContent className="flex items-center justify-between p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">
-                        {getRelationshipTypeLabel(relationship.relationship_type)}
-                      </Badge>
-                      {relationship.direction === 'child' && <ArrowRight className="h-4 w-4" />}
-                    </div>
+          {relationships.map((relationship) => (
+            <Card key={relationship.id}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">
+                      {getRelationshipDisplayText(relationship)}
+                    </Badge>
                     <div>
                       <p className="font-medium">
-                        {relatedAsset.type} - {relatedAsset.brand} {relatedAsset.model}
+                        {relationship.related_asset?.brand} {relationship.related_asset?.model}
                       </p>
-                      {relatedAsset.assetTag && (
-                        <p className="text-sm text-gray-500">Tag: {relatedAsset.assetTag}</p>
-                      )}
+                      <p className="text-sm text-gray-500">
+                        {relationship.related_asset?.type}
+                        {relationship.related_asset?.assetTag && ` • ${relationship.related_asset.assetTag}`}
+                      </p>
                       {relationship.description && (
                         <p className="text-sm text-gray-600 mt-1">{relationship.description}</p>
                       )}
@@ -386,9 +397,9 @@ export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationsh
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => window.open(`/assets/${relatedAsset.id}`, '_blank')}
+                      onClick={() => navigate(`/assets/${relationship.related_asset?.id}`)}
                     >
-                      Bekijken
+                      <ExternalLink className="h-4 w-4" />
                     </Button>
                     {canEdit && (
                       <Button
@@ -400,10 +411,10 @@ export const AssetRelationships = ({ assetId, canEdit = false }: AssetRelationsh
                       </Button>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
     </div>

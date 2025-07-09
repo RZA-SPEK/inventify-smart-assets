@@ -72,7 +72,8 @@ const AssetDetails = () => {
           penaltyAmount: data.penalty_amount || 0,
           category: data.category as Asset['category'],
           image: data.image_url || '',
-          comments: data.comments || ''
+          comments: data.comments || '',
+          reservable: data.reservable !== undefined ? data.reservable : true
         };
 
         setAsset(transformedAsset);
