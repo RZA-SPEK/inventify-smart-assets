@@ -24,6 +24,8 @@ export const LocationSelector = ({
   const [newSpecificLocation, setNewSpecificLocation] = useState("");
   const [isAddingLocation, setIsAddingLocation] = useState(false);
 
+  console.log('LocationSelector: Received props:', { mainLocation, specificLocation });
+
   // Get specific locations from settings, with fallback to default list
   const specificLocations = settings.specificLocations || [
     "Werkplek A-101", "Werkplek A-102", "Werkplek A-150", "Werkplek A-200",
@@ -51,12 +53,12 @@ export const LocationSelector = ({
     <>
       <div className="space-y-2">
         <Label htmlFor="location">Hoofdlocatie</Label>
-        <Select value={mainLocation} onValueChange={onMainLocationChange}>
+        <Select value={mainLocation || ""} onValueChange={onMainLocationChange}>
           <SelectTrigger>
             <SelectValue placeholder="Selecteer hoofdlocatie" />
           </SelectTrigger>
           <SelectContent>
-            {settings.locations.map((location) => (
+            {settings.locations?.map((location) => (
               <SelectItem key={location} value={location}>
                 {location}
               </SelectItem>
