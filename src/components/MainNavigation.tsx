@@ -129,17 +129,49 @@ const MainNavigation = () => {
   return (
     <>
       {/* Desktop Navigation */}
-      <nav className="hidden lg:flex bg-white border-b border-gray-200 px-4 py-3 overflow-x-auto">
-        <div className="flex items-center justify-between w-full max-w-7xl mx-auto min-w-0">
-          <div className="flex items-center space-x-4 min-w-0 flex-1">
-            <h1 className="text-lg font-semibold text-gray-900 whitespace-nowrap">Asset Management</h1>
-            <div className="flex items-center space-x-1 overflow-x-auto">
+      <nav className="hidden lg:block bg-white border-b border-gray-200">
+        {/* First row - Header with user info */}
+        <div className="px-4 py-3 border-b border-gray-100">
+          <div className="flex items-center justify-between w-full max-w-7xl mx-auto">
+            <h1 className="text-lg font-semibold text-gray-900">Asset Management</h1>
+            
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user?.user_metadata?.avatar_url as string} />
+                  <AvatarFallback>
+                    {user?.email?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden xl:block">
+                  <div className="text-sm font-medium text-gray-900">
+                    {user?.user_metadata?.full_name || user?.email}
+                  </div>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={handleLogout}
+              >
+                <Power className="h-4 w-4 mr-1" />
+                <span className="hidden xl:inline">Uitloggen</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Second row - Navigation menu */}
+        <div className="px-4 py-2">
+          <div className="flex items-center justify-center w-full max-w-7xl mx-auto">
+            <div className="flex items-center space-x-1 flex-wrap justify-center">
               {navItems.map((item) => (
                 <Button
                   key={item.name}
                   variant="ghost"
                   size="sm"
-                  className={`flex items-center space-x-2 px-2 py-1 whitespace-nowrap text-sm ${
+                  className={`flex items-center space-x-2 px-3 py-2 whitespace-nowrap text-sm ${
                     item.current
                       ? "bg-blue-50 text-blue-700 font-medium"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
@@ -147,35 +179,10 @@ const MainNavigation = () => {
                   onClick={() => handleNavigation(item.href)}
                 >
                   <item.icon className="h-4 w-4 flex-shrink-0" />
-                  <span className="hidden xl:inline">{item.name}</span>
+                  <span>{item.name}</span>
                 </Button>
               ))}
             </div>
-          </div>
-          
-          <div className="flex items-center space-x-3 flex-shrink-0">
-            <div className="flex items-center space-x-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.user_metadata?.avatar_url as string} />
-                <AvatarFallback>
-                  {user?.email?.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="hidden xl:block">
-                <div className="text-sm font-medium text-gray-900">
-                  {user?.user_metadata?.full_name || user?.email}
-                </div>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={handleLogout}
-            >
-              <Power className="h-4 w-4 mr-1" />
-              <span className="hidden xl:inline">Uitloggen</span>
-            </Button>
           </div>
         </div>
       </nav>
