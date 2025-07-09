@@ -1,94 +1,136 @@
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Login from './pages/Login';
+import AssetList from './pages/AssetList';
+import AssetDetail from './pages/AssetDetail';
+import CreateAsset from './pages/CreateAsset';
+import EditAsset from './pages/EditAsset';
+import Profile from './pages/Profile';
+import Reservations from './pages/Reservations';
+import { UserReservations } from './components/UserReservations';
+import MainNavigation from './components/MainNavigation';
+import ProtectedRoute from './components/ProtectedRoute';
+import { Toaster } from "@/components/ui/toaster"
+import PasswordReset from './pages/PasswordReset';
+import Notifications from './pages/Notifications';
+import SecurityAuditLog from './pages/SecurityAuditLog';
+import SystemSettings from './pages/SystemSettings';
+import ReservationCalendarPage from "./pages/ReservationCalendar";
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import MainNavigation from "@/components/MainNavigation";
-import Dashboard from "./pages/Dashboard";
-import Assets from "./pages/Assets";
-import AssetDetails from "./pages/AssetDetails";
-import AssetEdit from "./pages/AssetEdit";
-import AssetNew from "./pages/AssetNew";
-import Users from "./pages/Users";
-import Settings from "./pages/Settings";
-import ActivityLog from "./pages/ActivityLog";
-import Reservations from "./pages/Reservations";
-import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <div className="min-h-screen bg-gray-50">
-            <MainNavigation />
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen bg-background">
+          <Toaster />
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/password-reset" element={<PasswordReset />} />
+            <Route 
+              path="/" 
+              element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <MainNavigation />
+                  <AssetList />
                 </ProtectedRoute>
-              } />
-              <Route path="/dashboard" element={
+              } 
+            />
+            <Route 
+              path="/assets/:id" 
+              element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <MainNavigation />
+                  <AssetDetail />
                 </ProtectedRoute>
-              } />
-              <Route path="/assets" element={
+              } 
+            />
+            <Route 
+              path="/assets/create" 
+              element={
                 <ProtectedRoute>
-                  <Assets />
+                  <MainNavigation />
+                  <CreateAsset />
                 </ProtectedRoute>
-              } />
-              <Route path="/assets/new" element={
+              } 
+            />
+            <Route 
+              path="/assets/edit/:id" 
+              element={
                 <ProtectedRoute>
-                  <AssetNew />
+                  <MainNavigation />
+                  <EditAsset />
                 </ProtectedRoute>
-              } />
-              <Route path="/assets/:id" element={
+              } 
+            />
+            <Route 
+              path="/profile" 
+              element={
                 <ProtectedRoute>
-                  <AssetDetails />
+                  <MainNavigation />
+                  <Profile />
                 </ProtectedRoute>
-              } />
-              <Route path="/assets/:id/edit" element={
+              } 
+            />
+            <Route 
+              path="/reservations" 
+              element={
                 <ProtectedRoute>
-                  <AssetEdit />
-                </ProtectedRoute>
-              } />
-              <Route path="/users" element={
-                <ProtectedRoute>
-                  <Users />
-                </ProtectedRoute>
-              } />
-              <Route path="/settings" element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              } />
-              <Route path="/activity" element={
-                <ProtectedRoute>
-                  <ActivityLog />
-                </ProtectedRoute>
-              } />
-              <Route path="/reservations" element={
-                <ProtectedRoute>
+                  <MainNavigation />
                   <Reservations />
                 </ProtectedRoute>
-              } />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </div>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+              } 
+            />
+            <Route 
+              path="/my-reservations" 
+              element={
+                <ProtectedRoute>
+                  <MainNavigation />
+                  <UserReservations />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/notifications"
+              element={
+                <ProtectedRoute>
+                  <MainNavigation />
+                  <Notifications />
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path="/audit-log"
+              element={
+                <ProtectedRoute>
+                  <MainNavigation />
+                  <SecurityAuditLog />
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path="/system-settings"
+              element={
+                <ProtectedRoute>
+                  <MainNavigation />
+                  <SystemSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path="/reservations-calendar" 
+              element={
+                <ProtectedRoute>
+                  <MainNavigation />
+                  <ReservationCalendarPage />
+                </ProtectedRoute>
+              } 
+            />
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
+  );
+}
 
 export default App;

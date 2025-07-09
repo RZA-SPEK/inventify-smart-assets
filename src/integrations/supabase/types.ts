@@ -221,34 +221,40 @@ export type Database = {
         Row: {
           asset_id: string | null
           created_at: string | null
+          end_time: string | null
           id: string
           purpose: string | null
           requested_date: string
           requester_id: string | null
           requester_name: string | null
           return_date: string
+          start_time: string | null
           status: string | null
         }
         Insert: {
           asset_id?: string | null
           created_at?: string | null
+          end_time?: string | null
           id?: string
           purpose?: string | null
           requested_date: string
           requester_id?: string | null
           requester_name?: string | null
           return_date: string
+          start_time?: string | null
           status?: string | null
         }
         Update: {
           asset_id?: string | null
           created_at?: string | null
+          end_time?: string | null
           id?: string
           purpose?: string | null
           requested_date?: string
           requester_id?: string | null
           requester_name?: string | null
           return_date?: string
+          start_time?: string | null
           status?: string | null
         }
         Relationships: [

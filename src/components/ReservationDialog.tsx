@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link2 } from "lucide-react";
+import { ReservationCalendar } from "./ReservationCalendar";
 
 interface LinkedAsset {
   id: string;
@@ -32,8 +32,10 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
   const [linkedAssets, setLinkedAssets] = useState<LinkedAsset[]>([]);
   const [loadingLinkedAssets, setLoadingLinkedAssets] = useState(true);
   const [formData, setFormData] = useState({
-    requestedDate: "",
-    returnDate: "",
+    requestedDate: null as Date | null,
+    returnDate: null as Date | null,
+    startTime: "09:00",
+    endTime: "17:00",
     purpose: ""
   });
 
@@ -106,8 +108,28 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
     }
   };
 
+  const handleDateSelect = (date: Date, startTime?: string, endTime?: string) => {
+    setFormData(prev => ({
+      ...prev,
+      requestedDate: date,
+      returnDate: date, // For now, same day reservation
+      startTime: startTime || prev.startTime,
+      endTime: endTime || prev.endTime
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.requestedDate) {
+      toast({
+        title: "Fout",
+        description: "Selecteer een datum voor de reservering.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     
     try {
@@ -135,8 +157,10 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
           asset_id: asset.id,
           requester_id: user.id,
           requester_name: requesterName,
-          requested_date: formData.requestedDate,
-          return_date: formData.returnDate,
+          requested_date: formData.requestedDate.toISOString().split('T')[0],
+          return_date: (formData.returnDate || formData.requestedDate).toISOString().split('T')[0],
+          start_time: formData.startTime,
+          end_time: formData.endTime,
           purpose: formData.purpose || null,
           status: 'pending'
         });
@@ -183,11 +207,11 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Asset Reserveren</DialogTitle>
           <DialogDescription>
-            Vraag een reservering aan voor {asset.brand} {asset.model}
+            Selecteer een datum en tijd voor {asset.brand} {asset.model}
             {linkedAssets.length > 0 && " en gekoppelde assets"}
           </DialogDescription>
         </DialogHeader>
@@ -224,45 +248,53 @@ export const ReservationDialog = ({ asset, onClose }: ReservationDialogProps) =>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="requestedDate">Startdatum</Label>
-              <Input
-                id="requestedDate"
-                type="date"
-                value={formData.requestedDate}
-                onChange={(e) => setFormData({ ...formData, requestedDate: e.target.value })}
-                required
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <ReservationCalendar
+                assetId={asset.id}
+                onDateSelect={handleDateSelect}
+                selectedDate={formData.requestedDate || undefined}
+                startTime={formData.startTime}
+                endTime={formData.endTime}
               />
             </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="purpose">Doel van gebruik (optioneel)</Label>
+                <Textarea
+                  id="purpose"
+                  value={formData.purpose}
+                  onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                  placeholder="Beschrijf waarvoor u dit asset nodig heeft..."
+                  rows={4}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="returnDate">Einddatum</Label>
-              <Input
-                id="returnDate"
-                type="date"
-                value={formData.returnDate}
-                onChange={(e) => setFormData({ ...formData, returnDate: e.target.value })}
-                required
-              />
+              {formData.requestedDate && (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <h3 className="font-medium text-green-800 mb-2">Reservering Samenvatting</h3>
+                  <div className="space-y-1 text-sm text-green-700">
+                    <p>Datum: {formData.requestedDate.toLocaleDateString('nl-NL')}</p>
+                    <p>Tijd: {formData.startTime} - {formData.endTime}</p>
+                    <p>Asset: {asset.brand} {asset.model}</p>
+                    {linkedAssets.length > 0 && (
+                      <p>+ {linkedAssets.length} gekoppelde asset{linkedAssets.length > 1 ? 's' : ''}</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="purpose">Doel van gebruik (optioneel)</Label>
-            <Textarea
-              id="purpose"
-              value={formData.purpose}
-              onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
-              placeholder="Beschrijf waarvoor u dit asset nodig heeft..."
-            />
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Annuleren
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button 
+              type="submit" 
+              disabled={loading || !formData.requestedDate}
+            >
               {loading ? "Bezig..." : "Reservering Aanvragen"}
             </Button>
           </DialogFooter>

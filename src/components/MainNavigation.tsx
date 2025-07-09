@@ -1,182 +1,175 @@
-
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
-import { 
-  LayoutDashboard, 
-  Package, 
-  Users, 
-  Settings, 
-  Activity, 
+import {
+  Home,
   Calendar,
-  Menu,
-  LogOut
+  Box,
+  Users,
+  Settings,
+  Power,
+  ListChecks,
+  Plus,
+  LayoutDashboard,
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 const MainNavigation = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
-  const { currentRole, canManageUsers, canViewSettings, loading } = useUserRole();
-
-  // Don't render navigation on auth page or when user is not logged in
-  if (location.pathname === '/auth' || !user) {
-    return null;
-  }
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/auth");
-  };
+  const { user, logout } = useAuth();
+  const { canManageAssets } = useUserRole();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navItems = [
     {
-      title: "Dashboard",
+      name: "Dashboard",
       href: "/dashboard",
       icon: LayoutDashboard,
-      show: true
+      current: location.pathname === "/dashboard",
     },
     {
-      title: "Assets",
-      href: "/assets",
-      icon: Package,
-      show: true
+      name: "Assets",
+      href: "/",
+      icon: Box,
+      current: location.pathname === "/",
     },
     {
-      title: "Reserveringen",
+      name: "Reserveringen",
       href: "/reservations",
       icon: Calendar,
-      show: true
+      current: location.pathname === "/reservations",
     },
     {
-      title: "Gebruikers",
-      href: "/users",
-      icon: Users,
-      show: canManageUsers,
-      badge: canManageUsers ? "Admin" : undefined
+      name: "Mijn Reserveringen",
+      href: "/user-reservations",
+      icon: ListChecks,
+      current: location.pathname === "/user-reservations",
     },
-    {
-      title: "Instellingen",
-      href: "/settings",
-      icon: Settings,
-      show: canViewSettings,
-      badge: canViewSettings ? "Admin" : undefined
-    },
-    {
-      title: "Activiteit",
-      href: "/activity",
-      icon: Activity,
-      show: true
-    }
+    ...(canManageAssets
+      ? [
+          {
+            name: "Nieuw Asset",
+            href: "/assets/new",
+            icon: Plus,
+            current: location.pathname === "/assets/new",
+          },
+        ]
+      : []),
+    ...(canManageAssets ? [
+      { 
+        name: "Reserveringen Agenda", 
+        href: "/reservations-calendar", 
+        icon: Calendar,
+        current: location.pathname === "/reservations-calendar"
+      }
+    ] : []),
+    ...(canManageAssets
+      ? [
+          {
+            name: "Gebruikers",
+            href: "/users",
+            icon: Users,
+            current: location.pathname === "/users",
+          },
+        ]
+      : []),
+    ...(canManageAssets
+      ? [
+          {
+            name: "Instellingen",
+            href: "/settings",
+            icon: Settings,
+            current: location.pathname === "/settings",
+          },
+        ]
+      : []),
   ];
 
-  const visibleNavItems = navItems.filter(item => item.show);
-
-  const NavLink = ({ item, onClick }: { item: typeof navItems[0], onClick?: () => void }) => {
-    const isActive = location.pathname === item.href;
-    
-    return (
-      <Link
-        to={item.href}
-        onClick={onClick}
-        className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors whitespace-nowrap ${
-          isActive
-            ? "bg-blue-100 text-blue-700"
-            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-        }`}
-      >
-        <item.icon className="h-4 w-4" />
-        <span className="font-medium text-sm">{item.title}</span>
-        {item.badge && (
-          <Badge variant="secondary" className="text-xs">
-            {item.badge}
-          </Badge>
-        )}
-      </Link>
-    );
+  const handleNavigation = (href: string) => {
+    navigate(href);
+    setIsMenuOpen(false); // Close the menu after navigation
   };
 
   return (
-    <>
-      {/* Top Navigation Bar */}
-      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo/Brand */}
-            <div className="flex items-center">
-              <h1 className="text-lg font-bold text-gray-900">Asset Management</h1>
+    <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+      <SheetTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="mr-2 md:hidden"
+          aria-label="Menu"
+        >
+          <Home className="h-4 w-4" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-full sm:w-64 p-0">
+        <ScrollArea className="h-full">
+          <div className="flex flex-col space-y-4 p-4">
+            <SheetHeader className="pb-4 pl-6">
+              <SheetTitle>Menu</SheetTitle>
+            </SheetHeader>
+            <Separator />
+            <div className="flex items-center space-x-2 pl-6">
+              <Avatar>
+                <AvatarImage src={user?.user_metadata?.avatar_url as string} />
+                <AvatarFallback>
+                  {user?.email?.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col space-y-1">
+                <span className="font-semibold">{user?.user_metadata?.full_name}</span>
+                <span className="text-sm text-muted-foreground">
+                  {user?.email}
+                </span>
+              </div>
             </div>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-1">
-              {visibleNavItems.map((item) => (
-                <NavLink key={item.href} item={item} />
-              ))}
-            </nav>
-
-            {/* User Actions & Mobile Menu */}
-            <div className="flex items-center space-x-3">
-              {/* Desktop Logout */}
-              <div className="hidden md:flex items-center space-x-3">
+            <Separator />
+            <div className="flex flex-col space-y-1 mt-2">
+              {navItems.map((item) => (
                 <Button
-                  onClick={handleSignOut}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center space-x-2"
+                  key={item.name}
+                  variant="ghost"
+                  className={`justify-start pl-8 ${
+                    location.pathname === item.href
+                      ? "font-semibold text-primary"
+                      : "text-muted-foreground"
+                  }`}
+                  onClick={() => handleNavigation(item.href)}
                 >
-                  <LogOut className="h-4 w-4" />
-                  <span>Uitloggen</span>
+                  <item.icon className="mr-2 h-4 w-4" />
+                  <span>{item.name}</span>
                 </Button>
-              </div>
-
-              {/* Mobile Menu Button */}
-              <div className="md:hidden">
-                <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <Menu className="h-6 w-6" />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="w-64 p-0">
-                    <div className="flex flex-col h-full">
-                      <div className="p-4 border-b border-gray-200">
-                        <h2 className="font-semibold text-gray-900">Navigatie</h2>
-                      </div>
-                      
-                      <nav className="flex-1 px-4 py-4 space-y-2">
-                        {visibleNavItems.map((item) => (
-                          <NavLink 
-                            key={item.href} 
-                            item={item} 
-                            onClick={() => setIsOpen(false)}
-                          />
-                        ))}
-                      </nav>
-                      
-                      <div className="px-4 py-4 border-t border-gray-200">
-                        <Button
-                          onClick={handleSignOut}
-                          variant="outline"
-                          className="w-full flex items-center justify-center space-x-2"
-                        >
-                          <LogOut className="h-4 w-4" />
-                          <span>Uitloggen</span>
-                        </Button>
-                      </div>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
+              ))}
             </div>
+            <Separator />
+            <Button
+              variant="ghost"
+              className="justify-start pl-8 text-red-500"
+              onClick={() => {
+                logout();
+                setIsMenuOpen(false);
+                navigate("/login");
+              }}
+            >
+              <Power className="mr-2 h-4 w-4" />
+              <span>Uitloggen</span>
+            </Button>
           </div>
-        </div>
-      </div>
-    </>
+        </ScrollArea>
+      </SheetContent>
+    </Sheet>
   );
 };
 
