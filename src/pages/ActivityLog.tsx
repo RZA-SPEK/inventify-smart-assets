@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -100,78 +101,11 @@ const ActivityLog = () => {
           }
         }
 
-        // Enhanced user information detection
-        try {
-          let userId = null;
-          
-          // For profile changes, the record_id is the user_id
-          if (activity.table_name === 'profiles' && activity.record_id) {
-            userId = activity.record_id;
-          }
-          // For reservations, get the requester_id
-          else if (activity.table_name === 'reservations' && activity.record_id) {
-            const { data: reservationData } = await supabase
-              .from('reservations')
-              .select('requester_id')
-              .eq('id', activity.record_id)
-              .maybeSingle();
-            
-            if (reservationData?.requester_id) {
-              userId = reservationData.requester_id;
-            }
-          }
-          // For assets, try to get the current user or assigned user
-          else if (activity.table_name === 'assets' && activity.record_id) {
-            const { data: assetData } = await supabase
-              .from('assets')
-              .select('assigned_to')
-              .eq('id', activity.record_id)
-              .maybeSingle();
-            
-            // If asset is assigned to someone, use that as a fallback
-            if (assetData?.assigned_to) {
-              // Check if assigned_to is a user ID (UUID format)
-              const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-              if (uuidRegex.test(assetData.assigned_to)) {
-                userId = assetData.assigned_to;
-              }
-            }
-          }
-
-          // Fetch user profile if we have a userId
-          if (userId) {
-            const { data: userData } = await supabase
-              .from('profiles')
-              .select('email, full_name')
-              .eq('id', userId)
-              .maybeSingle();
-            
-            if (userData) {
-              enrichedActivity.user_email = userData.email || undefined;
-              enrichedActivity.user_name = userData.full_name || undefined;
-            }
-          }
-
-          // If we still don't have user info, try to get the current authenticated user
-          // This is a fallback for actions that might have been performed by the current session
-          if (!enrichedActivity.user_email && !enrichedActivity.user_name) {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-              const { data: currentUserData } = await supabase
-                .from('profiles')
-                .select('email, full_name')
-                .eq('id', user.id)
-                .maybeSingle();
-              
-              if (currentUserData) {
-                enrichedActivity.user_email = currentUserData.email || undefined;
-                enrichedActivity.user_name = currentUserData.full_name || undefined;
-              }
-            }
-          }
-        } catch (error) {
-          console.log('Could not fetch user info for activity:', activity.id, error);
-        }
+        // Instead of trying to guess the user, just show "Systeem" for now
+        // The audit log doesn't currently store which user performed the action
+        // This would need to be enhanced at the database trigger level to properly track users
+        enrichedActivity.user_name = 'Systeem';
+        enrichedActivity.user_email = undefined;
 
         return enrichedActivity;
       })
