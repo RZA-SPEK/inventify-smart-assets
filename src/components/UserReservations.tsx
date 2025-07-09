@@ -3,12 +3,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Edit3, Clock } from "lucide-react";
+import { Calendar, Edit3, Clock, User, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -69,7 +68,6 @@ export const UserReservations = () => {
         return;
       }
 
-      // Type assertion to match our interface
       const typedReservations = (data || []).map(reservation => ({
         ...reservation,
         status: reservation.status as "pending" | "approved" | "rejected"
@@ -132,7 +130,7 @@ export const UserReservations = () => {
             requested_date: editData.requestedDate,
             return_date: editData.returnDate,
             purpose: editData.purpose,
-            status: "pending" // Reset to pending when edited
+            status: "pending"
           })
           .eq('id', selectedReservation.id);
 
@@ -152,7 +150,7 @@ export const UserReservations = () => {
           .from('reservations')
           .update({
             return_date: newReturnDate.toISOString().split('T')[0],
-            status: "pending" // Reset to pending for extension request
+            status: "pending"
           })
           .eq('id', selectedReservation.id);
 
@@ -164,7 +162,7 @@ export const UserReservations = () => {
         });
       }
 
-      await fetchReservations(); // Refresh the list
+      await fetchReservations();
       closeDialog();
     } catch (error) {
       console.error('Error updating reservation:', error);
@@ -198,166 +196,162 @@ export const UserReservations = () => {
 
   const getAssetName = (reservation: Reservation) => {
     if (reservation.assets) {
-      return `${reservation.assets.brand} ${reservation.assets.model} (${reservation.assets.type})`;
+      return `${reservation.assets.brand} ${reservation.assets.model}`;
     }
     return `Asset ID: ${reservation.asset_id}`;
   };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('nl-NL');
+  };
+
   if (loading) {
     return (
-      <div className="responsive-container responsive-section">
-        <div className="text-center">Laden...</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Laden...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="responsive-container responsive-section">
-      <div className="responsive-spacing">
-        <div className="flex flex-col responsive-gap">
-          <div>
-            <h1 className="responsive-text-3xl font-bold text-foreground">Mijn Reserveringen</h1>
-            <p className="responsive-text-base text-muted-foreground mt-2">Beheer uw asset reserveringen</p>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Mijn Reserveringen</h1>
+          <p className="text-gray-600 mt-1">Beheer uw asset reserveringen</p>
+        </div>
 
-          <Card className="responsive-card">
-            <CardHeader className="responsive-padding">
-              <CardTitle className="responsive-text-xl">Uw Reserveringen</CardTitle>
-              <CardDescription className="responsive-text-base">
-                {reservations.filter(r => r.status === "pending").length} van {reservations.length} reserveringen wachten op goedkeuring
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="responsive-padding">
-              {reservations.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground responsive-text-base">
-                  U heeft nog geen reserveringen aangevraagd.
-                </div>
-              ) : (
-                <div className="table-container">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="responsive-text-sm">Asset</TableHead>
-                        <TableHead className="responsive-text-sm mobile-hidden">Periode</TableHead>
-                        <TableHead className="responsive-text-sm mobile-hidden">Doel</TableHead>
-                        <TableHead className="responsive-text-sm">Status</TableHead>
-                        <TableHead className="responsive-text-sm desktop-only">Aangemaakt</TableHead>
-                        <TableHead className="responsive-text-sm">Acties</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {reservations.map((reservation) => (
-                        <TableRow key={reservation.id} className="hover:bg-muted/50">
-                          <TableCell className="font-medium responsive-text-sm">
-                            <div className="truncate max-w-[200px]" title={getAssetName(reservation)}>
-                              {getAssetName(reservation)}
-                            </div>
-                          </TableCell>
-                          <TableCell className="mobile-hidden">
-                            <div className="flex items-center responsive-gap text-muted-foreground">
-                              <Calendar className="h-4 w-4" />
-                              <span className="responsive-text-sm">
-                                {new Date(reservation.requested_date).toLocaleDateString()} - {new Date(reservation.return_date).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="mobile-hidden">
-                            <span className="responsive-text-sm truncate max-w-[150px] block" title={reservation.purpose}>
-                              {reservation.purpose}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={`${getStatusColor(reservation.status)} responsive-text-sm`}>
-                              {getStatusText(reservation.status)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="desktop-only responsive-text-sm text-muted-foreground">
-                            {new Date(reservation.created_at).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex responsive-gap">
-                              {canEdit(reservation) && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleAction(reservation, "edit")}
-                                  className="text-blue-600 hover:text-blue-700 touch-target"
-                                >
-                                  <Edit3 className="h-4 w-4" />
-                                  <span className="mobile-hidden ml-2">Bewerk</span>
-                                </Button>
-                              )}
-                              {canExtend(reservation) && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleAction(reservation, "extend")}
-                                  className="text-green-600 hover:text-green-700 touch-target"
-                                >
-                                  <Clock className="h-4 w-4" />
-                                  <span className="mobile-hidden ml-2">Verleng</span>
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
+        {reservations.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-8">
+              <Calendar className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Geen reserveringen</h3>
+              <p className="mt-2 text-gray-500">U heeft nog geen reserveringen aangevraagd.</p>
             </CardContent>
           </Card>
-        </div>
+        ) : (
+          <div className="space-y-4">
+            {reservations.map((reservation) => (
+              <Card key={reservation.id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center space-x-2">
+                      <Package className="h-5 w-5 text-gray-400" />
+                      <div>
+                        <CardTitle className="text-lg">
+                          {getAssetName(reservation)}
+                        </CardTitle>
+                        <CardDescription>
+                          {reservation.assets?.type}
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <Badge className={getStatusColor(reservation.status)}>
+                      <span className="capitalize">{getStatusText(reservation.status)}</span>
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm text-gray-600">Periode:</span>
+                        <span className="text-sm font-medium">
+                          {formatDate(reservation.requested_date)} - {formatDate(reservation.return_date)}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm text-gray-600">Aangevraagd op:</span>
+                        <span className="text-sm font-medium">{formatDate(reservation.created_at)}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div>
+                        <span className="text-sm text-gray-600">Doel:</span>
+                        <p className="text-sm font-medium">{reservation.purpose}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 flex space-x-2">
+                    {canEdit(reservation) && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleAction(reservation, "edit")}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Edit3 className="h-4 w-4 mr-1" />
+                        Bewerk
+                      </Button>
+                    )}
+                    {canExtend(reservation) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAction(reservation, "extend")}
+                        className="text-green-600 border-green-600 hover:bg-green-50"
+                      >
+                        <Clock className="h-4 w-4 mr-1" />
+                        Verleng
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Edit/Extend Dialog */}
       {selectedReservation && actionType && (
         <Dialog open={true} onOpenChange={closeDialog}>
-          <DialogContent className="dialog-content responsive-padding">
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle className="responsive-text-lg">
+              <DialogTitle>
                 {actionType === "edit" && "Reservering Bewerken"}
                 {actionType === "extend" && "Reservering Verlengen"}
               </DialogTitle>
-              <DialogDescription className="responsive-text-base">
+              <DialogDescription>
                 Asset: {getAssetName(selectedReservation)}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="responsive-spacing">
+            <div className="space-y-4">
               {actionType === "edit" && (
                 <>
-                  <div className="responsive-grid-1-2 responsive-gap">
-                    <div className="responsive-spacing">
-                      <Label htmlFor="requestedDate" className="responsive-text-sm">Startdatum</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="requestedDate">Startdatum</Label>
                       <Input
                         id="requestedDate"
                         type="date"
                         value={editData.requestedDate}
                         onChange={(e) => setEditData({ ...editData, requestedDate: e.target.value })}
-                        className="touch-padding"
                       />
                     </div>
-                    <div className="responsive-spacing">
-                      <Label htmlFor="returnDate" className="responsive-text-sm">Einddatum</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="returnDate">Einddatum</Label>
                       <Input
                         id="returnDate"
                         type="date"
                         value={editData.returnDate}
                         onChange={(e) => setEditData({ ...editData, returnDate: e.target.value })}
-                        className="touch-padding"
                       />
                     </div>
                   </div>
-                  <div className="responsive-spacing">
-                    <Label htmlFor="purpose" className="responsive-text-sm">Doel van gebruik</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="purpose">Doel van gebruik</Label>
                     <Textarea
                       id="purpose"
                       value={editData.purpose}
                       onChange={(e) => setEditData({ ...editData, purpose: e.target.value })}
                       placeholder="Beschrijf waarvoor u dit asset nodig heeft..."
-                      className="touch-padding"
                     />
                   </div>
                 </>
@@ -366,13 +360,13 @@ export const UserReservations = () => {
               {actionType === "extend" && (
                 <>
                   <div>
-                    <Label className="responsive-text-sm">Huidige periode</Label>
-                    <p className="responsive-text-sm text-muted-foreground">
-                      {new Date(selectedReservation.requested_date).toLocaleDateString()} - {new Date(selectedReservation.return_date).toLocaleDateString()}
+                    <Label>Huidige periode</Label>
+                    <p className="text-sm text-gray-600">
+                      {formatDate(selectedReservation.requested_date)} - {formatDate(selectedReservation.return_date)}
                     </p>
                   </div>
-                  <div className="responsive-spacing">
-                    <Label htmlFor="extensionDays" className="responsive-text-sm">Aantal extra dagen</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="extensionDays">Aantal extra dagen</Label>
                     <Input
                       id="extensionDays"
                       type="number"
@@ -381,28 +375,26 @@ export const UserReservations = () => {
                       value={editData.extensionDays}
                       onChange={(e) => setEditData({ ...editData, extensionDays: e.target.value })}
                       placeholder="Aantal dagen"
-                      className="touch-padding"
                     />
                   </div>
-                  <div className="responsive-spacing">
-                    <Label htmlFor="extensionReason" className="responsive-text-sm">Reden voor verlenging</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="extensionReason">Reden voor verlenging</Label>
                     <Textarea
                       id="extensionReason"
                       value={editData.extensionReason}
                       onChange={(e) => setEditData({ ...editData, extensionReason: e.target.value })}
                       placeholder="Waarom heeft u extra tijd nodig?"
-                      className="touch-padding"
                     />
                   </div>
                 </>
               )}
             </div>
 
-            <DialogFooter className="responsive-flex responsive-gap">
-              <Button variant="outline" onClick={closeDialog} className="touch-target">
+            <DialogFooter>
+              <Button variant="outline" onClick={closeDialog}>
                 Annuleren
               </Button>
-              <Button onClick={handleSave} className="touch-target">
+              <Button onClick={handleSave}>
                 {actionType === "edit" && "Opslaan"}
                 {actionType === "extend" && "Verlenging Aanvragen"}
               </Button>
