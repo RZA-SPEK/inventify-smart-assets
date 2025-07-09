@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Auth from './pages/Auth';
+import Dashboard from './pages/Dashboard';
 import AssetList from './pages/Assets';
 import AssetDetail from './pages/AssetDetails';
 import CreateAsset from './pages/AssetNew';
@@ -25,6 +26,24 @@ function App() {
             <Route path="/auth" element={<Auth />} />
             <Route 
               path="/" 
+              element={
+                <ProtectedRoute>
+                  <MainNavigation />
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <MainNavigation />
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/assets" 
               element={
                 <ProtectedRoute>
                   <MainNavigation />
