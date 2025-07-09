@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +49,7 @@ const Reservations = () => {
         throw error;
       }
 
+      console.log('Fetched reservations:', data);
       setReservations(data || []);
     } catch (error) {
       console.error('Error fetching reservations:', error);
@@ -65,24 +65,34 @@ const Reservations = () => {
 
   const updateReservationStatus = async (id: string, status: string) => {
     if (updatingReservations.has(id)) {
+      console.log('Update already in progress for reservation:', id);
       return; // Prevent multiple simultaneous updates
     }
 
+    console.log('Starting update for reservation:', id, 'to status:', status);
     setUpdatingReservations(prev => new Set(prev).add(id));
     
     try {
-      console.log('Updating reservation', id, 'to status', status);
       const { error } = await supabase
         .from('reservations')
         .update({ status })
         .eq('id', id);
 
       if (error) {
-        console.error('Error updating reservation:', error);
+        console.error('Supabase error updating reservation:', error);
         throw error;
       }
 
-      console.log('Reservation updated successfully');
+      console.log('Reservation updated successfully, refetching data...');
+      
+      // Update the local state immediately for better UX
+      setReservations(prev => 
+        prev.map(reservation => 
+          reservation.id === id 
+            ? { ...reservation, status }
+            : reservation
+        )
+      );
       
       const statusText = status === 'approved' ? 'goedgekeurd' : 'afgewezen';
       toast({
@@ -90,6 +100,7 @@ const Reservations = () => {
         description: `Reservering is ${statusText}.`,
       });
       
+      // Also refetch to ensure data consistency
       await fetchReservations();
     } catch (error) {
       console.error('Error updating reservation:', error);
@@ -102,6 +113,7 @@ const Reservations = () => {
       setUpdatingReservations(prev => {
         const newSet = new Set(prev);
         newSet.delete(id);
+        console.log('Update completed for reservation:', id);
         return newSet;
       });
     }
@@ -177,84 +189,95 @@ const Reservations = () => {
               </CardContent>
             </Card>
           ) : (
-            reservations.map((reservation) => (
-              <Card key={reservation.id} className="w-full">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="flex items-center gap-2">
-                      <Package className="h-5 w-5" />
-                      {reservation.assets ? 
-                        `${reservation.assets.type} - ${reservation.assets.brand} ${reservation.assets.model}` :
-                        'Asset niet gevonden'
-                      }
-                    </CardTitle>
-                    <Badge className={getStatusColor(reservation.status)}>
-                      {getStatusText(reservation.status)}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm">
-                        <User className="h-4 w-4 text-gray-500" />
-                        <span className="font-medium">Aanvrager:</span>
-                        <span>{reservation.requester_name || 'Onbekend'}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-gray-500" />
-                        <span className="font-medium">Periode:</span>
-                        <span>
-                          {format(new Date(reservation.requested_date), 'dd MMM yyyy', { locale: nl })} - {' '}
-                          {format(new Date(reservation.return_date), 'dd MMM yyyy', { locale: nl })}
-                        </span>
-                      </div>
-                      {(reservation.start_time || reservation.end_time) && (
+            reservations.map((reservation) => {
+              const isUpdating = updatingReservations.has(reservation.id);
+              const isPending = isPendingReservation(reservation.status);
+              
+              return (
+                <Card key={reservation.id} className="w-full">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="flex items-center gap-2">
+                        <Package className="h-5 w-5" />
+                        {reservation.assets ? 
+                          `${reservation.assets.type} - ${reservation.assets.brand} ${reservation.assets.model}` :
+                          'Asset niet gevonden'
+                        }
+                      </CardTitle>
+                      <Badge className={getStatusColor(reservation.status)}>
+                        {getStatusText(reservation.status)}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
                         <div className="flex items-center gap-2 text-sm">
-                          <Clock className="h-4 w-4 text-gray-500" />
-                          <span className="font-medium">Tijd:</span>
+                          <User className="h-4 w-4 text-gray-500" />
+                          <span className="font-medium">Aanvrager:</span>
+                          <span>{reservation.requester_name || 'Onbekend'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4 text-gray-500" />
+                          <span className="font-medium">Periode:</span>
                           <span>
-                            {reservation.start_time && reservation.end_time
-                              ? `${reservation.start_time} - ${reservation.end_time}`
-                              : reservation.start_time || reservation.end_time || 'Hele dag'
-                            }
+                            {format(new Date(reservation.requested_date), 'dd MMM yyyy', { locale: nl })} - {' '}
+                            {format(new Date(reservation.return_date), 'dd MMM yyyy', { locale: nl })}
                           </span>
+                        </div>
+                        {(reservation.start_time || reservation.end_time) && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Clock className="h-4 w-4 text-gray-500" />
+                            <span className="font-medium">Tijd:</span>
+                            <span>
+                              {reservation.start_time && reservation.end_time
+                                ? `${reservation.start_time} - ${reservation.end_time}`
+                                : reservation.start_time || reservation.end_time || 'Hele dag'
+                              }
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {reservation.purpose && (
+                        <div className="text-sm">
+                          <span className="font-medium">Doel:</span>
+                          <p className="mt-1 text-gray-600">{reservation.purpose}</p>
                         </div>
                       )}
                     </div>
                     
-                    {reservation.purpose && (
-                      <div className="text-sm">
-                        <span className="font-medium">Doel:</span>
-                        <p className="mt-1 text-gray-600">{reservation.purpose}</p>
+                    {isPending && (
+                      <div className="flex gap-2 mt-4">
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            console.log('Approve button clicked for reservation:', reservation.id);
+                            updateReservationStatus(reservation.id, 'approved');
+                          }}
+                          className="bg-green-600 hover:bg-green-700"
+                          disabled={isUpdating}
+                        >
+                          {isUpdating ? 'Bezig...' : 'Goedkeuren'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            console.log('Reject button clicked for reservation:', reservation.id);
+                            updateReservationStatus(reservation.id, 'rejected');
+                          }}
+                          className="border-red-300 text-red-700 hover:bg-red-50"
+                          disabled={isUpdating}
+                        >
+                          {isUpdating ? 'Bezig...' : 'Afwijzen'}
+                        </Button>
                       </div>
                     )}
-                  </div>
-                  
-                  {isPendingReservation(reservation.status) && (
-                    <div className="flex gap-2 mt-4">
-                      <Button
-                        size="sm"
-                        onClick={() => updateReservationStatus(reservation.id, 'approved')}
-                        className="bg-green-600 hover:bg-green-700"
-                        disabled={updatingReservations.has(reservation.id)}
-                      >
-                        {updatingReservations.has(reservation.id) ? 'Bezig...' : 'Goedkeuren'}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateReservationStatus(reservation.id, 'rejected')}
-                        className="border-red-300 text-red-700 hover:bg-red-50"
-                        disabled={updatingReservations.has(reservation.id)}
-                      >
-                        {updatingReservations.has(reservation.id) ? 'Bezig...' : 'Afwijzen'}
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </div>
       </div>
