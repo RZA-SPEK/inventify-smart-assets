@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AssetList } from "@/components/AssetList";
 import { AssetFilters } from "@/components/AssetFilters";
@@ -186,6 +185,73 @@ const Assets = () => {
     }
   };
 
+  const handlePermanentDeleteAsset = async (id: string, reason: string) => {
+    if (!canManageAssets) {
+      toast({
+        title: "Geen toegang",
+        description: "U heeft geen toegang om assets permanent te verwijderen.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      console.log('Permanently deleting asset:', id, reason);
+      
+      // First delete related records
+      const { error: relationshipsError } = await supabase
+        .from('asset_relationships')
+        .delete()
+        .or(`parent_asset_id.eq.${id},child_asset_id.eq.${id}`);
+
+      if (relationshipsError) {
+        console.error('Error deleting asset relationships:', relationshipsError);
+      }
+
+      const { error: imagesError } = await supabase
+        .from('asset_images')
+        .delete()
+        .eq('asset_id', id);
+
+      if (imagesError) {
+        console.error('Error deleting asset images:', imagesError);
+      }
+
+      // Then delete the asset itself
+      const { error } = await supabase
+        .from('assets')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error permanently deleting asset:', error);
+        toast({
+          title: "Fout bij permanent verwijderen",
+          description: "Er is een fout opgetreden bij het permanent verwijderen van het asset.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Remove from local state
+      setAssets(assets.filter(asset => asset.id !== id));
+
+      const asset = assets.find(a => a.id === id);
+      toast({
+        title: "Asset permanent verwijderd",
+        description: `${asset?.brand} ${asset?.model} is permanent verwijderd uit de database. Reden: ${reason}`,
+        variant: "destructive",
+      });
+    } catch (error) {
+      console.error('Error permanently deleting asset:', error);
+      toast({
+        title: "Fout bij permanent verwijderen",
+        description: "Er is een onverwachte fout opgetreden.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleReserveAsset = (asset: Asset) => {
     console.log('Reserve asset:', asset);
     // Check if asset is available for reservation
@@ -277,6 +343,7 @@ const Assets = () => {
           currentRole={currentRole}
           onEdit={handleEditAsset}
           onDelete={handleDeleteAsset}
+          onPermanentDelete={canManageAssets ? handlePermanentDeleteAsset : undefined}
           onReserve={handleReserveAsset}
         />
 

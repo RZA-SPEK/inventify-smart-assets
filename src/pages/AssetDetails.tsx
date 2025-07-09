@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +8,7 @@ import { Asset } from "@/types/asset";
 import { AssetImage } from "@/components/AssetImage";
 import { ReservationDialog } from "@/components/ReservationDialog";
 import { AssetDeleteDialog } from "@/components/AssetDeleteDialog";
+import { AssetPermanentDeleteDialog } from "@/components/AssetPermanentDeleteDialog";
 import { AssetImageGallery } from "@/components/AssetImageGallery";
 import { AssetRelationships } from "@/components/AssetRelationships";
 import { getAssetIcon, getStatusColor } from "@/utils/assetUtils";
@@ -129,6 +129,65 @@ const AssetDetails = () => {
     }
   };
 
+  const handlePermanentDeleteAsset = async (reason: string) => {
+    if (!asset) return;
+    
+    try {
+      console.log('Permanently deleting asset:', asset.id, reason);
+      
+      // First delete related records
+      const { error: relationshipsError } = await supabase
+        .from('asset_relationships')
+        .delete()
+        .or(`parent_asset_id.eq.${asset.id},child_asset_id.eq.${asset.id}`);
+
+      if (relationshipsError) {
+        console.error('Error deleting asset relationships:', relationshipsError);
+      }
+
+      const { error: imagesError } = await supabase
+        .from('asset_images')
+        .delete()
+        .eq('asset_id', asset.id);
+
+      if (imagesError) {
+        console.error('Error deleting asset images:', imagesError);
+      }
+
+      // Then delete the asset itself
+      const { error } = await supabase
+        .from('assets')
+        .delete()
+        .eq('id', asset.id);
+
+      if (error) {
+        console.error('Error permanently deleting asset:', error);
+        toast({
+          title: "Fout bij permanent verwijderen",
+          description: "Er is een fout opgetreden bij het permanent verwijderen van het asset.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Asset permanent verwijderd",
+        description: `${asset.brand} ${asset.model} is permanent verwijderd uit de database. Reden: ${reason}`,
+        variant: "destructive",
+      });
+      
+      // Navigate back to assets list after successful permanent deletion
+      navigate("/assets");
+    } catch (error) {
+      console.error('Error permanently deleting asset:', error);
+      toast({
+        title: "Fout bij permanent verwijderen",
+        description: "Er is een onverwachte fout opgetreden.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -194,27 +253,36 @@ const AssetDetails = () => {
                       </Badge>
                     </div>
                   </div>
-                  <div className="flex space-x-2">
-                    {canManageAssets && (
-                      <>
+                  <div className="flex flex-col space-y-2">
+                    <div className="flex space-x-2">
+                      {canManageAssets && (
                         <Button onClick={() => navigate(`/assets/${asset.id}/edit`)}>
                           <Edit className="h-4 w-4 mr-2" />
                           Bewerken
                         </Button>
+                      )}
+                      {asset.status === "In voorraad" && (
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setShowReservationDialog(true)}
+                        >
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Reserveren
+                        </Button>
+                      )}
+                    </div>
+                    {canManageAssets && (
+                      <div className="flex space-x-2">
                         <AssetDeleteDialog
                           onDelete={handleDeleteAsset}
                           canDelete={asset.status !== "Deleted"}
                         />
-                      </>
-                    )}
-                    {asset.status === "In voorraad" && (
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setShowReservationDialog(true)}
-                      >
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Reserveren
-                      </Button>
+                        <AssetPermanentDeleteDialog
+                          onPermanentDelete={handlePermanentDeleteAsset}
+                          canDelete={true}
+                          assetName={`${asset.brand} ${asset.model}`}
+                        />
+                      </div>
                     )}
                   </div>
                 </div>

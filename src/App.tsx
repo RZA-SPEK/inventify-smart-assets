@@ -11,6 +11,7 @@ import EditAsset from './pages/AssetEdit';
 import Reservations from './pages/Reservations';
 import Users from './pages/Users';
 import Settings from './pages/Settings';
+import ActivityLog from './pages/ActivityLog';
 import { UserReservations } from './components/UserReservations';
 import MainNavigation from './components/MainNavigation';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -113,6 +114,15 @@ function App() {
                 <ProtectedRoute>
                   <MainNavigation />
                   <Users />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/activity-log" 
+              element={
+                <ProtectedRoute>
+                  <MainNavigation />
+                  <ActivityLog />
                 </ProtectedRoute>
               } 
             />

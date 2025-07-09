@@ -11,10 +11,18 @@ interface AssetListProps {
   currentRole: string;
   onEdit: (asset: Asset) => void;
   onDelete: (id: string, reason: string) => void;
+  onPermanentDelete?: (id: string, reason: string) => void;
   onReserve: (asset: Asset) => void;
 }
 
-export const AssetList = ({ assets, currentRole, onEdit, onDelete, onReserve }: AssetListProps) => {
+export const AssetList = ({ 
+  assets, 
+  currentRole, 
+  onEdit, 
+  onDelete, 
+  onPermanentDelete,
+  onReserve 
+}: AssetListProps) => {
   const isAdmin = currentRole === "ICT Admin" || currentRole === "Facilitair Admin";
   
   return (
@@ -37,6 +45,7 @@ export const AssetList = ({ assets, currentRole, onEdit, onDelete, onReserve }: 
               currentRole={currentRole}
               onEdit={onEdit}
               onDelete={onDelete}
+              onPermanentDelete={onPermanentDelete}
               onReserve={onReserve}
               getAssetIcon={getAssetIcon}
               getStatusColor={getStatusColor}
@@ -66,6 +75,7 @@ export const AssetList = ({ assets, currentRole, onEdit, onDelete, onReserve }: 
                   currentRole={currentRole}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onPermanentDelete={onPermanentDelete}
                   onReserve={onReserve}
                   getAssetIcon={getAssetIcon}
                   getStatusColor={getStatusColor}
