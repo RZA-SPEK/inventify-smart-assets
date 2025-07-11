@@ -1,11 +1,9 @@
-
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
 import { useState } from "react";
 import { Asset } from "@/types/asset";
-
 interface AssetFiltersProps {
   searchTerm: string;
   statusFilter: string;
@@ -17,7 +15,6 @@ interface AssetFiltersProps {
   setTypeFilter: (value: string) => void;
   assets: Asset[];
 }
-
 export const AssetFilters = ({
   searchTerm,
   statusFilter,
@@ -30,9 +27,7 @@ export const AssetFilters = ({
   assets
 }: AssetFiltersProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-
   const hasActiveFilters = statusFilter !== "all" || categoryFilter !== "all" || typeFilter !== "all" || searchTerm !== "";
-
   const onClearFilters = () => {
     setSearchTerm('');
     setStatusFilter('all');
@@ -42,45 +37,26 @@ export const AssetFilters = ({
 
   // Get unique asset types from the assets
   const assetTypes = Array.from(new Set(assets.map(asset => asset.type).filter(Boolean)));
-
-  return (
-    <div className="space-y-4">
+  return <div className="space-y-4">
       {/* Primary search bar - always visible */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Zoek in alle velden (type, merk, model, serienummer, asset tag, locatie, toegewezen aan...)"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 w-full"
-          />
+          <Input placeholder="Zoek in alle velden (type, merk, model, serienummer, asset tag, locatie, toegewezen aan...)" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10 w-full my-[10px]" />
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="whitespace-nowrap"
-          >
+          <Button variant="outline" onClick={() => setIsExpanded(!isExpanded)} className="whitespace-nowrap">
             {isExpanded ? "Minder filters" : "Meer filters"}
           </Button>
-          {hasActiveFilters && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClearFilters}
-              className="flex items-center gap-1"
-            >
+          {hasActiveFilters && <Button variant="outline" size="sm" onClick={onClearFilters} className="flex items-center gap-1">
               <X className="h-3 w-3" />
               <span className="hidden sm:inline">Wis filters</span>
-            </Button>
-          )}
+            </Button>}
         </div>
       </div>
 
       {/* Advanced filters - collapsible */}
-      {isExpanded && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 bg-gray-50 rounded-lg">
+      {isExpanded && <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 bg-gray-50 rounded-lg">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Status</label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -122,54 +98,36 @@ export const AssetFilters = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle types</SelectItem>
-                {assetTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
+                {assetTypes.map(type => <SelectItem key={type} value={type}>
                     {type}
-                  </SelectItem>
-                ))}
+                  </SelectItem>)}
               </SelectContent>
             </Select>
           </div>
 
           <div className="flex items-end">
-            <Button
-              variant="outline"
-              onClick={onClearFilters}
-              className="w-full flex items-center gap-2"
-            >
+            <Button variant="outline" onClick={onClearFilters} className="w-full flex items-center gap-2">
               <X className="h-4 w-4" />
               Alle filters wissen
             </Button>
           </div>
-        </div>
-      )}
+        </div>}
 
       {/* Active filters indicator */}
-      {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2 text-sm">
+      {hasActiveFilters && <div className="flex flex-wrap gap-2 text-sm">
           <span className="text-gray-600">Actieve filters:</span>
-          {searchTerm && (
-            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+          {searchTerm && <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
               Zoekterm: "{searchTerm}"
-            </span>
-          )}
-          {statusFilter !== "all" && (
-            <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+            </span>}
+          {statusFilter !== "all" && <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
               Status: {statusFilter}
-            </span>
-          )}
-          {categoryFilter !== "all" && (
-            <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
+            </span>}
+          {categoryFilter !== "all" && <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
               Categorie: {categoryFilter}
-            </span>
-          )}
-          {typeFilter !== "all" && (
-            <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">
+            </span>}
+          {typeFilter !== "all" && <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">
               Type: {typeFilter}
-            </span>
-          )}
-        </div>
-      )}
-    </div>
-  );
+            </span>}
+        </div>}
+    </div>;
 };
