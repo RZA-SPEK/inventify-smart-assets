@@ -1,5 +1,7 @@
+
 import { SettingsForm } from "@/components/SettingsForm";
 import { SystemConfiguration } from "@/components/SystemConfiguration";
+import { ExportImportSection } from "@/components/settings/ExportImportSection";
 import { SettingsHeader } from "@/components/settings/SettingsHeader";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNavigate } from "react-router-dom";
@@ -77,6 +79,7 @@ const Settings = () => {
         <div className="w-full space-y-8">
           <SettingsForm />
           <SystemConfiguration />
+          <ExportImportSection />
         </div>
       </div>
     </div>
