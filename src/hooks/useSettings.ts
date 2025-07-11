@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -128,18 +129,9 @@ export const useSettings = () => {
     }
   };
 
-  const resetSettings = async () => {
-    const result = await saveSettings(DEFAULT_SETTINGS);
-    if (result.success) {
-      localStorage.removeItem("systemSettings");
-    }
-    return result;
-  };
-
   return {
     settings,
     saveSettings,
-    resetSettings,
     isLoading,
     loadSettings
   };

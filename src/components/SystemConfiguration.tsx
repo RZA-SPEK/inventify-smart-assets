@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, RefreshCw } from "lucide-react";
+import { Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -56,14 +57,6 @@ export const SystemConfiguration = () => {
     });
   };
 
-  const handleReset = () => {
-    // Reset to default values
-    toast({
-      title: "Configuratie gereset",
-      description: "Alle instellingen zijn teruggezet naar standaardwaarden"
-    });
-  };
-
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
@@ -72,15 +65,6 @@ export const SystemConfiguration = () => {
           <p className="text-muted-foreground text-sm sm:text-base">Beheer algemene systeeminstellingen en standaardwaarden</p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={handleReset} 
-            className="flex items-center gap-2 text-sm"
-            size={isMobile ? "sm" : "default"}
-          >
-            <RefreshCw className="h-4 w-4" />
-            Reset
-          </Button>
           <Button 
             onClick={handleSave} 
             className="flex items-center gap-2 text-sm"

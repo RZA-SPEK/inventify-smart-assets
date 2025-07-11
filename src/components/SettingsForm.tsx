@@ -6,14 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Save, RotateCcw } from "lucide-react";
+import { Plus, X, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings, SystemSettings } from "@/hooks/useSettings";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const SettingsForm = () => {
   const { toast } = useToast();
-  const { settings: currentSettings, saveSettings, resetSettings, isLoading, loadSettings } = useSettings();
+  const { settings: currentSettings, saveSettings, isLoading, loadSettings } = useSettings();
   const isMobile = useIsMobile();
   
   const [settings, setSettings] = useState<SystemSettings>(currentSettings);
@@ -94,34 +94,6 @@ export const SettingsForm = () => {
     }
   };
 
-  const handleReset = async () => {
-    try {
-      const result = await resetSettings();
-      if (result.success) {
-        setHasChanges(false);
-        toast({
-          title: "Instellingen gereset",
-          description: "Alle instellingen zijn teruggezet naar de standaardwaarden"
-        });
-        // Reload settings to ensure we have the latest data
-        await loadSettings();
-      } else {
-        toast({
-          title: "Fout bij resetten",
-          description: result.error || "Er is een fout opgetreden bij het resetten",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('Error resetting settings:', error);
-      toast({
-        title: "Fout bij resetten",
-        description: "Er is een onverwachte fout opgetreden",
-        variant: "destructive"
-      });
-    }
-  };
-
   const renderSettingsSection = (
     title: string,
     field: keyof SystemSettings,
@@ -185,16 +157,6 @@ export const SettingsForm = () => {
           <p className="text-muted-foreground text-sm sm:text-base">Beheer alle configureerbare opties voor het asset management systeem</p>
         </div>
         <div className="flex gap-3">
-          <Button 
-            onClick={handleReset} 
-            variant="outline" 
-            className="flex items-center gap-2 text-sm"
-            disabled={isLoading}
-            size={isMobile ? "sm" : "default"}
-          >
-            <RotateCcw className="h-4 w-4" />
-            Reset
-          </Button>
           <Button 
             onClick={handleSave} 
             className="flex items-center gap-2 text-sm"
