@@ -3,8 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, Package } from "lucide-react";
-import { format } from "date-fns";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Calendar, Clock, User, Package, Trash2 } from "lucide-react";
+import { format, isAfter, isBefore, isToday, parseISO } from "date-fns";
 import { nl } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -29,6 +31,7 @@ const Reservations = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingReservations, setUpdatingReservations] = useState<Set<string>>(new Set());
+  const [deletingReservations, setDeletingReservations] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   const fetchReservations = async () => {
@@ -119,6 +122,76 @@ const Reservations = () => {
     }
   };
 
+  const deleteReservation = async (id: string) => {
+    if (deletingReservations.has(id)) {
+      return;
+    }
+
+    console.log('Starting delete for reservation:', id);
+    setDeletingReservations(prev => new Set(prev).add(id));
+    
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Supabase error deleting reservation:', error);
+        throw error;
+      }
+
+      console.log('Reservation deleted successfully, refetching data...');
+      
+      // Remove from local state immediately
+      setReservations(prev => prev.filter(reservation => reservation.id !== id));
+      
+      toast({
+        title: "Reservering verwijderd",
+        description: "Reservering is succesvol verwijderd.",
+      });
+      
+      // Also refetch to ensure data consistency
+      await fetchReservations();
+    } catch (error) {
+      console.error('Error deleting reservation:', error);
+      toast({
+        title: "Fout",
+        description: "Kon reservering niet verwijderen.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingReservations(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        console.log('Delete completed for reservation:', id);
+        return newSet;
+      });
+    }
+  };
+
+  const categorizeReservations = (reservations: Reservation[]) => {
+    const today = new Date();
+    const upcoming: Reservation[] = [];
+    const ongoing: Reservation[] = [];
+    const past: Reservation[] = [];
+
+    reservations.forEach(reservation => {
+      const startDate = parseISO(reservation.requested_date);
+      const endDate = parseISO(reservation.return_date);
+      
+      if (isAfter(startDate, today)) {
+        upcoming.push(reservation);
+      } else if (isBefore(endDate, today)) {
+        past.push(reservation);
+      } else {
+        ongoing.push(reservation);
+      }
+    });
+
+    return { upcoming, ongoing, past };
+  };
+
   const getStatusColor = (status: string | null) => {
     switch (status) {
       case 'approved':
@@ -155,6 +228,130 @@ const Reservations = () => {
     return status === 'pending' || status === 'in_afwachting' || !status;
   };
 
+  const renderReservationCard = (reservation: Reservation) => {
+    const isUpdating = updatingReservations.has(reservation.id);
+    const isDeleting = deletingReservations.has(reservation.id);
+    const isPending = isPendingReservation(reservation.status);
+    
+    return (
+      <Card key={reservation.id} className="w-full">
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              {reservation.assets ? 
+                `${reservation.assets.type} - ${reservation.assets.brand} ${reservation.assets.model}` :
+                'Asset niet gevonden'
+              }
+            </CardTitle>
+            <Badge className={getStatusColor(reservation.status)}>
+              {getStatusText(reservation.status)}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <User className="h-4 w-4 text-gray-500" />
+                <span className="font-medium">Aanvrager:</span>
+                <span>{reservation.requester_name || 'Onbekend'}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Calendar className="h-4 w-4 text-gray-500" />
+                <span className="font-medium">Periode:</span>
+                <span>
+                  {format(new Date(reservation.requested_date), 'dd-MM-yyyy', { locale: nl })} - {' '}
+                  {format(new Date(reservation.return_date), 'dd-MM-yyyy', { locale: nl })}
+                </span>
+              </div>
+              {(reservation.start_time || reservation.end_time) && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-gray-500" />
+                  <span className="font-medium">Tijd:</span>
+                  <span>
+                    {reservation.start_time && reservation.end_time
+                      ? `${reservation.start_time.slice(0, 5)} - ${reservation.end_time.slice(0, 5)}`
+                      : reservation.start_time?.slice(0, 5) || reservation.end_time?.slice(0, 5) || 'Hele dag'
+                    }
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            {reservation.purpose && (
+              <div className="text-sm">
+                <span className="font-medium">Doel:</span>
+                <p className="mt-1 text-gray-600">{reservation.purpose}</p>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex gap-2 mt-4">
+            {isPending && (
+              <>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    console.log('Approve button clicked for reservation:', reservation.id);
+                    updateReservationStatus(reservation.id, 'approved');
+                  }}
+                  className="bg-green-600 hover:bg-green-700"
+                  disabled={isUpdating || isDeleting}
+                >
+                  {isUpdating ? 'Bezig...' : 'Goedkeuren'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    console.log('Reject button clicked for reservation:', reservation.id);
+                    updateReservationStatus(reservation.id, 'rejected');
+                  }}
+                  className="border-red-300 text-red-700 hover:bg-red-50"
+                  disabled={isUpdating || isDeleting}
+                >
+                  {isUpdating ? 'Bezig...' : 'Afwijzen'}
+                </Button>
+              </>
+            )}
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-red-300 text-red-700 hover:bg-red-50"
+                  disabled={isUpdating || isDeleting}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  {isDeleting ? 'Bezig...' : 'Verwijderen'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reservering verwijderen</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Weet u zeker dat u deze reservering wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => deleteReservation(reservation.id)}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Verwijderen
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   useEffect(() => {
     fetchReservations();
   }, []);
@@ -170,6 +367,8 @@ const Reservations = () => {
     );
   }
 
+  const { upcoming, ongoing, past } = categorizeReservations(reservations);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto mobile-spacing py-4 sm:py-6 max-w-7xl">
@@ -180,106 +379,67 @@ const Reservations = () => {
           </div>
         </div>
 
-        <div className="grid gap-4">
-          {reservations.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <Calendar className="h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-gray-500 text-center">Geen reserveringen gevonden</p>
-              </CardContent>
-            </Card>
-          ) : (
-            reservations.map((reservation) => {
-              const isUpdating = updatingReservations.has(reservation.id);
-              const isPending = isPendingReservation(reservation.status);
-              
-              return (
-                <Card key={reservation.id} className="w-full">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="flex items-center gap-2">
-                        <Package className="h-5 w-5" />
-                        {reservation.assets ? 
-                          `${reservation.assets.type} - ${reservation.assets.brand} ${reservation.assets.model}` :
-                          'Asset niet gevonden'
-                        }
-                      </CardTitle>
-                      <Badge className={getStatusColor(reservation.status)}>
-                        {getStatusText(reservation.status)}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm">
-                          <User className="h-4 w-4 text-gray-500" />
-                          <span className="font-medium">Aanvrager:</span>
-                          <span>{reservation.requester_name || 'Onbekend'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="h-4 w-4 text-gray-500" />
-                          <span className="font-medium">Periode:</span>
-                          <span>
-                            {format(new Date(reservation.requested_date), 'dd-MM-yyyy', { locale: nl })} - {' '}
-                            {format(new Date(reservation.return_date), 'dd-MM-yyyy', { locale: nl })}
-                          </span>
-                        </div>
-                        {(reservation.start_time || reservation.end_time) && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Clock className="h-4 w-4 text-gray-500" />
-                            <span className="font-medium">Tijd:</span>
-                            <span>
-                              {reservation.start_time && reservation.end_time
-                                ? `${reservation.start_time.slice(0, 5)} - ${reservation.end_time.slice(0, 5)}`
-                                : reservation.start_time?.slice(0, 5) || reservation.end_time?.slice(0, 5) || 'Hele dag'
-                              }
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {reservation.purpose && (
-                        <div className="text-sm">
-                          <span className="font-medium">Doel:</span>
-                          <p className="mt-1 text-gray-600">{reservation.purpose}</p>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {isPending && (
-                      <div className="flex gap-2 mt-4">
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            console.log('Approve button clicked for reservation:', reservation.id);
-                            updateReservationStatus(reservation.id, 'approved');
-                          }}
-                          className="bg-green-600 hover:bg-green-700"
-                          disabled={isUpdating}
-                        >
-                          {isUpdating ? 'Bezig...' : 'Goedkeuren'}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            console.log('Reject button clicked for reservation:', reservation.id);
-                            updateReservationStatus(reservation.id, 'rejected');
-                          }}
-                          className="border-red-300 text-red-700 hover:bg-red-50"
-                          disabled={isUpdating}
-                        >
-                          {isUpdating ? 'Bezig...' : 'Afwijzen'}
-                        </Button>
-                      </div>
-                    )}
+        {reservations.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-8">
+              <Calendar className="h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-gray-500 text-center">Geen reserveringen gevonden</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Tabs defaultValue="ongoing" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="ongoing">
+                Lopend ({ongoing.length})
+              </TabsTrigger>
+              <TabsTrigger value="upcoming">
+                Komend ({upcoming.length})
+              </TabsTrigger>
+              <TabsTrigger value="past">
+                Voorbij ({past.length})
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="ongoing" className="space-y-4 mt-6">
+              {ongoing.length === 0 ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-8">
+                    <Calendar className="h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-gray-500 text-center">Geen lopende reserveringen</p>
                   </CardContent>
                 </Card>
-              );
-            })
-          )}
-        </div>
+              ) : (
+                ongoing.map(renderReservationCard)
+              )}
+            </TabsContent>
+            
+            <TabsContent value="upcoming" className="space-y-4 mt-6">
+              {upcoming.length === 0 ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-8">
+                    <Calendar className="h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-gray-500 text-center">Geen komende reserveringen</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                upcoming.map(renderReservationCard)
+              )}
+            </TabsContent>
+            
+            <TabsContent value="past" className="space-y-4 mt-6">
+              {past.length === 0 ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-8">
+                    <Calendar className="h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-gray-500 text-center">Geen voorbije reserveringen</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                past.map(renderReservationCard)
+              )}
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
     </div>
   );

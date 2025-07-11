@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,9 +6,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Edit3, Clock, User, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { isAfter, isBefore, parseISO } from "date-fns";
 
 interface Reservation {
   id: string;
@@ -79,6 +80,28 @@ export const UserReservations = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const categorizeReservations = (reservations: Reservation[]) => {
+    const today = new Date();
+    const upcoming: Reservation[] = [];
+    const ongoing: Reservation[] = [];
+    const past: Reservation[] = [];
+
+    reservations.forEach(reservation => {
+      const startDate = parseISO(reservation.requested_date);
+      const endDate = parseISO(reservation.return_date);
+      
+      if (isAfter(startDate, today)) {
+        upcoming.push(reservation);
+      } else if (isBefore(endDate, today)) {
+        past.push(reservation);
+      } else {
+        ongoing.push(reservation);
+      }
+    });
+
+    return { upcoming, ongoing, past };
   };
 
   const getStatusColor = (status: string) => {
@@ -202,8 +225,83 @@ export const UserReservations = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('nl-NL');
+    return new Date(dateString).toLocaleDateString('nl-NL', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric' 
+    });
   };
+
+  const renderReservationCard = (reservation: Reservation) => (
+    <Card key={reservation.id}>
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div className="flex items-center space-x-2">
+            <Package className="h-5 w-5 text-gray-400" />
+            <div>
+              <CardTitle className="text-lg">
+                {getAssetName(reservation)}
+              </CardTitle>
+              <CardDescription>
+                {reservation.assets?.type}
+              </CardDescription>
+            </div>
+          </div>
+          <Badge className={getStatusColor(reservation.status)}>
+            <span className="capitalize">{getStatusText(reservation.status)}</span>
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Calendar className="h-4 w-4 text-gray-400" />
+              <span className="text-sm text-gray-600">Periode:</span>
+              <span className="text-sm font-medium">
+                {formatDate(reservation.requested_date)} - {formatDate(reservation.return_date)}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Clock className="h-4 w-4 text-gray-400" />
+              <span className="text-sm text-gray-600">Aangevraagd op:</span>
+              <span className="text-sm font-medium">{formatDate(reservation.created_at)}</span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div>
+              <span className="text-sm text-gray-600">Doel:</span>
+              <p className="text-sm font-medium">{reservation.purpose}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-4 flex space-x-2">
+          {canEdit(reservation) && (
+            <Button
+              size="sm"
+              onClick={() => handleAction(reservation, "edit")}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Edit3 className="h-4 w-4 mr-1" />
+              Bewerk
+            </Button>
+          )}
+          {canExtend(reservation) && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleAction(reservation, "extend")}
+              className="text-green-600 border-green-600 hover:bg-green-50"
+            >
+              <Clock className="h-4 w-4 mr-1" />
+              Verleng
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   if (loading) {
     return (
@@ -215,6 +313,8 @@ export const UserReservations = () => {
       </div>
     );
   }
+
+  const { upcoming, ongoing, past } = categorizeReservations(reservations);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -233,78 +333,58 @@ export const UserReservations = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {reservations.map((reservation) => (
-              <Card key={reservation.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center space-x-2">
-                      <Package className="h-5 w-5 text-gray-400" />
-                      <div>
-                        <CardTitle className="text-lg">
-                          {getAssetName(reservation)}
-                        </CardTitle>
-                        <CardDescription>
-                          {reservation.assets?.type}
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <Badge className={getStatusColor(reservation.status)}>
-                      <span className="capitalize">{getStatusText(reservation.status)}</span>
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">Periode:</span>
-                        <span className="text-sm font-medium">
-                          {formatDate(reservation.requested_date)} - {formatDate(reservation.return_date)}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">Aangevraagd op:</span>
-                        <span className="text-sm font-medium">{formatDate(reservation.created_at)}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div>
-                        <span className="text-sm text-gray-600">Doel:</span>
-                        <p className="text-sm font-medium">{reservation.purpose}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 flex space-x-2">
-                    {canEdit(reservation) && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleAction(reservation, "edit")}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        <Edit3 className="h-4 w-4 mr-1" />
-                        Bewerk
-                      </Button>
-                    )}
-                    {canExtend(reservation) && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleAction(reservation, "extend")}
-                        className="text-green-600 border-green-600 hover:bg-green-50"
-                      >
-                        <Clock className="h-4 w-4 mr-1" />
-                        Verleng
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Tabs defaultValue="ongoing" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="ongoing">
+                Lopend ({ongoing.length})
+              </TabsTrigger>
+              <TabsTrigger value="upcoming">
+                Komend ({upcoming.length})
+              </TabsTrigger>
+              <TabsTrigger value="past">
+                Voorbij ({past.length})
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="ongoing" className="space-y-4 mt-6">
+              {ongoing.length === 0 ? (
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <Calendar className="mx-auto h-12 w-12 text-gray-400" />
+                    <p className="text-gray-500">Geen lopende reserveringen</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                ongoing.map(renderReservationCard)
+              )}
+            </TabsContent>
+            
+            <TabsContent value="upcoming" className="space-y-4 mt-6">
+              {upcoming.length === 0 ? (
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <Calendar className="mx-auto h-12 w-12 text-gray-400" />
+                    <p className="text-gray-500">Geen komende reserveringen</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                upcoming.map(renderReservationCard)
+              )}
+            </TabsContent>
+            
+            <TabsContent value="past" className="space-y-4 mt-6">
+              {past.length === 0 ? (
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <Calendar className="mx-auto h-12 w-12 text-gray-400" />
+                    <p className="text-gray-500">Geen voorbije reserveringen</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                past.map(renderReservationCard)
+              )}
+            </TabsContent>
+          </Tabs>
         )}
       </div>
 
