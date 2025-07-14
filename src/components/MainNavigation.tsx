@@ -27,6 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationCenter } from "@/components/NotificationCenter";
 
 const MainNavigation = () => {
   const location = useLocation();
@@ -139,6 +140,7 @@ const MainNavigation = () => {
             <h1 className="text-lg font-semibold text-gray-900">Asset Management</h1>
             
             <div className="flex items-center space-x-3">
+              <NotificationCenter />
               <div className="flex items-center space-x-2">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user?.user_metadata?.avatar_url as string} />
@@ -194,7 +196,9 @@ const MainNavigation = () => {
       <nav className="hidden md:flex lg:hidden bg-white border-b border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between w-full">
           <h1 className="text-lg font-semibold text-gray-900">Asset Management</h1>
-          <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+          <div className="flex items-center space-x-2">
+            <NotificationCenter />
+            <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <SheetTrigger asChild>
               <Button
                 variant="ghost"
@@ -256,6 +260,7 @@ const MainNavigation = () => {
               </ScrollArea>
             </SheetContent>
           </Sheet>
+          </div>
         </div>
       </nav>
 
@@ -263,7 +268,9 @@ const MainNavigation = () => {
       <nav className="md:hidden bg-white border-b border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-semibold text-gray-900">Asset Management</h1>
-          <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+          <div className="flex items-center space-x-2">
+            <NotificationCenter />
+            <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <SheetTrigger asChild>
               <Button
                 variant="ghost"
@@ -325,6 +332,7 @@ const MainNavigation = () => {
               </ScrollArea>
             </SheetContent>
           </Sheet>
+          </div>
         </div>
       </nav>
     </>
