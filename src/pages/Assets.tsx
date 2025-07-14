@@ -78,8 +78,8 @@ const Assets = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto mobile-spacing py-4 sm:py-6 max-w-7xl">
+    <div className="min-h-screen bg-background">
+      <div className="responsive-container responsive-section">
         <AssetHeader 
           canManageAssets={canManageAssets}
           onCreateAsset={handleCreateAsset}
@@ -87,25 +87,27 @@ const Assets = () => {
           filteredAssets={filteredAssets.length}
         />
         
-        <AssetFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          categoryFilter={categoryFilter}
-          setCategoryFilter={setCategoryFilter}
-          typeFilter={typeFilter}
-          setTypeFilter={setTypeFilter}
-          assets={assets}
-        />
-        
-        <AssetList
-          assets={filteredAssets}
-          canManageAssets={canManageAssets}
-          onViewAsset={handleViewAsset}
-          onEditAsset={handleEditAsset}
-          onDeleteAsset={handleDeleteAsset}
-        />
+        <div className="responsive-spacing">
+          <AssetFilters
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            categoryFilter={categoryFilter}
+            setCategoryFilter={setCategoryFilter}
+            typeFilter={typeFilter}
+            setTypeFilter={setTypeFilter}
+            assets={assets}
+          />
+          
+          <AssetList
+            assets={filteredAssets}
+            canManageAssets={canManageAssets}
+            onViewAsset={handleViewAsset}
+            onEditAsset={handleEditAsset}
+            onDeleteAsset={handleDeleteAsset}
+          />
+        </div>
       </div>
     </div>
   );

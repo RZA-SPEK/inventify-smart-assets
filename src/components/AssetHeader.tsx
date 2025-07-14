@@ -18,28 +18,35 @@ export const AssetHeader = ({
   filteredAssets 
 }: AssetHeaderProps) => {
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Asset Management</h1>
-        <p className="text-gray-600 mt-1">
-          {filteredAssets} van {totalAssets} assets weergegeven
-        </p>
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center responsive-gap-lg mb-8">
+      <div className="space-y-2">
+        <h1 className="page-header">Asset Management</h1>
+        <div className="flex items-center gap-2">
+          <span className="status-badge status-available">
+            {filteredAssets} van {totalAssets} assets
+          </span>
+          {filteredAssets !== totalAssets && (
+            <span className="text-sm text-muted-foreground">
+              (gefilterd)
+            </span>
+          )}
+        </div>
       </div>
       
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center responsive-gap">
         <NotificationCenter />
         {canManageAssets && (
           <Button
             onClick={onCreateAsset}
-            size="sm"
-            className="flex items-center gap-2"
+            size="lg"
+            className="gradient-primary flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Nieuw Asset</span>
           </Button>
         )}
         <Link to="/activity-log">
-          <Button variant="outline" size="sm" className="flex items-center gap-2">
+          <Button variant="outline" size="lg" className="flex items-center gap-2 hover:bg-accent">
             <History className="h-4 w-4" />
             <span className="hidden sm:inline">Activiteit</span>
           </Button>

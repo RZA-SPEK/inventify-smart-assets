@@ -36,18 +36,25 @@ export const AssetList = ({
   };
   
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Assets ({assets.length})</CardTitle>
-        <CardDescription>
-          {canManageAssets 
-            ? "Overzicht van alle bedrijfsassets" 
-            : "Beschikbare assets voor reservering"
-          }
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="block lg:hidden space-y-4 p-6">
+    <div className="card-elevated">
+      <div className="responsive-padding border-b border-border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="section-header">Assets</h2>
+            <p className="text-muted-foreground mt-1">
+              {canManageAssets 
+                ? "Overzicht van alle bedrijfsassets" 
+                : "Beschikbare assets voor reservering"
+              }
+            </p>
+          </div>
+          <div className="status-badge bg-primary text-primary-foreground">
+            {assets.length} items
+          </div>
+        </div>
+      </div>
+      <div className="p-0">
+        <div className="block lg:hidden responsive-spacing responsive-padding">
           {assets.map((asset) => (
             <AssetMobileCard
               key={asset.id}
@@ -64,17 +71,17 @@ export const AssetList = ({
         </div>
 
         <div className="hidden lg:block">
-          <ScrollArea className="h-[600px] w-full">
+          <ScrollArea className="h-[700px] w-full">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16">Foto</TableHead>
-                  <TableHead className="min-w-[200px]">Asset Info</TableHead>
-                  <TableHead className="w-24">Tag</TableHead>
-                  <TableHead className="w-32">Status</TableHead>
-                  <TableHead className="min-w-[120px]">Locatie</TableHead>
-                  <TableHead className="min-w-[150px]">Toegewezen</TableHead>
-                  {canManageAssets && <TableHead className="w-40">Acties</TableHead>}
+              <TableHeader className="bg-muted/50">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-16 font-semibold">Foto</TableHead>
+                  <TableHead className="min-w-[200px] font-semibold">Asset Info</TableHead>
+                  <TableHead className="w-24 font-semibold">Tag</TableHead>
+                  <TableHead className="w-32 font-semibold">Status</TableHead>
+                  <TableHead className="min-w-[120px] font-semibold">Locatie</TableHead>
+                  <TableHead className="min-w-[150px] font-semibold">Toegewezen</TableHead>
+                  {canManageAssets && <TableHead className="w-40 font-semibold">Acties</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -97,11 +104,19 @@ export const AssetList = ({
         </div>
 
         {assets.length === 0 && (
-          <div className="text-center py-8 text-gray-500 p-6">
-            Geen assets gevonden die voldoen aan uw zoekcriteria.
+          <div className="text-center py-16 px-6">
+            <div className="max-w-md mx-auto">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                <span className="text-2xl text-muted-foreground">📦</span>
+              </div>
+              <h3 className="text-lg font-medium text-foreground mb-2">Geen assets gevonden</h3>
+              <p className="text-muted-foreground">
+                Er zijn geen assets die voldoen aan uw zoekcriteria. Probeer uw filters aan te passen.
+              </p>
+            </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
