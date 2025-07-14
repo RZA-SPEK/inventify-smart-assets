@@ -1,7 +1,7 @@
-
 import { Asset } from "@/types/asset";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Edit, Calendar } from "lucide-react";
 import { AssetImage } from "./AssetImage";
@@ -19,6 +19,9 @@ interface AssetTableRowProps {
   getAssetIcon: (type: string) => React.ReactElement;
   getStatusColor: (status: string) => string;
   getCategoryDisplayName: (category: string) => string;
+  isSelected?: boolean;
+  onSelect?: (id: string) => void;
+  canSelect?: boolean;
 }
 
 export const AssetTableRow = ({
@@ -31,13 +34,26 @@ export const AssetTableRow = ({
   getAssetIcon,
   getStatusColor,
   getCategoryDisplayName,
+  isSelected = false,
+  onSelect,
+  canSelect = false
 }: AssetTableRowProps) => {
   const canManageAssets = currentRole === "ICT Admin" || currentRole === "Facilitair Admin";
   const canDelete = asset.status !== "Deleted";
   const canPermanentDelete = canManageAssets && onPermanentDelete;
 
   return (
-    <TableRow className="hover:bg-gray-50">
+    <TableRow className={`transition-colors hover:bg-muted/50 ${isSelected ? 'bg-accent/50' : ''}`}>
+      {canSelect && onSelect && (
+        <TableCell>
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => onSelect(asset.id)}
+            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+          />
+        </TableCell>
+      )}
+      
       <TableCell className="py-4 w-16">
         <AssetImage
           image={asset.image}
@@ -52,11 +68,11 @@ export const AssetTableRow = ({
         <div className="space-y-1">
           <Link 
             to={`/assets/${asset.id}`}
-            className="font-medium text-gray-900 hover:text-blue-600 block truncate"
+            className="font-medium text-foreground hover:text-primary block truncate transition-colors"
           >
             {asset.type}
           </Link>
-          <p className="text-sm text-gray-500 truncate">{asset.brand} {asset.model}</p>
+          <p className="text-sm text-muted-foreground truncate">{asset.brand} {asset.model}</p>
         </div>
       </TableCell>
       
@@ -71,11 +87,11 @@ export const AssetTableRow = ({
       </TableCell>
       
       <TableCell className="py-4 min-w-[120px]">
-        <span className="text-sm text-gray-600 truncate block">{asset.location}</span>
+        <span className="text-sm text-muted-foreground truncate block">{asset.location}</span>
       </TableCell>
       
       <TableCell className="py-4 min-w-[150px]">
-        <span className="text-sm text-gray-600 truncate block">{asset.assignedTo || "Niet toegewezen"}</span>
+        <span className="text-sm text-muted-foreground truncate block">{asset.assignedTo || "Niet toegewezen"}</span>
       </TableCell>
       
       {canManageAssets && (
@@ -85,7 +101,7 @@ export const AssetTableRow = ({
               variant="outline"
               size="sm"
               onClick={() => onEdit(asset)}
-              className="h-8 px-2"
+              className="h-8 px-2 hover:bg-accent"
             >
               <Edit className="h-3 w-3" />
             </Button>
@@ -108,7 +124,7 @@ export const AssetTableRow = ({
                 variant="outline"
                 size="sm"
                 onClick={() => onReserve(asset)}
-                className="h-8 px-2"
+                className="h-8 px-2 hover:bg-accent"
               >
                 <Calendar className="h-3 w-3" />
               </Button>
@@ -123,7 +139,7 @@ export const AssetTableRow = ({
             variant="outline"
             size="sm"
             onClick={() => onReserve(asset)}
-            className="h-8 px-2"
+            className="h-8 px-2 hover:bg-accent"
           >
             <Calendar className="h-3 w-3 mr-1" />
             Reserveren

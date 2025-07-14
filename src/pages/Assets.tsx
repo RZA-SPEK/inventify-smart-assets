@@ -4,11 +4,17 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { AssetHeader } from "@/components/AssetHeader";
 import { AssetFilters } from "@/components/AssetFilters";
 import { AssetList } from "@/components/AssetList";
+import { AssetQuickActions } from "@/components/AssetQuickActions";
+import { AssetStatsCards } from "@/components/AssetStatsCards";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const Assets = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const { canManageAssets, currentRole, loading: roleLoading } = useUserRole();
   const { 
     assets, 
@@ -46,9 +52,76 @@ const Assets = () => {
     try {
       await deleteAsset(id);
       refetch();
+      toast({
+        title: "Asset verwijderd",
+        description: "Het asset is succesvol verwijderd.",
+      });
     } catch (error) {
       console.error('Error deleting asset:', error);
+      toast({
+        title: "Fout",
+        description: "Er is een fout opgetreden bij het verwijderen van het asset.",
+        variant: "destructive",
+      });
     }
+  };
+
+  const handleSelectAsset = (id: string) => {
+    setSelectedAssets(prev => 
+      prev.includes(id) 
+        ? prev.filter(assetId => assetId !== id)
+        : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = (selected: boolean) => {
+    setSelectedAssets(selected ? filteredAssets.map(asset => asset.id) : []);
+  };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    try {
+      for (const id of ids) {
+        await deleteAsset(id);
+      }
+      refetch();
+      setSelectedAssets([]);
+      toast({
+        title: "Assets verwijderd",
+        description: `${ids.length} assets zijn succesvol verwijderd.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Fout",
+        description: "Er is een fout opgetreden bij het verwijderen van assets.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBulkArchive = async (ids: string[]) => {
+    // Implementation for bulk archive
+    toast({
+      title: "Assets gearchiveerd",
+      description: `${ids.length} assets zijn gearchiveerd.`,
+    });
+    setSelectedAssets([]);
+  };
+
+  const handleExportSelected = (ids: string[]) => {
+    const selectedData = filteredAssets.filter(asset => ids.includes(asset.id));
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      "Type,Brand,Model,Serial Number,Asset Tag,Status,Location\n" +
+      selectedData.map(asset => 
+        `${asset.type},${asset.brand || ''},${asset.model || ''},${asset.serialNumber || ''},${asset.assetTag || ''},${asset.status || ''},${asset.location || ''}`
+      ).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "selected_assets.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (loading || roleLoading) {
@@ -144,6 +217,8 @@ const Assets = () => {
           filteredAssets={filteredAssets.length}
         />
         
+        <AssetStatsCards assets={assets} />
+        
         <div className="responsive-spacing">
           <AssetFilters
             searchTerm={searchTerm}
@@ -157,13 +232,29 @@ const Assets = () => {
             assets={assets}
           />
           
-          <AssetList
-            assets={filteredAssets}
-            canManageAssets={canManageAssets}
-            onViewAsset={handleViewAsset}
-            onEditAsset={handleEditAsset}
-            onDeleteAsset={handleDeleteAsset}
-          />
+          <div className="card-elevated">
+            <AssetQuickActions
+              selectedAssets={selectedAssets}
+              onSelectAsset={handleSelectAsset}
+              onSelectAll={handleSelectAll}
+              allSelected={selectedAssets.length === filteredAssets.length && filteredAssets.length > 0}
+              assets={filteredAssets}
+              canManageAssets={canManageAssets}
+              onBulkDelete={handleBulkDelete}
+              onBulkArchive={handleBulkArchive}
+              onExportSelected={handleExportSelected}
+            />
+            
+            <AssetList
+              assets={filteredAssets}
+              canManageAssets={canManageAssets}
+              onViewAsset={handleViewAsset}
+              onEditAsset={handleEditAsset}
+              onDeleteAsset={handleDeleteAsset}
+              selectedAssets={selectedAssets}
+              onSelectAsset={handleSelectAsset}
+            />
+          </div>
         </div>
       </div>
     </div>

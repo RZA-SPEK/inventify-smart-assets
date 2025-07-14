@@ -152,6 +152,21 @@
     @apply m-4 sm:m-6 lg:m-8;
   }
 
+  /* Enhanced mobile optimizations */
+  @media (max-width: 640px) {
+    .mobile-stack {
+      @apply flex flex-col space-y-3;
+    }
+    
+    .mobile-hide {
+      @apply hidden;
+    }
+    
+    .mobile-full {
+      @apply w-full;
+    }
+  }
+
   /* Responsive text sizes */
   .responsive-text-sm {
     @apply text-xs sm:text-sm;

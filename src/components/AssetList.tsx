@@ -14,6 +14,8 @@ interface AssetListProps {
   onViewAsset: (id: string) => void;
   onEditAsset: (id: string) => void;
   onDeleteAsset: (id: string) => Promise<void>;
+  selectedAssets?: string[];
+  onSelectAsset?: (id: string) => void;
 }
 
 export const AssetList = ({ 
@@ -21,7 +23,9 @@ export const AssetList = ({
   canManageAssets, 
   onViewAsset, 
   onEditAsset, 
-  onDeleteAsset 
+  onDeleteAsset,
+  selectedAssets = [],
+  onSelectAsset 
 }: AssetListProps) => {
   const handleEdit = (asset: Asset) => {
     onEditAsset(asset.id);
@@ -67,6 +71,9 @@ export const AssetList = ({
               getAssetIcon={getAssetIcon}
               getStatusColor={getStatusColor}
               getCategoryDisplayName={getCategoryDisplayName}
+              isSelected={selectedAssets.includes(asset.id)}
+              onSelect={onSelectAsset}
+              canSelect={canManageAssets && !!onSelectAsset}
             />
           ))}
         </div>
@@ -76,6 +83,7 @@ export const AssetList = ({
             <Table>
               <TableHeader className="bg-muted/50">
                 <TableRow className="hover:bg-transparent">
+                  {canManageAssets && onSelectAsset && <TableHead className="w-12"></TableHead>}
                   <TableHead className="w-16 font-semibold">Foto</TableHead>
                   <TableHead className="min-w-[200px] font-semibold">Asset Info</TableHead>
                   <TableHead className="w-24 font-semibold">Tag</TableHead>
@@ -97,6 +105,9 @@ export const AssetList = ({
                     getAssetIcon={getAssetIcon}
                     getStatusColor={getStatusColor}
                     getCategoryDisplayName={getCategoryDisplayName}
+                    isSelected={selectedAssets.includes(asset.id)}
+                    onSelect={onSelectAsset}
+                    canSelect={canManageAssets && !!onSelectAsset}
                   />
                 ))}
               </TableBody>
