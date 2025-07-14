@@ -2,6 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { Asset } from "@/types/asset";
 import { AssetTableRow } from "./AssetTableRow";
 import { AssetMobileCard } from "./AssetMobileCard";
@@ -106,13 +107,33 @@ export const AssetList = ({
         {assets.length === 0 && (
           <div className="text-center py-16 px-6">
             <div className="max-w-md mx-auto">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                <span className="text-2xl text-muted-foreground">📦</span>
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
+                <span className="text-4xl">📦</span>
               </div>
-              <h3 className="text-lg font-medium text-foreground mb-2">Geen assets gevonden</h3>
-              <p className="text-muted-foreground">
-                Er zijn geen assets die voldoen aan uw zoekcriteria. Probeer uw filters aan te passen.
+              <h3 className="text-xl font-semibold text-foreground mb-3">Geen assets gevonden</h3>
+              <p className="text-muted-foreground mb-6">
+                Er zijn geen assets die voldoen aan uw zoekcriteria. Probeer uw filters aan te passen of voeg een nieuw asset toe.
               </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    // Reset filters - you'll need to pass these as props
+                    window.location.reload();
+                  }}
+                >
+                  Filters wissen
+                </Button>
+                <Button 
+                  className="gradient-primary"
+                  onClick={() => {
+                    // Navigate to create asset - you'll need to pass this as prop
+                    window.location.href = '/assets/create';
+                  }}
+                >
+                  Nieuw Asset Toevoegen
+                </Button>
+              </div>
             </div>
           </div>
         )}
