@@ -8,6 +8,7 @@ import { AssetFormIdentificationFields } from "./AssetFormIdentificationFields";
 import { AssetFormPriceFields } from "./AssetFormPriceFields";
 import { AssetCommentsField } from "./AssetCommentsField";
 import { ReservableField } from "./ReservableField";
+import { AssetAssignmentPDF } from "./AssetAssignmentPDF";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
@@ -35,14 +36,16 @@ interface AssetFormFieldsProps {
   onShowScanner: () => void;
   onShowAssetTagScanner: () => void;
   onGenerateAssetTag: () => void;
+  assetId?: string; // For existing assets
 }
 
 export const AssetFormFields = ({ 
   formData, 
   onFormDataChange, 
-  onShowScanner,
-  onShowAssetTagScanner,
-  onGenerateAssetTag 
+  onShowScanner, 
+  onShowAssetTagScanner, 
+  onGenerateAssetTag,
+  assetId 
 }: AssetFormFieldsProps) => {
   // Helper function to update individual fields while preserving other data
   const handleFieldChange = (field: string, value: any) => {
@@ -105,6 +108,21 @@ export const AssetFormFields = ({
         value={formData.comments}
         onChange={(value) => handleFieldChange('comments', value)}
       />
+
+      {/* Asset Assignment PDF - Only show for existing assets with assignment */}
+      {assetId && formData.assignedTo && formData.assignedTo !== 'unassigned' && (
+        <AssetAssignmentPDF
+          assetId={assetId}
+          assetData={{
+            brand: formData.brand,
+            model: formData.model,
+            serialNumber: formData.serialNumber,
+            assetTag: formData.assetTag,
+            type: formData.type,
+            assignedTo: formData.assignedTo
+          }}
+        />
+      )}
     </>
   );
 };

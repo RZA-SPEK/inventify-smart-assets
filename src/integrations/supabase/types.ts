@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      asset_assignment_documents: {
+        Row: {
+          asset_id: string
+          assigned_to_name: string
+          created_at: string
+          document_type: string
+          generated_at: string
+          id: string
+          signed_at: string | null
+          signed_document_url: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset_id: string
+          assigned_to_name: string
+          created_at?: string
+          document_type?: string
+          generated_at?: string
+          id?: string
+          signed_at?: string | null
+          signed_document_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset_id?: string
+          assigned_to_name?: string
+          created_at?: string
+          document_type?: string
+          generated_at?: string
+          id?: string
+          signed_at?: string | null
+          signed_document_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_assignment_documents_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_images: {
         Row: {
           asset_id: string

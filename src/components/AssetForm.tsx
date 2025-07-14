@@ -201,6 +201,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
             onShowScanner={handleShowSerialScanner}
             onShowAssetTagScanner={handleShowAssetTagScanner}
             onGenerateAssetTag={generateAssetTag}
+            assetId={asset?.id}
           />
 
           <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">

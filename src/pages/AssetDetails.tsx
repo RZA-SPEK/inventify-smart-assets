@@ -11,6 +11,7 @@ import { AssetDeleteDialog } from "@/components/AssetDeleteDialog";
 import { AssetPermanentDeleteDialog } from "@/components/AssetPermanentDeleteDialog";
 import { AssetImageGallery } from "@/components/AssetImageGallery";
 import { AssetRelationships } from "@/components/AssetRelationships";
+import { AssetAssignmentDocuments } from "@/components/AssetAssignmentDocuments";
 import { getAssetIcon, getStatusColor } from "@/utils/assetUtils";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
@@ -378,6 +379,9 @@ const AssetDetails = () => {
                 <AssetRelationships assetId={asset.id} canEdit={canManageAssets} />
               </CardContent>
             </Card>
+            
+            {/* Assignment Documents */}
+            <AssetAssignmentDocuments assetId={asset.id} />
           </div>
         </div>
 
