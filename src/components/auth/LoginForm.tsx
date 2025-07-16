@@ -8,7 +8,6 @@ export const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
   const {
     toast
   } = useToast();
@@ -41,44 +40,13 @@ export const LoginForm = () => {
       setLoading(false);
     }
   };
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const {
-        data,
-        error
-      } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`
-        }
-      });
-      if (error) throw error;
-      if (data.user) {
-        toast({
-          title: "Account aangemaakt",
-          description: "Controleer uw email voor verificatie."
-        });
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Registratie mislukt",
-        description: error.message || "Er is een fout opgetreden"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
   return <div className="w-full max-w-md mx-auto space-y-6">
       <div className="text-center">
         
         
       </div>
 
-      <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
+      <form onSubmit={handleSignIn} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input id="email" type="email" placeholder="naam@voorbeeld.nl" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
@@ -86,18 +54,16 @@ export const LoginForm = () => {
 
         <div className="space-y-2">
           <Label htmlFor="password">Wachtwoord</Label>
-          <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} autoComplete={isSignUp ? "new-password" : "current-password"} />
+          <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} autoComplete="current-password" />
         </div>
 
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Bezig..." : isSignUp ? "Account aanmaken" : "Inloggen"}
+          {loading ? "Bezig..." : "Inloggen"}
         </Button>
       </form>
 
-      <div className="text-center">
-        <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="text-blue-600 hover:text-blue-800 text-sm">
-          {isSignUp ? "Heeft u al een account? Inloggen" : "Nog geen account? Registreren"}
-        </button>
+      <div className="text-center text-sm text-muted-foreground">
+        Geen account? Neem contact op met de beheerder voor toegang.
       </div>
     </div>;
 };
