@@ -46,19 +46,16 @@ export const AssetAssignmentPDF = ({ assetId, assetData, onDocumentGenerated }: 
         .maybeSingle();
 
       const defaultTemplate = {
-        title: 'Asset Toewijzingsformulier',
-        headerText: 'Dit formulier bevestigt de toewijzing van bedrijfsmiddelen aan de medewerker.',
+        title: '{assetType} • Uitgifte',
+        headerText: '{assignedTo}',
         conditions: [
-          'De gebruiker is verantwoordelijk voor het zorgvuldig gebruik van het toegewezen asset',
-          'Verlies, diefstal of schade moet onmiddellijk gemeld worden',
-          'Het asset mag niet aan derden worden uitgeleend zonder toestemming',
-          'Bij vertrek uit de organisatie moet het asset worden geretourneerd',
-          'Regulier onderhoud en updates zijn verplicht'
+          'Het verstrekte apparaat is persoonlijk, vertrouwelijk en niet overdraagbaar',
+          '(Bij oneigenlijk gebruik wordt desbetreffende persoon ter verantwoording geroepen)'
         ],
-        footerText: 'Door ondertekening bevestigt de gebruiker akkoord te gaan met bovenstaande voorwaarden.',
+        footerText: 'Getekend voor ontvangst,',
         signatureFields: {
-          userLabel: 'Handtekening gebruiker',
-          adminLabel: 'Handtekening beheerder'
+          userLabel: 'Handtekening',
+          adminLabel: 'Beheerder'
         }
       };
 
@@ -68,79 +65,95 @@ export const AssetAssignmentPDF = ({ assetId, assetData, onDocumentGenerated }: 
 
       const pdf = new jsPDF();
       
-      // Header
-      pdf.setFontSize(20);
-      pdf.text(template.title, 20, 30);
+      // Replace placeholders in template
+      const processedTitle = template.title
+        .replace('{assetType}', assetData.type)
+        .replace('{assignedTo}', assetData.assignedTo);
       
-      pdf.setFontSize(12);
-      pdf.text(`Datum: ${new Date().toLocaleDateString('nl-NL')}`, 20, 50);
+      const processedHeaderText = template.headerText
+        .replace('{assetType}', assetData.type)
+        .replace('{assignedTo}', assetData.assignedTo);
       
-      // Header text
-      if (template.headerText) {
-        pdf.setFontSize(10);
-        const headerLines = pdf.splitTextToSize(template.headerText, 170);
-        pdf.text(headerLines, 20, 65);
-      }
+      // Header with asset type and assignment
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(processedTitle, 20, 30);
       
-      // Asset informatie
+      // Assigned person name
       pdf.setFontSize(14);
-      pdf.text('Asset Informatie:', 20, 85);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(processedHeaderText, 20, 50);
+      
+      // Asset details table
+      const tableY = 70;
+      const leftCol = 20;
+      const rightCol = 100;
       
       pdf.setFontSize(11);
-      pdf.text(`Type: ${assetData.type}`, 25, 100);
-      pdf.text(`Merk: ${assetData.brand}`, 25, 110);
-      pdf.text(`Model: ${assetData.model}`, 25, 120);
-      pdf.text(`Serienummer: ${assetData.serialNumber}`, 25, 130);
-      pdf.text(`Asset Tag: ${assetData.assetTag}`, 25, 140);
+      pdf.setFont('helvetica', 'normal');
       
-      // Toewijzing informatie
-      pdf.setFontSize(14);
-      pdf.text('Toewijzing:', 20, 160);
+      // Table rows
+      const rows = [
+        ['PC Type', `${assetData.brand} ${assetData.model}`],
+        ['Data sim kaart', ''],
+        ['Service tag Proxsys', assetData.assetTag || ''],
+        ['PIN', '']
+      ];
       
-      pdf.setFontSize(11);
-      pdf.text(`Toegewezen aan: ${assetData.assignedTo}`, 25, 175);
-      pdf.text(`Datum toewijzing: ${new Date().toLocaleDateString('nl-NL')}`, 25, 185);
-      
-      // Voorwaarden
-      pdf.setFontSize(14);
-      pdf.text('Voorwaarden en Verantwoordelijkheden:', 20, 205);
-      
-      pdf.setFontSize(10);
-      let yPosition = 220;
-      template.conditions.forEach((condition: string) => {
-        const conditionText = condition.startsWith('•') ? condition : `• ${condition}`;
-        const lines = pdf.splitTextToSize(conditionText, 170);
-        pdf.text(lines, 25, yPosition);
-        yPosition += lines.length * 5 + 2;
+      let currentY = tableY;
+      rows.forEach(([label, value]) => {
+        // Draw table lines
+        pdf.line(leftCol, currentY - 5, 190, currentY - 5);
+        
+        // Labels
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(label, leftCol + 2, currentY);
+        
+        // Values
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(value, rightCol, currentY);
+        
+        currentY += 15;
       });
       
-      // Footer text
-      if (template.footerText) {
-        yPosition += 10;
-        pdf.setFontSize(10);
-        const footerLines = pdf.splitTextToSize(template.footerText, 170);
-        pdf.text(footerLines, 20, yPosition);
-        yPosition += footerLines.length * 5;
-      }
+      // Close table
+      pdf.line(leftCol, currentY - 5, 190, currentY - 5);
       
-      // Handtekening velden
-      yPosition += 15;
+      // Vertical lines for table
+      pdf.line(leftCol, tableY - 5, leftCol, currentY - 5);
+      pdf.line(rightCol - 2, tableY - 5, rightCol - 2, currentY - 5);
+      pdf.line(190, tableY - 5, 190, currentY - 5);
+      
+      // Important section
+      currentY += 20;
       pdf.setFontSize(12);
-      pdf.text('Akkoord en Handtekeningen:', 20, yPosition);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Belangrijk', leftCol, currentY);
       
-      // Gebruiker handtekening
-      yPosition += 30;
-      pdf.line(25, yPosition, 90, yPosition);
-      pdf.setFontSize(9);
-      pdf.text(template.signatureFields.userLabel || 'Handtekening gebruiker', 25, yPosition + 5);
-      pdf.text(`${assetData.assignedTo}`, 25, yPosition + 15);
-      pdf.text(`Datum: _______________`, 25, yPosition + 25);
+      currentY += 10;
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
       
-      // Admin handtekening
-      pdf.line(110, yPosition, 175, yPosition);
-      pdf.text(template.signatureFields.adminLabel || 'Handtekening beheerder', 110, yPosition + 5);
-      pdf.text('Naam: _______________', 110, yPosition + 15);
-      pdf.text(`Datum: _______________`, 110, yPosition + 25);
+      template.conditions.forEach((condition: string) => {
+        const lines = pdf.splitTextToSize(condition, 170);
+        pdf.text(lines, leftCol, currentY);
+        currentY += lines.length * 5 + 3;
+      });
+      
+      // Footer section
+      currentY += 20;
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(template.footerText, leftCol, currentY);
+      
+      // Signature section
+      currentY += 40;
+      pdf.setFontSize(11);
+      
+      // Signature line and label
+      pdf.line(leftCol, currentY, leftCol + 80, currentY);
+      pdf.text(template.signatureFields.userLabel, leftCol, currentY + 10);
+      pdf.text('Datum:_______________', leftCol + 100, currentY + 10);
       
       // Save PDF and create database record
       const pdfBlob = pdf.output('blob');

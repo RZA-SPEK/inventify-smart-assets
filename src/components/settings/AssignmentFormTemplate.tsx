@@ -26,19 +26,16 @@ interface AssignmentFormTemplates {
 }
 
 const DEFAULT_TEMPLATE: AssignmentFormTemplate = {
-  title: 'Asset Toewijzingsformulier',
-  headerText: 'Dit formulier bevestigt de toewijzing van bedrijfsmiddelen aan de medewerker.',
+  title: '{assetType} • Uitgifte',
+  headerText: '{assignedTo}',
   conditions: [
-    'De gebruiker is verantwoordelijk voor het zorgvuldig gebruik van het toegewezen asset',
-    'Verlies, diefstal of schade moet onmiddellijk gemeld worden',
-    'Het asset mag niet aan derden worden uitgeleend zonder toestemming',
-    'Bij vertrek uit de organisatie moet het asset worden geretourneerd',
-    'Regulier onderhoud en updates zijn verplicht'
+    'Het verstrekte apparaat is persoonlijk, vertrouwelijk en niet overdraagbaar',
+    '(Bij oneigenlijk gebruik wordt desbetreffende persoon ter verantwoording geroepen)'
   ],
-  footerText: 'Door ondertekening bevestigt de gebruiker akkoord te gaan met bovenstaande voorwaarden.',
+  footerText: 'Getekend voor ontvangst,',
   signatureFields: {
-    userLabel: 'Handtekening gebruiker',
-    adminLabel: 'Handtekening beheerder'
+    userLabel: 'Handtekening',
+    adminLabel: 'Beheerder'
   }
 };
 
@@ -256,27 +253,36 @@ export const AssignmentFormTemplate = () => {
         </div>
 
         {selectedAssetType && (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="title">Formulier Titel</Label>
-              <Input
-                id="title"
-                value={currentTemplate.title}
-                onChange={(e) => updateCurrentTemplate({ ...currentTemplate, title: e.target.value })}
-                placeholder="Titel van het formulier"
-              />
+          <>
+            <div className="bg-muted/50 p-4 rounded-lg">
+              <h4 className="font-medium mb-2">Beschikbare placeholders:</h4>
+              <div className="text-sm space-y-1">
+                <div><code className="bg-background px-1 rounded">{'{assetType}'}</code> - Wordt vervangen door het asset type</div>
+                <div><code className="bg-background px-1 rounded">{'{assignedTo}'}</code> - Wordt vervangen door de naam van de toegewezen persoon</div>
+              </div>
             </div>
+            
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="title">Formulier Titel</Label>
+                <Input
+                  id="title"
+                  value={currentTemplate.title}
+                  onChange={(e) => updateCurrentTemplate({ ...currentTemplate, title: e.target.value })}
+                  placeholder="Bijv: {assetType} • Uitgifte"
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="headerText">Header Tekst</Label>
-              <Textarea
-                id="headerText"
-                value={currentTemplate.headerText}
-                onChange={(e) => updateCurrentTemplate({ ...currentTemplate, headerText: e.target.value })}
-                placeholder="Introductie tekst bovenaan het formulier"
-                rows={3}
-              />
-            </div>
+              <div>
+                <Label htmlFor="headerText">Header Tekst</Label>
+                <Textarea
+                  id="headerText"
+                  value={currentTemplate.headerText}
+                  onChange={(e) => updateCurrentTemplate({ ...currentTemplate, headerText: e.target.value })}
+                  placeholder="Bijv: {assignedTo}"
+                  rows={3}
+                />
+              </div>
 
             <div>
               <Label>Voorwaarden en Verantwoordelijkheden</Label>
@@ -348,7 +354,8 @@ export const AssignmentFormTemplate = () => {
                 />
               </div>
             </div>
-          </div>
+            </div>
+          </>
         )}
 
         <div className="flex gap-2 pt-4 border-t">
