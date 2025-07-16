@@ -38,14 +38,14 @@ export const AssetAssignmentPDF = ({ assetId, assetData, onDocumentGenerated }: 
 
     setIsGenerating(true);
     try {
-      // Load template from database
+      // Load templates from database
       const { data: templateData } = await supabase
         .from('system_settings')
         .select('settings_data')
-        .eq('id', 'assignment_form_template')
+        .eq('id', 'assignment_form_templates')
         .maybeSingle();
 
-      const template = templateData?.settings_data as any || {
+      const defaultTemplate = {
         title: 'Asset Toewijzingsformulier',
         headerText: 'Dit formulier bevestigt de toewijzing van bedrijfsmiddelen aan de medewerker.',
         conditions: [
@@ -61,6 +61,10 @@ export const AssetAssignmentPDF = ({ assetId, assetData, onDocumentGenerated }: 
           adminLabel: 'Handtekening beheerder'
         }
       };
+
+      // Get template for this specific asset type, fallback to default
+      const templatesData = templateData?.settings_data as any || {};
+      const template = templatesData[assetData.type] || defaultTemplate;
 
       const pdf = new jsPDF();
       

@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Save, RotateCcw } from 'lucide-react';
+import { useSettings } from '@/hooks/useSettings';
+import { FileText, Save, RotateCcw, Copy } from 'lucide-react';
 
 interface AssignmentFormTemplate {
   title: string;
@@ -17,6 +19,10 @@ interface AssignmentFormTemplate {
     userLabel: string;
     adminLabel: string;
   };
+}
+
+interface AssignmentFormTemplates {
+  [assetType: string]: AssignmentFormTemplate;
 }
 
 const DEFAULT_TEMPLATE: AssignmentFormTemplate = {
@@ -37,22 +43,31 @@ const DEFAULT_TEMPLATE: AssignmentFormTemplate = {
 };
 
 export const AssignmentFormTemplate = () => {
-  const [template, setTemplate] = useState<AssignmentFormTemplate>(DEFAULT_TEMPLATE);
+  const { settings } = useSettings();
+  const [templates, setTemplates] = useState<AssignmentFormTemplates>({});
+  const [selectedAssetType, setSelectedAssetType] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    loadTemplate();
+    loadTemplates();
   }, []);
 
-  const loadTemplate = async () => {
+  useEffect(() => {
+    // Set first asset type as default selected
+    if (settings.assetTypes.length > 0 && !selectedAssetType) {
+      setSelectedAssetType(settings.assetTypes[0]);
+    }
+  }, [settings.assetTypes, selectedAssetType]);
+
+  const loadTemplates = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('system_settings')
         .select('settings_data')
-        .eq('id', 'assignment_form_template')
+        .eq('id', 'assignment_form_templates')
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
@@ -60,14 +75,14 @@ export const AssignmentFormTemplate = () => {
       }
 
       if (data?.settings_data) {
-        const templateData = data.settings_data as unknown as AssignmentFormTemplate;
-        setTemplate({ ...DEFAULT_TEMPLATE, ...templateData });
+        const templatesData = data.settings_data as unknown as AssignmentFormTemplates;
+        setTemplates(templatesData);
       }
     } catch (error) {
-      console.error('Error loading template:', error);
+      console.error('Error loading templates:', error);
       toast({
         title: "Fout bij laden",
-        description: "Kon de formuliertemplate niet laden.",
+        description: "Kon de formuliertemplates niet laden.",
         variant: "destructive",
       });
     } finally {
@@ -75,37 +90,37 @@ export const AssignmentFormTemplate = () => {
     }
   };
 
-  const saveTemplate = async () => {
+  const saveTemplates = async () => {
     setIsSaving(true);
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Gebruiker niet ingelogd');
 
-      // Check if template exists
+      // Check if templates exist
       const { data: existing } = await supabase
         .from('system_settings')
         .select('id')
-        .eq('id', 'assignment_form_template')
+        .eq('id', 'assignment_form_templates')
         .maybeSingle();
 
       let result;
       if (existing) {
-        // Update existing template
+        // Update existing templates
         result = await supabase
           .from('system_settings')
           .update({
-            settings_data: template as unknown as any,
+            settings_data: templates as unknown as any,
             updated_by: user.user.id,
             updated_at: new Date().toISOString()
           })
-          .eq('id', 'assignment_form_template');
+          .eq('id', 'assignment_form_templates');
       } else {
-        // Create new template
+        // Create new templates
         result = await supabase
           .from('system_settings')
           .insert({
-            id: 'assignment_form_template',
-            settings_data: template as unknown as any,
+            id: 'assignment_form_templates',
+            settings_data: templates as unknown as any,
             updated_by: user.user.id
           });
       }
@@ -113,14 +128,14 @@ export const AssignmentFormTemplate = () => {
       if (result.error) throw result.error;
 
       toast({
-        title: "Template opgeslagen",
-        description: "Formuliertemplate is succesvol bijgewerkt.",
+        title: "Templates opgeslagen",
+        description: "Formuliertemplates zijn succesvol bijgewerkt.",
       });
     } catch (error) {
-      console.error('Error saving template:', error);
+      console.error('Error saving templates:', error);
       toast({
         title: "Fout bij opslaan",
-        description: "Kon de template niet opslaan.",
+        description: "Kon de templates niet opslaan.",
         variant: "destructive",
       });
     } finally {
@@ -128,30 +143,54 @@ export const AssignmentFormTemplate = () => {
     }
   };
 
-  const resetTemplate = () => {
-    setTemplate(DEFAULT_TEMPLATE);
-    toast({
-      title: "Template gereset",
-      description: "Formuliertemplate is teruggezet naar standaard waarden.",
+  const getCurrentTemplate = (): AssignmentFormTemplate => {
+    return templates[selectedAssetType] || DEFAULT_TEMPLATE;
+  };
+
+  const updateCurrentTemplate = (newTemplate: AssignmentFormTemplate) => {
+    setTemplates({
+      ...templates,
+      [selectedAssetType]: newTemplate
     });
   };
 
+  const resetCurrentTemplate = () => {
+    updateCurrentTemplate(DEFAULT_TEMPLATE);
+    toast({
+      title: "Template gereset",
+      description: `Template voor ${selectedAssetType} is teruggezet naar standaard waarden.`,
+    });
+  };
+
+  const copyFromOtherType = (sourceType: string) => {
+    if (templates[sourceType]) {
+      updateCurrentTemplate(templates[sourceType]);
+      toast({
+        title: "Template gekopieerd",
+        description: `Template van ${sourceType} is gekopieerd naar ${selectedAssetType}.`,
+      });
+    }
+  };
+
   const updateCondition = (index: number, value: string) => {
-    const newConditions = [...template.conditions];
+    const currentTemplate = getCurrentTemplate();
+    const newConditions = [...currentTemplate.conditions];
     newConditions[index] = value;
-    setTemplate({ ...template, conditions: newConditions });
+    updateCurrentTemplate({ ...currentTemplate, conditions: newConditions });
   };
 
   const addCondition = () => {
-    setTemplate({
-      ...template,
-      conditions: [...template.conditions, 'Nieuwe voorwaarde']
+    const currentTemplate = getCurrentTemplate();
+    updateCurrentTemplate({
+      ...currentTemplate,
+      conditions: [...currentTemplate.conditions, 'Nieuwe voorwaarde']
     });
   };
 
   const removeCondition = (index: number) => {
-    const newConditions = template.conditions.filter((_, i) => i !== index);
-    setTemplate({ ...template, conditions: newConditions });
+    const currentTemplate = getCurrentTemplate();
+    const newConditions = currentTemplate.conditions.filter((_, i) => i !== index);
+    updateCurrentTemplate({ ...currentTemplate, conditions: newConditions });
   };
 
   if (isLoading) {
@@ -166,41 +205,83 @@ export const AssignmentFormTemplate = () => {
     );
   }
 
+  const currentTemplate = getCurrentTemplate();
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          Toewijzingsformulier Template
+          Toewijzingsformulier Templates
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="title">Formulier Titel</Label>
-            <Input
-              id="title"
-              value={template.title}
-              onChange={(e) => setTemplate({ ...template, title: e.target.value })}
-              placeholder="Titel van het formulier"
-            />
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <Label htmlFor="assetType">Asset Type</Label>
+            <Select value={selectedAssetType} onValueChange={setSelectedAssetType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecteer asset type" />
+              </SelectTrigger>
+              <SelectContent>
+                {settings.assetTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+          
+          {Object.keys(templates).length > 0 && selectedAssetType && (
+            <div className="flex-1">
+              <Label htmlFor="copyFrom">Kopieer van ander type</Label>
+              <Select onValueChange={copyFromOtherType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecteer type om te kopiëren" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.keys(templates)
+                    .filter(type => type !== selectedAssetType)
+                    .map((type) => (
+                      <SelectItem key={type} value={type}>
+                        <Copy className="h-4 w-4 mr-2 inline" />
+                        {type}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
 
-          <div>
-            <Label htmlFor="headerText">Header Tekst</Label>
-            <Textarea
-              id="headerText"
-              value={template.headerText}
-              onChange={(e) => setTemplate({ ...template, headerText: e.target.value })}
-              placeholder="Introductie tekst bovenaan het formulier"
-              rows={3}
-            />
-          </div>
+        {selectedAssetType && (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="title">Formulier Titel</Label>
+              <Input
+                id="title"
+                value={currentTemplate.title}
+                onChange={(e) => updateCurrentTemplate({ ...currentTemplate, title: e.target.value })}
+                placeholder="Titel van het formulier"
+              />
+            </div>
 
-          <div>
-            <Label>Voorwaarden en Verantwoordelijkheden</Label>
-            <div className="space-y-2 mt-2">
-              {template.conditions.map((condition, index) => (
+            <div>
+              <Label htmlFor="headerText">Header Tekst</Label>
+              <Textarea
+                id="headerText"
+                value={currentTemplate.headerText}
+                onChange={(e) => updateCurrentTemplate({ ...currentTemplate, headerText: e.target.value })}
+                placeholder="Introductie tekst bovenaan het formulier"
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <Label>Voorwaarden en Verantwoordelijkheden</Label>
+              <div className="space-y-2 mt-2">
+                {currentTemplate.conditions.map((condition, index) => (
                 <div key={index} className="flex gap-2">
                   <Textarea
                     value={condition}
@@ -213,76 +294,77 @@ export const AssignmentFormTemplate = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => removeCondition(index)}
-                    disabled={template.conditions.length <= 1}
+                    disabled={currentTemplate.conditions.length <= 1}
                   >
                     ×
                   </Button>
                 </div>
               ))}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addCondition}
-                className="w-full"
-              >
-                + Voorwaarde Toevoegen
-              </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addCondition}
+                  className="w-full"
+                >
+                  + Voorwaarde Toevoegen
+                </Button>
+              </div>
             </div>
-          </div>
 
-          <div>
-            <Label htmlFor="footerText">Footer Tekst</Label>
-            <Textarea
-              id="footerText"
-              value={template.footerText}
-              onChange={(e) => setTemplate({ ...template, footerText: e.target.value })}
-              placeholder="Tekst onderaan het formulier"
-              rows={2}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="userLabel">Gebruiker Handtekening Label</Label>
-              <Input
-                id="userLabel"
-                value={template.signatureFields.userLabel}
-                onChange={(e) => setTemplate({
-                  ...template,
-                  signatureFields: { ...template.signatureFields, userLabel: e.target.value }
-                })}
-                placeholder="Label voor gebruiker handtekening"
+              <Label htmlFor="footerText">Footer Tekst</Label>
+              <Textarea
+                id="footerText"
+                value={currentTemplate.footerText}
+                onChange={(e) => updateCurrentTemplate({ ...currentTemplate, footerText: e.target.value })}
+                placeholder="Tekst onderaan het formulier"
+                rows={2}
               />
             </div>
-            <div>
-              <Label htmlFor="adminLabel">Beheerder Handtekening Label</Label>
-              <Input
-                id="adminLabel"
-                value={template.signatureFields.adminLabel}
-                onChange={(e) => setTemplate({
-                  ...template,
-                  signatureFields: { ...template.signatureFields, adminLabel: e.target.value }
-                })}
-                placeholder="Label voor beheerder handtekening"
-              />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="userLabel">Gebruiker Handtekening Label</Label>
+                <Input
+                  id="userLabel"
+                  value={currentTemplate.signatureFields.userLabel}
+                  onChange={(e) => updateCurrentTemplate({
+                    ...currentTemplate,
+                    signatureFields: { ...currentTemplate.signatureFields, userLabel: e.target.value }
+                  })}
+                  placeholder="Label voor gebruiker handtekening"
+                />
+              </div>
+              <div>
+                <Label htmlFor="adminLabel">Beheerder Handtekening Label</Label>
+                <Input
+                  id="adminLabel"
+                  value={currentTemplate.signatureFields.adminLabel}
+                  onChange={(e) => updateCurrentTemplate({
+                    ...currentTemplate,
+                    signatureFields: { ...currentTemplate.signatureFields, adminLabel: e.target.value }
+                  })}
+                  placeholder="Label voor beheerder handtekening"
+                />
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="flex gap-2 pt-4 border-t">
-          <Button onClick={saveTemplate} disabled={isSaving} className="flex-1">
+          <Button onClick={saveTemplates} disabled={isSaving || !selectedAssetType} className="flex-1">
             {isSaving ? (
               "Opslaan..."
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Template Opslaan
+                Alle Templates Opslaan
               </>
             )}
           </Button>
-          <Button variant="outline" onClick={resetTemplate}>
+          <Button variant="outline" onClick={resetCurrentTemplate} disabled={!selectedAssetType}>
             <RotateCcw className="h-4 w-4 mr-2" />
-            Reset
+            Reset {selectedAssetType}
           </Button>
         </div>
       </CardContent>
