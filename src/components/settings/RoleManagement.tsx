@@ -35,6 +35,7 @@ export const RoleManagement = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [rolePermissions, setRolePermissions] = useState<RolePermission[]>([]);
+  const [roleCategories, setRoleCategories] = useState<Record<string, string[]>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
@@ -47,6 +48,7 @@ export const RoleManagement = () => {
 
   useEffect(() => {
     loadData();
+    fetchRoleCategories();
   }, []);
 
   const loadData = async () => {
@@ -78,6 +80,7 @@ export const RoleManagement = () => {
       setRoles(rolesData || []);
       setPermissions(permissionsData || []);
       setRolePermissions(rolePermissionsData || []);
+      fetchRoleCategories();
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
@@ -87,6 +90,26 @@ export const RoleManagement = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchRoleCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('role_categories')
+        .select('role_id, category');
+      
+      if (error) throw error;
+      
+      const categoriesByRole = data.reduce((acc, item) => {
+        if (!acc[item.role_id]) acc[item.role_id] = [];
+        acc[item.role_id].push(item.category);
+        return acc;
+      }, {} as Record<string, string[]>);
+      
+      setRoleCategories(categoriesByRole);
+    } catch (error) {
+      console.error('Error fetching role categories:', error);
     }
   };
 
@@ -193,6 +216,46 @@ export const RoleManagement = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const updateRoleCategories = async (roleId: string, categories: string[]) => {
+    try {
+      // Delete existing categories
+      await supabase
+        .from('role_categories')
+        .delete()
+        .eq('role_id', roleId);
+
+      // Insert new categories
+      if (categories.length > 0) {
+        const categoryInserts = categories.map(category => ({
+          role_id: roleId,
+          category
+        }));
+
+        await supabase
+          .from('role_categories')
+          .insert(categoryInserts);
+      }
+
+      // Update local state
+      setRoleCategories(prev => ({
+        ...prev,
+        [roleId]: categories
+      }));
+
+      toast({
+        title: "Categorieën bijgewerkt",
+        description: "De categorieën voor deze rol zijn succesvol bijgewerkt.",
+      });
+    } catch (error) {
+      console.error('Error updating role categories:', error);
+      toast({
+        title: "Fout",
+        description: "Er is een fout opgetreden bij het bijwerken van de categorieën.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -371,6 +434,41 @@ export const RoleManagement = () => {
                               {permission.description}
                             </Badge>
                           ))}
+                        </div>
+                        {roleCategories[role.id] && roleCategories[role.id].length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-xs text-muted-foreground mb-1">Toegestane categorieën:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {roleCategories[role.id].map((category) => (
+                                <Badge key={category} variant="outline" className="text-xs">
+                                  {category}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div className="mt-2">
+                          <p className="text-xs text-muted-foreground mb-1">Categorieën beheren:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {['ICT', 'Facilitair', 'Catering', 'Logistics'].map((category) => (
+                              <div key={category} className="flex items-center space-x-1">
+                                <Checkbox
+                                  id={`${role.id}-${category}`}
+                                  checked={roleCategories[role.id]?.includes(category) || false}
+                                  onCheckedChange={(checked) => {
+                                    const currentCategories = roleCategories[role.id] || [];
+                                    const updatedCategories = checked
+                                      ? [...currentCategories, category]
+                                      : currentCategories.filter(cat => cat !== category);
+                                    updateRoleCategories(role.id, updatedCategories);
+                                  }}
+                                />
+                                <Label htmlFor={`${role.id}-${category}`} className="text-xs">
+                                  {category}
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                       <div className="flex gap-2">

@@ -341,6 +341,35 @@ export type Database = {
           },
         ]
       }
+      role_categories: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          role_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          role_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_categories_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           created_at: string

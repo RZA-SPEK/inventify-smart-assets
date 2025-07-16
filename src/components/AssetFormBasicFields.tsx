@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Asset } from "@/types/asset";
 import { useSettings } from "@/hooks/useSettings";
+import { useUserCategories } from "@/hooks/useUserCategories";
 
 interface AssetFormBasicFieldsProps {
   formData: {
@@ -19,6 +20,7 @@ interface AssetFormBasicFieldsProps {
 
 export const AssetFormBasicFields = ({ formData, onFormDataChange }: AssetFormBasicFieldsProps) => {
   const { settings } = useSettings();
+  const { availableCategories } = useUserCategories();
 
   // Helper function to update individual fields
   const handleFieldChange = (field: string, value: any) => {
@@ -62,7 +64,7 @@ export const AssetFormBasicFields = ({ formData, onFormDataChange }: AssetFormBa
               <SelectValue placeholder="Selecteer categorie" />
             </SelectTrigger>
             <SelectContent>
-              {settings.categories.map((category) => (
+              {availableCategories.map((category) => (
                 <SelectItem key={category} value={category as Asset["category"]}>
                   {category}
                 </SelectItem>
