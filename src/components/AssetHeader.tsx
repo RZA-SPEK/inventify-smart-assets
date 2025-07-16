@@ -1,7 +1,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Calendar, History, Plus } from "lucide-react";
-import { NotificationCenter } from "./NotificationCenter";
 import { Link } from "react-router-dom";
 
 interface AssetHeaderProps {
@@ -34,7 +33,6 @@ export const AssetHeader = ({
       </div>
       
       <div className="flex flex-wrap items-center responsive-gap">
-        <NotificationCenter />
         {canManageAssets && (
           <Button
             onClick={onCreateAsset}
