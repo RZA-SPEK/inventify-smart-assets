@@ -464,6 +464,7 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          setting_type: string | null
           settings_data: Json
           updated_at: string | null
           updated_by: string | null
@@ -471,6 +472,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
+          setting_type?: string | null
           settings_data: Json
           updated_at?: string | null
           updated_by?: string | null
@@ -478,6 +480,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
+          setting_type?: string | null
           settings_data?: Json
           updated_at?: string | null
           updated_by?: string | null

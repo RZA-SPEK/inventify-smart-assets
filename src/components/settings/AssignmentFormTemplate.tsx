@@ -64,7 +64,7 @@ export const AssignmentFormTemplate = () => {
       const { data, error } = await supabase
         .from('system_settings')
         .select('settings_data')
-        .eq('id', 'assignment_form_templates')
+        .eq('setting_type', 'assignment_form_templates')
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
@@ -97,7 +97,7 @@ export const AssignmentFormTemplate = () => {
       const { data: existing } = await supabase
         .from('system_settings')
         .select('id')
-        .eq('id', 'assignment_form_templates')
+        .eq('setting_type', 'assignment_form_templates')
         .maybeSingle();
 
       let result;
@@ -110,13 +110,13 @@ export const AssignmentFormTemplate = () => {
             updated_by: user.user.id,
             updated_at: new Date().toISOString()
           })
-          .eq('id', 'assignment_form_templates');
+          .eq('setting_type', 'assignment_form_templates');
       } else {
         // Create new templates
         result = await supabase
           .from('system_settings')
           .insert({
-            id: 'assignment_form_templates',
+            setting_type: 'assignment_form_templates',
             settings_data: templates as unknown as any,
             updated_by: user.user.id
           });

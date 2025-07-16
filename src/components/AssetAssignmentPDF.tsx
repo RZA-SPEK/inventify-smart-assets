@@ -42,7 +42,7 @@ export const AssetAssignmentPDF = ({ assetId, assetData, onDocumentGenerated }: 
       const { data: templateData } = await supabase
         .from('system_settings')
         .select('settings_data')
-        .eq('id', 'assignment_form_templates')
+        .eq('setting_type', 'assignment_form_templates')
         .maybeSingle();
 
       const defaultTemplate = {
