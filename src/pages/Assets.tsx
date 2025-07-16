@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Asset } from "@/types/asset";
 
 type SortField = 'asset_tag' | 'type' | 'brand' | 'model' | 'status' | 'location' | 'assigned_to';
 type SortOrder = 'asc' | 'desc';
@@ -43,8 +44,20 @@ const Assets = () => {
 
   const sortedAssets = useMemo(() => {
     const sorted = [...filteredAssets].sort((a, b) => {
-      let aValue = a[sortField as keyof typeof a] || '';
-      let bValue = b[sortField as keyof typeof b] || '';
+      // Map sort field names to actual property names
+      const fieldMap: Record<SortField, keyof Asset> = {
+        'asset_tag': 'assetTag',
+        'type': 'type',
+        'brand': 'brand',
+        'model': 'model',
+        'status': 'status',
+        'location': 'location',
+        'assigned_to': 'assignedTo'
+      };
+      
+      const actualField = fieldMap[sortField];
+      let aValue = a[actualField] || '';
+      let bValue = b[actualField] || '';
       
       // Convert to string for comparison
       aValue = String(aValue).toLowerCase();
