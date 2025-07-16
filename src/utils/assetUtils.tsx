@@ -34,7 +34,7 @@ export const getCategoryDisplayName = (category: string) => {
     case 'ICT': return 'ICT';
     case 'Facilitair': return 'Facilitair';
     case 'Catering': return 'Catering';
-    case 'Logistics': return 'Logistiek';
+    case 'Logistiek': return 'Logistiek';
     default: return category;
   }
 };

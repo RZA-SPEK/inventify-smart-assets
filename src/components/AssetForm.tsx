@@ -169,7 +169,7 @@ export const AssetForm = ({ asset, onSave, onCancel }: AssetFormProps) => {
       baseNumber = 1;
     } else if (formData.category === "Catering") {
       baseNumber = 60001;
-    } else if (formData.category === "Logistics") {
+    } else if (formData.category === "Logistiek") {
       baseNumber = 70001;
     } else {
       baseNumber = 1;

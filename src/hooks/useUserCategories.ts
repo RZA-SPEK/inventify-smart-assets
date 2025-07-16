@@ -51,7 +51,7 @@ export const useUserCategories = () => {
       } catch (error) {
         console.error('Error fetching user categories:', error);
         // Fallback to all categories if there's an error
-        setAvailableCategories(['ICT', 'Facilitair', 'Catering', 'Logistics']);
+        setAvailableCategories(['ICT', 'Facilitair', 'Catering', 'Logistiek']);
       }
     };
 

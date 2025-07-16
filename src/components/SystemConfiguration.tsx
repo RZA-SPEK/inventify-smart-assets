@@ -103,7 +103,7 @@ export const SystemConfiguration = () => {
                   <SelectItem value="ICT">ICT</SelectItem>
                   <SelectItem value="Facilitair">Facilitair</SelectItem>
                   <SelectItem value="Catering">Catering</SelectItem>
-                  <SelectItem value="Logistics">Logistiek</SelectItem>
+                  <SelectItem value="Logistiek">Logistiek</SelectItem>
                 </SelectContent>
               </Select>
             </div>

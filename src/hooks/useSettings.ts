@@ -13,7 +13,7 @@ export interface SystemSettings {
 }
 
 const DEFAULT_SETTINGS: SystemSettings = {
-  categories: ["ICT", "Facilitair", "Catering", "Logistics"],
+  categories: ["ICT", "Facilitair", "Catering", "Logistiek"],
   statuses: ["In gebruik", "In voorraad", "Defect", "Onderhoud", "Deleted"],
   assetTypes: ["Laptop", "Telefoon", "Headset", "Bureau", "Monitor", "Printer", "Kabel", "Toetsenbord", "Muis"],
   locations: ["Kantoor Amsterdam", "Kantoor Utrecht", "ICT Magazijn", "Facilitair Magazijn", "Hoofdkantoor"],

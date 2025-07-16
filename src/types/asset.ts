@@ -14,7 +14,7 @@ export interface Asset {
   warrantyExpiry?: string;
   purchasePrice?: number;
   penaltyAmount?: number;
-  category: "ICT" | "Facilitair" | "Catering" | "Logistics";
+  category: "ICT" | "Facilitair" | "Catering" | "Logistiek";
   image?: string;
   comments?: string;
   reservable?: boolean;

@@ -450,7 +450,7 @@ export const RoleManagement = () => {
                         <div className="mt-2">
                           <p className="text-xs text-muted-foreground mb-1">Categorieën beheren:</p>
                           <div className="flex flex-wrap gap-1">
-                            {['ICT', 'Facilitair', 'Catering', 'Logistics'].map((category) => (
+                            {['ICT', 'Facilitair', 'Catering', 'Logistiek'].map((category) => (
                               <div key={category} className="flex items-center space-x-1">
                                 <Checkbox
                                   id={`${role.id}-${category}`}
