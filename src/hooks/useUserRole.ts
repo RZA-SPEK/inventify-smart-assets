@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-export type UserRole = 'ICT Admin' | 'Facilitair Admin' | 'Gebruiker';
+export type UserRole = 'Superadmin' | 'ICT Admin' | 'Facilitair Admin' | 'Gebruiker';
 
 export const useUserRole = () => {
   const [currentRole, setCurrentRole] = useState<UserRole>('Gebruiker');
@@ -30,7 +30,7 @@ export const useUserRole = () => {
         } else {
           // Cast the role to UserRole type, with fallback to 'Gebruiker'
           const role = data?.role as UserRole;
-          setCurrentRole(role && ['ICT Admin', 'Facilitair Admin', 'Gebruiker'].includes(role) ? role : 'Gebruiker');
+          setCurrentRole(role && ['Superadmin', 'ICT Admin', 'Facilitair Admin', 'Gebruiker'].includes(role) ? role : 'Gebruiker');
         }
       } catch (error) {
         setCurrentRole('Gebruiker');
@@ -42,9 +42,9 @@ export const useUserRole = () => {
     fetchUserRole();
   }, []);
 
-  const canManageAssets = currentRole === 'ICT Admin' || currentRole === 'Facilitair Admin';
-  const canViewSettings = currentRole === 'ICT Admin' || currentRole === 'Facilitair Admin';
-  const canManageUsers = currentRole === 'ICT Admin' || currentRole === 'Facilitair Admin';
+  const canManageAssets = currentRole === 'Superadmin' || currentRole === 'ICT Admin' || currentRole === 'Facilitair Admin';
+  const canViewSettings = currentRole === 'Superadmin' || currentRole === 'ICT Admin' || currentRole === 'Facilitair Admin';
+  const canManageUsers = currentRole === 'Superadmin' || currentRole === 'ICT Admin' || currentRole === 'Facilitair Admin';
 
   return {
     currentRole,
