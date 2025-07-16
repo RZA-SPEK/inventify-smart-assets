@@ -17,10 +17,29 @@ interface ActivityLogEntry {
   user_id: string | null;
   user_email?: string;
   user_name?: string;
+  user_role?: string;
   asset_info?: {
     type: string;
     brand: string;
     model: string;
+    asset_tag: string;
+    serial_number: string;
+    location: string;
+    status: string;
+    assigned_to: string;
+  };
+  reservation_info?: {
+    requester_name: string;
+    requested_date: string;
+    return_date: string;
+    purpose: string;
+    status: string;
+    asset_type: string;
+  };
+  profile_info?: {
+    email: string;
+    full_name: string;
+    role: string;
   };
 }
 
@@ -89,15 +108,76 @@ const ActivityLog = () => {
           try {
             const { data: assetData } = await supabase
               .from('assets')
-              .select('type, brand, model')
+              .select('type, brand, model, asset_tag, serial_number, location, status, assigned_to')
               .eq('id', activity.record_id)
               .single();
             
             if (assetData) {
-              enrichedActivity.asset_info = assetData;
+              enrichedActivity.asset_info = {
+                type: assetData.type || 'Onbekend',
+                brand: assetData.brand || 'Onbekend',
+                model: assetData.model || 'Onbekend',
+                asset_tag: assetData.asset_tag || 'Geen tag',
+                serial_number: assetData.serial_number || 'Geen serienummer',
+                location: assetData.location || 'Onbekende locatie',
+                status: assetData.status || 'Onbekende status',
+                assigned_to: assetData.assigned_to || 'Niet toegewezen'
+              };
             }
           } catch (error) {
             console.log('Could not fetch asset info for:', activity.record_id);
+          }
+        }
+
+        // Get reservation information if it's a reservation-related activity
+        if (activity.table_name === 'reservations' && activity.record_id) {
+          try {
+            const { data: reservationData } = await supabase
+              .from('reservations')
+              .select(`
+                requester_name,
+                requested_date,
+                return_date,
+                purpose,
+                status,
+                assets!inner(type)
+              `)
+              .eq('id', activity.record_id)
+              .single();
+            
+            if (reservationData) {
+              enrichedActivity.reservation_info = {
+                requester_name: reservationData.requester_name || 'Onbekende aanvrager',
+                requested_date: reservationData.requested_date || 'Onbekende datum',
+                return_date: reservationData.return_date || 'Onbekende datum',
+                purpose: reservationData.purpose || 'Geen doel opgegeven',
+                status: reservationData.status || 'Onbekende status',
+                asset_type: reservationData.assets?.type || 'Onbekend type'
+              };
+            }
+          } catch (error) {
+            console.log('Could not fetch reservation info for:', activity.record_id);
+          }
+        }
+
+        // Get profile information if it's a profile-related activity
+        if (activity.table_name === 'profiles' && activity.record_id) {
+          try {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('email, full_name, role')
+              .eq('id', activity.record_id)
+              .single();
+            
+            if (profileData) {
+              enrichedActivity.profile_info = {
+                email: profileData.email || 'Geen email',
+                full_name: profileData.full_name || 'Onbekende naam',
+                role: profileData.role || 'Geen rol'
+              };
+            }
+          } catch (error) {
+            console.log('Could not fetch profile info for:', activity.record_id);
           }
         }
 
@@ -106,23 +186,26 @@ const ActivityLog = () => {
           try {
             const { data: userData } = await supabase
               .from('profiles')
-              .select('email, full_name')
+              .select('email, full_name, role')
               .eq('id', activity.user_id)
               .single();
             
             if (userData) {
               enrichedActivity.user_email = userData.email || undefined;
               enrichedActivity.user_name = userData.full_name || userData.email || undefined;
+              enrichedActivity.user_role = userData.role || 'Onbekende rol';
             }
           } catch (error) {
             console.log('Could not fetch user info for:', activity.user_id);
             // If we can't find the profile, show "Onbekende gebruiker"
             enrichedActivity.user_name = 'Onbekende gebruiker';
+            enrichedActivity.user_role = 'Onbekende rol';
           }
         } else {
           // No user_id means it was a system action or from before the enhancement
           enrichedActivity.user_name = 'Systeem';
           enrichedActivity.user_email = undefined;
+          enrichedActivity.user_role = 'Systeem';
         }
 
         return enrichedActivity;
@@ -152,6 +235,10 @@ const ActivityLog = () => {
         return <User className="h-4 w-4" />;
       case 'reservations':
         return <CalendarDays className="h-4 w-4" />;
+      case 'roles':
+        return <User className="h-4 w-4" />;
+      case 'permissions':
+        return <FileText className="h-4 w-4" />;
       default:
         return <FileText className="h-4 w-4" />;
     }
@@ -165,6 +252,12 @@ const ActivityLog = () => {
         return 'Gebruiker';
       case 'reservations':
         return 'Reservering';
+      case 'roles':
+        return 'Rol';
+      case 'permissions':
+        return 'Permissie';
+      case 'role_permissions':
+        return 'Rol Permissie';
       default:
         return tableName;
     }
@@ -199,6 +292,18 @@ const ActivityLog = () => {
       if (assetDescription) {
         description += `: ${assetDescription}`;
       }
+      
+      if (activity.asset_info.asset_tag && activity.asset_info.asset_tag !== 'Geen tag') {
+        description += ` - Tag: ${activity.asset_info.asset_tag}`;
+      }
+    }
+    
+    if (activity.reservation_info) {
+      description += `: ${activity.reservation_info.asset_type} door ${activity.reservation_info.requester_name}`;
+    }
+    
+    if (activity.profile_info) {
+      description += `: ${activity.profile_info.full_name} (${activity.profile_info.email})`;
     }
     
     return description;
@@ -232,8 +337,19 @@ const ActivityLog = () => {
       activity.asset_info?.brand,
       activity.asset_info?.model,
       activity.asset_info?.type,
+      activity.asset_info?.asset_tag,
+      activity.asset_info?.serial_number,
+      activity.asset_info?.location,
+      activity.asset_info?.status,
+      activity.reservation_info?.requester_name,
+      activity.reservation_info?.purpose,
+      activity.reservation_info?.status,
+      activity.profile_info?.email,
+      activity.profile_info?.full_name,
+      activity.profile_info?.role,
       activity.user_name,
       activity.user_email,
+      activity.user_role,
       activity.record_id
     ].filter(Boolean).join(' ').toLowerCase();
 
@@ -383,7 +499,7 @@ const ActivityLog = () => {
                 {filteredActivities.map((activity) => (
                   <div
                     key={activity.id}
-                    className="flex flex-col space-y-2 p-3 sm:p-4 bg-gray-50 rounded-lg"
+                    className="flex flex-col space-y-3 p-4 sm:p-5 bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -399,12 +515,17 @@ const ActivityLog = () => {
                       </div>
                     </div>
                     
-                    <div className="flex flex-col sm:flex-row gap-1 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs sm:text-sm text-gray-600">
                       <div>
                         <span className="font-medium">Tijdstip:</span> {formatTimestamp(activity.created_at)}
                       </div>
                       <div>
                         <span className="font-medium">Gebruiker:</span> {getUserDisplayName(activity)}
+                        {activity.user_role && activity.user_role !== 'Onbekende rol' && (
+                          <span className="ml-1 text-xs bg-gray-100 px-1.5 py-0.5 rounded">
+                            {activity.user_role}
+                          </span>
+                        )}
                       </div>
                       {activity.record_id && (
                         <div>
@@ -415,6 +536,56 @@ const ActivityLog = () => {
                         </div>
                       )}
                     </div>
+
+                    {/* Additional details section */}
+                    {(activity.asset_info || activity.reservation_info || activity.profile_info) && (
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 text-xs sm:text-sm">
+                          
+                          {activity.asset_info && (
+                            <div className="bg-blue-50 p-3 rounded-md">
+                              <h4 className="font-medium text-blue-800 mb-2">Asset Details</h4>
+                              <div className="space-y-1 text-blue-700">
+                                <div><span className="font-medium">Locatie:</span> {activity.asset_info.location}</div>
+                                <div><span className="font-medium">Status:</span> {activity.asset_info.status}</div>
+                                {activity.asset_info.serial_number !== 'Geen serienummer' && (
+                                  <div><span className="font-medium">Serienummer:</span> {activity.asset_info.serial_number}</div>
+                                )}
+                                {activity.asset_info.assigned_to !== 'Niet toegewezen' && (
+                                  <div><span className="font-medium">Toegewezen aan:</span> {activity.asset_info.assigned_to}</div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {activity.reservation_info && (
+                            <div className="bg-green-50 p-3 rounded-md">
+                              <h4 className="font-medium text-green-800 mb-2">Reservering Details</h4>
+                              <div className="space-y-1 text-green-700">
+                                <div><span className="font-medium">Van:</span> {new Date(activity.reservation_info.requested_date).toLocaleDateString('nl-NL')}</div>
+                                <div><span className="font-medium">Tot:</span> {new Date(activity.reservation_info.return_date).toLocaleDateString('nl-NL')}</div>
+                                <div><span className="font-medium">Status:</span> {activity.reservation_info.status}</div>
+                                {activity.reservation_info.purpose && activity.reservation_info.purpose !== 'Geen doel opgegeven' && (
+                                  <div><span className="font-medium">Doel:</span> {activity.reservation_info.purpose}</div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {activity.profile_info && (
+                            <div className="bg-purple-50 p-3 rounded-md">
+                              <h4 className="font-medium text-purple-800 mb-2">Gebruiker Details</h4>
+                              <div className="space-y-1 text-purple-700">
+                                <div><span className="font-medium">Email:</span> {activity.profile_info.email}</div>
+                                <div><span className="font-medium">Naam:</span> {activity.profile_info.full_name}</div>
+                                <div><span className="font-medium">Rol:</span> {activity.profile_info.role}</div>
+                              </div>
+                            </div>
+                          )}
+                          
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
