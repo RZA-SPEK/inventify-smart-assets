@@ -32,6 +32,8 @@ const DEFAULT_SETTINGS: SystemSettings = {
 // Global state management for settings
 let globalSettings: SystemSettings = DEFAULT_SETTINGS;
 let settingsListeners: (() => void)[] = [];
+let settingsLoaded = false;
+let loadingPromise: Promise<void> | null = null;
 
 const notifySettingsChange = () => {
   settingsListeners.forEach(listener => listener());
@@ -54,59 +56,79 @@ export const useSettings = () => {
       setSettings(globalSettings);
     });
 
-    // Load settings if they haven't been loaded yet
-    if (globalSettings === DEFAULT_SETTINGS) {
+    // Load settings if they haven't been loaded yet and no loading is in progress
+    if (!settingsLoaded && !loadingPromise) {
       loadSettings();
+    } else if (settingsLoaded) {
+      // Settings already loaded, just update local state
+      setSettings(globalSettings);
     }
 
     return unsubscribe;
   }, []);
 
   const loadSettings = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      console.log('useSettings: Loading settings from database...');
-      
-      const { data, error } = await supabase
-        .from('system_settings')
-        .select('settings_data')
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error) {
-        console.error('useSettings: Error loading settings:', error);
-        // Fall back to localStorage if database fails
-        const savedSettings = localStorage.getItem("systemSettings");
-        if (savedSettings) {
-          try {
-            const parsedSettings = JSON.parse(savedSettings);
-            console.log('useSettings: Loaded settings from localStorage:', parsedSettings);
-            globalSettings = { ...DEFAULT_SETTINGS, ...parsedSettings };
-            setSettings(globalSettings);
-            notifySettingsChange();
-          } catch (parseError) {
-            console.error("useSettings: Failed to parse saved settings:", parseError);
-          }
-        }
-        return;
-      }
-
-      if (data?.settings_data) {
-        // Cast the Json type to our SystemSettings interface safely
-        const dbSettings = data.settings_data as unknown as SystemSettings;
-        console.log('useSettings: Loaded settings from database:', dbSettings);
-        globalSettings = { ...DEFAULT_SETTINGS, ...dbSettings };
-        setSettings(globalSettings);
-        notifySettingsChange();
-      } else {
-        console.log('useSettings: No settings found in database, using defaults');
-      }
-    } catch (error) {
-      console.error('useSettings: Error loading settings:', error);
-    } finally {
-      setIsLoading(false);
+    // If already loading, return the existing promise
+    if (loadingPromise) {
+      return loadingPromise;
     }
+    
+    // If already loaded, don't load again
+    if (settingsLoaded) {
+      return;
+    }
+
+    setIsLoading(true);
+    
+    loadingPromise = (async () => {
+      try {
+        console.log('useSettings: Loading settings from database...');
+        
+        const { data, error } = await supabase
+          .from('system_settings')
+          .select('settings_data')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (error) {
+          console.error('useSettings: Error loading settings:', error);
+          // Fall back to localStorage if database fails
+          const savedSettings = localStorage.getItem("systemSettings");
+          if (savedSettings) {
+            try {
+              const parsedSettings = JSON.parse(savedSettings);
+              console.log('useSettings: Loaded settings from localStorage:', parsedSettings);
+              globalSettings = { ...DEFAULT_SETTINGS, ...parsedSettings };
+              settingsLoaded = true;
+              notifySettingsChange();
+            } catch (parseError) {
+              console.error("useSettings: Failed to parse saved settings:", parseError);
+            }
+          }
+          return;
+        }
+
+        if (data?.settings_data) {
+          // Cast the Json type to our SystemSettings interface safely
+          const dbSettings = data.settings_data as unknown as SystemSettings;
+          console.log('useSettings: Loaded settings from database:', dbSettings);
+          globalSettings = { ...DEFAULT_SETTINGS, ...dbSettings };
+          settingsLoaded = true;
+          notifySettingsChange();
+        } else {
+          console.log('useSettings: No settings found in database, using defaults');
+          settingsLoaded = true;
+        }
+      } catch (error) {
+        console.error('useSettings: Error loading settings:', error);
+      } finally {
+        loadingPromise = null;
+        setIsLoading(false);
+      }
+    })();
+
+    return loadingPromise;
   }, []);
 
   const saveSettings = async (newSettings: SystemSettings) => {
