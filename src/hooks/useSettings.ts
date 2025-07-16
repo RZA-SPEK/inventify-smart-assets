@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface SystemSettings {
@@ -29,15 +29,40 @@ const DEFAULT_SETTINGS: SystemSettings = {
   ]
 };
 
+// Global state management for settings
+let globalSettings: SystemSettings = DEFAULT_SETTINGS;
+let settingsListeners: (() => void)[] = [];
+
+const notifySettingsChange = () => {
+  settingsListeners.forEach(listener => listener());
+};
+
+const subscribeToSettings = (callback: () => void) => {
+  settingsListeners.push(callback);
+  return () => {
+    settingsListeners = settingsListeners.filter(listener => listener !== callback);
+  };
+};
+
 export const useSettings = () => {
-  const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<SystemSettings>(globalSettings);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    loadSettings();
+    // Subscribe to settings changes
+    const unsubscribe = subscribeToSettings(() => {
+      setSettings(globalSettings);
+    });
+
+    // Load settings if they haven't been loaded yet
+    if (globalSettings === DEFAULT_SETTINGS) {
+      loadSettings();
+    }
+
+    return unsubscribe;
   }, []);
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -54,7 +79,9 @@ export const useSettings = () => {
         if (savedSettings) {
           try {
             const parsedSettings = JSON.parse(savedSettings);
-            setSettings({ ...DEFAULT_SETTINGS, ...parsedSettings });
+            globalSettings = { ...DEFAULT_SETTINGS, ...parsedSettings };
+            setSettings(globalSettings);
+            notifySettingsChange();
           } catch (parseError) {
             console.error("Failed to parse saved settings:", parseError);
           }
@@ -65,14 +92,16 @@ export const useSettings = () => {
       if (data?.settings_data) {
         // Cast the Json type to our SystemSettings interface safely
         const dbSettings = data.settings_data as unknown as SystemSettings;
-        setSettings({ ...DEFAULT_SETTINGS, ...dbSettings });
+        globalSettings = { ...DEFAULT_SETTINGS, ...dbSettings };
+        setSettings(globalSettings);
+        notifySettingsChange();
       }
     } catch (error) {
       console.error('Error loading settings:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const saveSettings = async (newSettings: SystemSettings) => {
     setIsLoading(true);
@@ -115,7 +144,10 @@ export const useSettings = () => {
         throw result.error;
       }
 
+      // Update global settings and notify all listeners
+      globalSettings = newSettings;
       setSettings(newSettings);
+      notifySettingsChange();
       
       // Also save to localStorage as backup
       localStorage.setItem("systemSettings", JSON.stringify(newSettings));
