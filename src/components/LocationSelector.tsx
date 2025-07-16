@@ -25,6 +25,9 @@ export const LocationSelector = ({
   const [isAddingLocation, setIsAddingLocation] = useState(false);
 
   console.log('LocationSelector: Received props:', { mainLocation, specificLocation });
+  console.log('LocationSelector: Current settings:', settings);
+  console.log('LocationSelector: Available locations:', settings.locations);
+  console.log('LocationSelector: Available specific locations:', settings.specificLocations);
 
   // Get specific locations from settings, with fallback to default list
   const specificLocations = settings.specificLocations || [
