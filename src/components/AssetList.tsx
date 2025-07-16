@@ -7,6 +7,10 @@ import { Asset } from "@/types/asset";
 import { AssetTableRow } from "./AssetTableRow";
 import { AssetMobileCard } from "./AssetMobileCard";
 import { getAssetIcon, getStatusColor, getCategoryDisplayName } from "@/utils/assetUtils";
+import { ChevronUp, ChevronDown } from "lucide-react";
+
+type SortField = 'asset_tag' | 'type' | 'brand' | 'model' | 'status' | 'location' | 'assigned_to';
+type SortOrder = 'asc' | 'desc';
 
 interface AssetListProps {
   assets: Asset[];
@@ -16,6 +20,9 @@ interface AssetListProps {
   onDeleteAsset: (id: string) => Promise<void>;
   selectedAssets?: string[];
   onSelectAsset?: (id: string) => void;
+  sortField?: SortField;
+  sortOrder?: SortOrder;
+  onSort?: (field: SortField) => void;
 }
 
 export const AssetList = ({ 
@@ -25,7 +32,10 @@ export const AssetList = ({
   onEditAsset, 
   onDeleteAsset,
   selectedAssets = [],
-  onSelectAsset 
+  onSelectAsset,
+  sortField,
+  sortOrder,
+  onSort
 }: AssetListProps) => {
   const handleEdit = (asset: Asset) => {
     onEditAsset(asset.id);
@@ -38,6 +48,29 @@ export const AssetList = ({
   const handleReserve = (asset: Asset) => {
     // TODO: Implement reservation logic
     console.log('Reserve asset:', asset);
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return null;
+    return sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />;
+  };
+
+  const SortableHeader = ({ field, children, className }: { field?: SortField; children: React.ReactNode; className?: string }) => {
+    if (!field || !onSort) {
+      return <TableHead className={className}>{children}</TableHead>;
+    }
+
+    return (
+      <TableHead 
+        className={`${className} cursor-pointer hover:bg-muted/70 select-none`}
+        onClick={() => onSort(field)}
+      >
+        <div className="flex items-center gap-1">
+          {children}
+          {getSortIcon(field)}
+        </div>
+      </TableHead>
+    );
   };
   
   return (
@@ -85,11 +118,11 @@ export const AssetList = ({
                 <TableRow className="hover:bg-transparent">
                   {canManageAssets && onSelectAsset && <TableHead className="w-12"></TableHead>}
                   <TableHead className="w-16 font-semibold">Foto</TableHead>
-                  <TableHead className="min-w-[200px] font-semibold">Asset Info</TableHead>
-                  <TableHead className="w-24 font-semibold">Tag</TableHead>
-                  <TableHead className="w-32 font-semibold">Status</TableHead>
-                  <TableHead className="min-w-[120px] font-semibold">Locatie</TableHead>
-                  <TableHead className="min-w-[150px] font-semibold">Toegewezen</TableHead>
+                  <SortableHeader field="type" className="min-w-[200px] font-semibold">Asset Info</SortableHeader>
+                  <SortableHeader field="asset_tag" className="w-24 font-semibold">Tag</SortableHeader>
+                  <SortableHeader field="status" className="w-32 font-semibold">Status</SortableHeader>
+                  <SortableHeader field="location" className="min-w-[120px] font-semibold">Locatie</SortableHeader>
+                  <SortableHeader field="assigned_to" className="min-w-[150px] font-semibold">Toegewezen</SortableHeader>
                   {canManageAssets && <TableHead className="w-40 font-semibold">Acties</TableHead>}
                 </TableRow>
               </TableHeader>

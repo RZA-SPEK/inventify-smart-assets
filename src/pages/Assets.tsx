@@ -8,13 +8,18 @@ import { AssetQuickActions } from "@/components/AssetQuickActions";
 import { AssetStatsCards } from "@/components/AssetStatsCards";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
+
+type SortField = 'asset_tag' | 'type' | 'brand' | 'model' | 'status' | 'location' | 'assigned_to';
+type SortOrder = 'asc' | 'desc';
 
 const Assets = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
+  const [sortField, setSortField] = useState<SortField>('asset_tag');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const { canManageAssets, currentRole, loading: roleLoading } = useUserRole();
   const { 
     assets, 
@@ -35,6 +40,33 @@ const Assets = () => {
     setTypeFilter,
     filteredAssets
   } = useAssetFilters(assets);
+
+  const sortedAssets = useMemo(() => {
+    const sorted = [...filteredAssets].sort((a, b) => {
+      let aValue = a[sortField as keyof typeof a] || '';
+      let bValue = b[sortField as keyof typeof b] || '';
+      
+      // Convert to string for comparison
+      aValue = String(aValue).toLowerCase();
+      bValue = String(bValue).toLowerCase();
+      
+      if (sortOrder === 'asc') {
+        return aValue.localeCompare(bValue);
+      } else {
+        return bValue.localeCompare(aValue);
+      }
+    });
+    return sorted;
+  }, [filteredAssets, sortField, sortOrder]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
 
   const handleCreateAsset = () => {
     navigate('/assets/create');
@@ -75,7 +107,7 @@ const Assets = () => {
   };
 
   const handleSelectAll = (selected: boolean) => {
-    setSelectedAssets(selected ? filteredAssets.map(asset => asset.id) : []);
+    setSelectedAssets(selected ? sortedAssets.map(asset => asset.id) : []);
   };
 
   const handleBulkDelete = async (ids: string[]) => {
@@ -108,7 +140,7 @@ const Assets = () => {
   };
 
   const handleExportSelected = (ids: string[]) => {
-    const selectedData = filteredAssets.filter(asset => ids.includes(asset.id));
+    const selectedData = sortedAssets.filter(asset => ids.includes(asset.id));
     const csvContent = "data:text/csv;charset=utf-8," + 
       "Type,Brand,Model,Serial Number,Asset Tag,Status,Location\n" +
       selectedData.map(asset => 
@@ -214,7 +246,7 @@ const Assets = () => {
           canManageAssets={canManageAssets}
           onCreateAsset={handleCreateAsset}
           totalAssets={assets.length}
-          filteredAssets={filteredAssets.length}
+          filteredAssets={sortedAssets.length}
         />
         
         <AssetStatsCards assets={assets} />
@@ -237,8 +269,8 @@ const Assets = () => {
               selectedAssets={selectedAssets}
               onSelectAsset={handleSelectAsset}
               onSelectAll={handleSelectAll}
-              allSelected={selectedAssets.length === filteredAssets.length && filteredAssets.length > 0}
-              assets={filteredAssets}
+              allSelected={selectedAssets.length === sortedAssets.length && sortedAssets.length > 0}
+              assets={sortedAssets}
               canManageAssets={canManageAssets}
               onBulkDelete={handleBulkDelete}
               onBulkArchive={handleBulkArchive}
@@ -246,13 +278,16 @@ const Assets = () => {
             />
             
             <AssetList
-              assets={filteredAssets}
+              assets={sortedAssets}
               canManageAssets={canManageAssets}
               onViewAsset={handleViewAsset}
               onEditAsset={handleEditAsset}
               onDeleteAsset={handleDeleteAsset}
               selectedAssets={selectedAssets}
               onSelectAsset={handleSelectAsset}
+              sortField={sortField}
+              sortOrder={sortOrder}
+              onSort={handleSort}
             />
           </div>
         </div>
