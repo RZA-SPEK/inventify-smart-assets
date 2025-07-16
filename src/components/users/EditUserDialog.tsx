@@ -14,7 +14,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: "ICT Admin" | "Facilitair Admin" | "Gebruiker";
+  role: "Superadmin" | "ICT Admin" | "Facilitair Admin" | "Gebruiker";
   status: "active" | "inactive";
   lastLogin: string;
   createdAt: string;
@@ -32,7 +32,7 @@ export const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: Edit
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
-    role: user?.role || "Gebruiker" as "ICT Admin" | "Facilitair Admin" | "Gebruiker"
+    role: user?.role || "Gebruiker" as "Superadmin" | "ICT Admin" | "Facilitair Admin" | "Gebruiker"
   });
   const [loading, setLoading] = useState(false);
 
@@ -207,7 +207,7 @@ export const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: Edit
               <Label htmlFor="role">Rol</Label>
               <Select 
                 value={formData.role}
-                onValueChange={(value: "ICT Admin" | "Facilitair Admin" | "Gebruiker") => 
+                onValueChange={(value: "Superadmin" | "ICT Admin" | "Facilitair Admin" | "Gebruiker") => 
                   setFormData(prev => ({ ...prev, role: value }))
                 }
               >
@@ -215,6 +215,7 @@ export const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: Edit
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="Superadmin">Superadmin</SelectItem>
                   <SelectItem value="ICT Admin">ICT Admin</SelectItem>
                   <SelectItem value="Facilitair Admin">Facilitair Admin</SelectItem>
                   <SelectItem value="Gebruiker">Gebruiker</SelectItem>
@@ -225,10 +226,21 @@ export const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: Edit
             <div className="space-y-3">
               <Label>Toegangsrechten voor deze rol:</Label>
               <div className="space-y-2 text-sm">
-                {formData.role === "ICT Admin" && (
+                {formData.role === "Superadmin" && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <h4 className="font-medium text-red-800">ICT Admin</h4>
+                    <h4 className="font-medium text-red-800">Superadmin</h4>
                     <ul className="text-red-700 mt-1 space-y-1">
+                      <li>• Volledige controle over het systeem</li>
+                      <li>• Alle functies en data toegankelijk</li>
+                      <li>• Kan alle rollen beheren</li>
+                      <li>• Systeembeheer en configuratie</li>
+                    </ul>
+                  </div>
+                )}
+                {formData.role === "ICT Admin" && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-medium text-blue-800">ICT Admin</h4>
+                    <ul className="text-blue-700 mt-1 space-y-1">
                       <li>• Volledige toegang tot alle functies</li>
                       <li>• Gebruikersbeheer</li>
                       <li>• Systeeminstellingen</li>
