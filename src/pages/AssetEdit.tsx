@@ -125,6 +125,7 @@ const AssetEdit = () => {
     
     try {
       console.log('AssetEdit: Updating asset with data:', updatedAsset);
+      console.log('AssetEdit: Warranty expiry value:', updatedAsset.warrantyExpiry);
       
       // Validate required fields
       if (!updatedAsset.type || updatedAsset.type.trim() === '') {
@@ -158,6 +159,7 @@ const AssetEdit = () => {
       };
 
       console.log('AssetEdit: Database update payload:', dbData);
+      console.log('AssetEdit: warranty_expiry in payload:', dbData.warranty_expiry);
 
       const { error } = await supabase
         .from('assets')
