@@ -65,6 +65,8 @@ export const useSettings = () => {
   const loadSettings = useCallback(async () => {
     setIsLoading(true);
     try {
+      console.log('useSettings: Loading settings from database...');
+      
       const { data, error } = await supabase
         .from('system_settings')
         .select('settings_data')
@@ -73,17 +75,18 @@ export const useSettings = () => {
         .single();
 
       if (error) {
-        console.error('Error loading settings:', error);
+        console.error('useSettings: Error loading settings:', error);
         // Fall back to localStorage if database fails
         const savedSettings = localStorage.getItem("systemSettings");
         if (savedSettings) {
           try {
             const parsedSettings = JSON.parse(savedSettings);
+            console.log('useSettings: Loaded settings from localStorage:', parsedSettings);
             globalSettings = { ...DEFAULT_SETTINGS, ...parsedSettings };
             setSettings(globalSettings);
             notifySettingsChange();
           } catch (parseError) {
-            console.error("Failed to parse saved settings:", parseError);
+            console.error("useSettings: Failed to parse saved settings:", parseError);
           }
         }
         return;
@@ -92,12 +95,15 @@ export const useSettings = () => {
       if (data?.settings_data) {
         // Cast the Json type to our SystemSettings interface safely
         const dbSettings = data.settings_data as unknown as SystemSettings;
+        console.log('useSettings: Loaded settings from database:', dbSettings);
         globalSettings = { ...DEFAULT_SETTINGS, ...dbSettings };
         setSettings(globalSettings);
         notifySettingsChange();
+      } else {
+        console.log('useSettings: No settings found in database, using defaults');
       }
     } catch (error) {
-      console.error('Error loading settings:', error);
+      console.error('useSettings: Error loading settings:', error);
     } finally {
       setIsLoading(false);
     }
@@ -106,21 +112,29 @@ export const useSettings = () => {
   const saveSettings = async (newSettings: SystemSettings) => {
     setIsLoading(true);
     try {
+      console.log('useSettings: Saving settings:', newSettings);
+      
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
+        console.error('useSettings: User not authenticated');
         throw new Error('User not authenticated');
       }
 
+      console.log('useSettings: Current user:', user.id);
+
       // Check if settings already exist
-      const { data: existingSettings } = await supabase
+      const { data: existingSettings, error: selectError } = await supabase
         .from('system_settings')
         .select('id')
         .limit(1)
         .single();
 
+      console.log('useSettings: Existing settings check:', { existingSettings, selectError });
+
       let result;
       if (existingSettings) {
+        console.log('useSettings: Updating existing settings with ID:', existingSettings.id);
         // Update existing settings - cast SystemSettings to Json safely
         result = await supabase
           .from('system_settings')
@@ -131,6 +145,7 @@ export const useSettings = () => {
           })
           .eq('id', existingSettings.id);
       } else {
+        console.log('useSettings: Inserting new settings');
         // Insert new settings - cast SystemSettings to Json safely
         result = await supabase
           .from('system_settings')
@@ -140,10 +155,15 @@ export const useSettings = () => {
           });
       }
 
+      console.log('useSettings: Database operation result:', result);
+
       if (result.error) {
+        console.error('useSettings: Database error:', result.error);
         throw result.error;
       }
 
+      console.log('useSettings: Settings saved successfully, updating global state');
+      
       // Update global settings and notify all listeners
       globalSettings = newSettings;
       setSettings(newSettings);
@@ -154,7 +174,7 @@ export const useSettings = () => {
       
       return { success: true };
     } catch (error) {
-      console.error("Failed to save settings:", error);
+      console.error("useSettings: Failed to save settings:", error);
       return { success: false, error: "Failed to save settings" };
     } finally {
       setIsLoading(false);
