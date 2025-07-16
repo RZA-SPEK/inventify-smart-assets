@@ -38,69 +38,105 @@ export const AssetAssignmentPDF = ({ assetId, assetData, onDocumentGenerated }: 
 
     setIsGenerating(true);
     try {
+      // Load template from database
+      const { data: templateData } = await supabase
+        .from('system_settings')
+        .select('settings_data')
+        .eq('id', 'assignment_form_template')
+        .maybeSingle();
+
+      const template = templateData?.settings_data as any || {
+        title: 'Asset Toewijzingsformulier',
+        headerText: 'Dit formulier bevestigt de toewijzing van bedrijfsmiddelen aan de medewerker.',
+        conditions: [
+          'De gebruiker is verantwoordelijk voor het zorgvuldig gebruik van het toegewezen asset',
+          'Verlies, diefstal of schade moet onmiddellijk gemeld worden',
+          'Het asset mag niet aan derden worden uitgeleend zonder toestemming',
+          'Bij vertrek uit de organisatie moet het asset worden geretourneerd',
+          'Regulier onderhoud en updates zijn verplicht'
+        ],
+        footerText: 'Door ondertekening bevestigt de gebruiker akkoord te gaan met bovenstaande voorwaarden.',
+        signatureFields: {
+          userLabel: 'Handtekening gebruiker',
+          adminLabel: 'Handtekening beheerder'
+        }
+      };
+
       const pdf = new jsPDF();
       
       // Header
       pdf.setFontSize(20);
-      pdf.text('Asset Toewijzingsformulier', 20, 30);
+      pdf.text(template.title, 20, 30);
       
       pdf.setFontSize(12);
       pdf.text(`Datum: ${new Date().toLocaleDateString('nl-NL')}`, 20, 50);
       
+      // Header text
+      if (template.headerText) {
+        pdf.setFontSize(10);
+        const headerLines = pdf.splitTextToSize(template.headerText, 170);
+        pdf.text(headerLines, 20, 65);
+      }
+      
       // Asset informatie
       pdf.setFontSize(14);
-      pdf.text('Asset Informatie:', 20, 70);
+      pdf.text('Asset Informatie:', 20, 85);
       
       pdf.setFontSize(11);
-      pdf.text(`Type: ${assetData.type}`, 25, 85);
-      pdf.text(`Merk: ${assetData.brand}`, 25, 95);
-      pdf.text(`Model: ${assetData.model}`, 25, 105);
-      pdf.text(`Serienummer: ${assetData.serialNumber}`, 25, 115);
-      pdf.text(`Asset Tag: ${assetData.assetTag}`, 25, 125);
+      pdf.text(`Type: ${assetData.type}`, 25, 100);
+      pdf.text(`Merk: ${assetData.brand}`, 25, 110);
+      pdf.text(`Model: ${assetData.model}`, 25, 120);
+      pdf.text(`Serienummer: ${assetData.serialNumber}`, 25, 130);
+      pdf.text(`Asset Tag: ${assetData.assetTag}`, 25, 140);
       
       // Toewijzing informatie
       pdf.setFontSize(14);
-      pdf.text('Toewijzing:', 20, 145);
+      pdf.text('Toewijzing:', 20, 160);
       
       pdf.setFontSize(11);
-      pdf.text(`Toegewezen aan: ${assetData.assignedTo}`, 25, 160);
-      pdf.text(`Datum toewijzing: ${new Date().toLocaleDateString('nl-NL')}`, 25, 170);
+      pdf.text(`Toegewezen aan: ${assetData.assignedTo}`, 25, 175);
+      pdf.text(`Datum toewijzing: ${new Date().toLocaleDateString('nl-NL')}`, 25, 185);
       
       // Voorwaarden
       pdf.setFontSize(14);
-      pdf.text('Voorwaarden en Verantwoordelijkheden:', 20, 190);
+      pdf.text('Voorwaarden en Verantwoordelijkheden:', 20, 205);
       
       pdf.setFontSize(10);
-      const conditions = [
-        '• De gebruiker is verantwoordelijk voor het zorgvuldig gebruik van het toegewezen asset',
-        '• Verlies, diefstal of schade moet onmiddellijk gemeld worden',
-        '• Het asset mag niet aan derden worden uitgeleend zonder toestemming',
-        '• Bij vertrek uit de organisatie moet het asset worden geretourneerd',
-        '• Regulier onderhoud en updates zijn verplicht'
-      ];
-      
-      let yPosition = 205;
-      conditions.forEach(condition => {
-        pdf.text(condition, 25, yPosition);
-        yPosition += 10;
+      let yPosition = 220;
+      template.conditions.forEach((condition: string) => {
+        const conditionText = condition.startsWith('•') ? condition : `• ${condition}`;
+        const lines = pdf.splitTextToSize(conditionText, 170);
+        pdf.text(lines, 25, yPosition);
+        yPosition += lines.length * 5 + 2;
       });
       
+      // Footer text
+      if (template.footerText) {
+        yPosition += 10;
+        pdf.setFontSize(10);
+        const footerLines = pdf.splitTextToSize(template.footerText, 170);
+        pdf.text(footerLines, 20, yPosition);
+        yPosition += footerLines.length * 5;
+      }
+      
       // Handtekening velden
+      yPosition += 15;
       pdf.setFontSize(12);
-      pdf.text('Akkoord en Handtekeningen:', 20, yPosition + 20);
+      pdf.text('Akkoord en Handtekeningen:', 20, yPosition);
       
       // Gebruiker handtekening
-      pdf.line(25, yPosition + 50, 90, yPosition + 50);
+      yPosition += 30;
+      pdf.line(25, yPosition, 90, yPosition);
       pdf.setFontSize(9);
-      pdf.text('Handtekening gebruiker', 25, yPosition + 55);
-      pdf.text(`${assetData.assignedTo}`, 25, yPosition + 65);
-      pdf.text(`Datum: _______________`, 25, yPosition + 75);
+      pdf.text(template.signatureFields.userLabel || 'Handtekening gebruiker', 25, yPosition + 5);
+      pdf.text(`${assetData.assignedTo}`, 25, yPosition + 15);
+      pdf.text(`Datum: _______________`, 25, yPosition + 25);
       
       // Admin handtekening
-      pdf.line(110, yPosition + 50, 175, yPosition + 50);
-      pdf.text('Handtekening beheerder', 110, yPosition + 55);
-      pdf.text('Naam: _______________', 110, yPosition + 65);
-      pdf.text(`Datum: _______________`, 110, yPosition + 75);
+      pdf.line(110, yPosition, 175, yPosition);
+      pdf.text(template.signatureFields.adminLabel || 'Handtekening beheerder', 110, yPosition + 5);
+      pdf.text('Naam: _______________', 110, yPosition + 15);
+      pdf.text(`Datum: _______________`, 110, yPosition + 25);
       
       // Save PDF and create database record
       const pdfBlob = pdf.output('blob');
