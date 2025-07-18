@@ -15,6 +15,11 @@ export const useAssetManagement = () => {
       setLoading(true);
       setError(null);
 
+      // Don't proceed if role is still loading
+      if (roleLoading) {
+        return;
+      }
+
       const { data, error: fetchError } = await supabase
         .from('assets')
         .select('*')
@@ -48,49 +53,47 @@ export const useAssetManagement = () => {
       // Filter assets based on user role and role categories
       let finalAssets = transformedAssets;
       
-      if (!roleLoading) {
-        if (canManageAssets) {
-          // Get user's role categories to filter assets
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            const { data: profileData } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('id', user.id)
+      if (canManageAssets) {
+        // Get user's role categories to filter assets
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+          if (profileData?.role) {
+            // Get role ID for the user's role
+            const { data: roleData } = await supabase
+              .from('roles')
+              .select('id')
+              .eq('name', profileData.role)
               .single();
 
-            if (profileData?.role) {
-              // Get role ID for the user's role
-              const { data: roleData } = await supabase
-                .from('roles')
-                .select('id')
-                .eq('name', profileData.role)
-                .single();
+            if (roleData) {
+              // Get allowed categories for this role
+              const { data: categoriesData } = await supabase
+                .from('role_categories')
+                .select('category')
+                .eq('role_id', roleData.id);
 
-              if (roleData) {
-                // Get allowed categories for this role
-                const { data: categoriesData } = await supabase
-                  .from('role_categories')
-                  .select('category')
-                  .eq('role_id', roleData.id);
-
-                // If role has specific categories, filter assets by those categories
-                if (categoriesData && categoriesData.length > 0) {
-                  const allowedCategories = categoriesData.map(c => c.category);
-                  finalAssets = transformedAssets.filter(asset => 
-                    allowedCategories.includes(asset.category)
-                  );
-                } else {
-                  // If no specific categories are set, show all assets (for Superadmin or roles without category restrictions)
-                  finalAssets = transformedAssets;
-                }
+              // If role has specific categories, filter assets by those categories
+              if (categoriesData && categoriesData.length > 0) {
+                const allowedCategories = categoriesData.map(c => c.category);
+                finalAssets = transformedAssets.filter(asset => 
+                  allowedCategories.includes(asset.category)
+                );
+              } else {
+                // If no specific categories are set, show all assets (for Superadmin or roles without category restrictions)
+                finalAssets = transformedAssets;
               }
             }
           }
-        } else {
-          // Regular users only see reservable assets
-          finalAssets = transformedAssets.filter(asset => asset.reservable === true);
         }
+      } else {
+        // Regular users only see reservable assets
+        finalAssets = transformedAssets.filter(asset => asset.reservable === true);
       }
 
       setAssets(finalAssets);
