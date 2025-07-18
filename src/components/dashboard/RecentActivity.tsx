@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, User, Package, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface ActivityItem {
   id: string;
@@ -20,19 +21,77 @@ export const RecentActivity = () => {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { canManageAssets, loading: roleLoading } = useUserRole();
 
   useEffect(() => {
-    fetchRecentActivity();
-  }, []);
+    if (!roleLoading) {
+      fetchRecentActivity();
+    }
+  }, [roleLoading, canManageAssets]);
 
   const fetchRecentActivity = async () => {
     try {
-      // Fetch recent assets
-      const { data: assets } = await supabase
+      setLoading(true);
+      
+      // Fetch recent assets with category filtering
+      const { data: allAssets } = await supabase
         .from('assets')
-        .select('id, type, brand, model, status, created_at')
+        .select('id, type, brand, model, status, created_at, category')
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(20); // Fetch more initially for filtering
+
+      // Filter assets based on user role and categories
+      let filteredAssets = allAssets || [];
+      
+      if (canManageAssets) {
+        // Get user's role categories to filter assets
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+          if (profileData?.role) {
+            // Get role ID for the user's role
+            const { data: roleData } = await supabase
+              .from('roles')
+              .select('id')
+              .eq('name', profileData.role)
+              .single();
+
+            if (roleData) {
+              // Get allowed categories for this role
+              const { data: categoriesData } = await supabase
+                .from('role_categories')
+                .select('category')
+                .eq('role_id', roleData.id);
+
+              // If role has specific categories, filter assets by those categories
+              if (categoriesData && categoriesData.length > 0) {
+                const allowedCategories = categoriesData.map(c => c.category);
+                filteredAssets = (allAssets || []).filter(asset => 
+                  allowedCategories.includes(asset.category)
+                );
+              }
+              // If no specific categories are set, show all assets (for Superadmin or roles without category restrictions)
+            }
+          }
+        }
+      } else {
+        // Regular users only see reservable assets - we'll need to fetch the reservable field
+        const { data: reservableAssets } = await supabase
+          .from('assets')
+          .select('id, type, brand, model, status, created_at, category')
+          .eq('reservable', true)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        filteredAssets = reservableAssets || [];
+      }
+
+      // Take only first 5 after filtering
+      const assets = filteredAssets.slice(0, 5);
 
       // Fetch recent reservations
       const { data: reservations } = await supabase
@@ -44,7 +103,7 @@ export const RecentActivity = () => {
       const recentActivities: ActivityItem[] = [];
 
       // Add asset activities
-      (assets || []).forEach(asset => {
+      assets.forEach(asset => {
         recentActivities.push({
           id: `asset-${asset.id}`,
           type: 'asset',
