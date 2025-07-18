@@ -102,7 +102,8 @@ export const AssetAssignmentDocuments = ({ assetId }: AssetAssignmentDocumentsPr
 
       if (error) throw error;
 
-      setDocuments(documents.filter(doc => doc.id !== documentId));
+      // Refetch documents to ensure we have the latest state
+      await fetchDocuments();
       
       toast({
         title: "Document verwijderd",
