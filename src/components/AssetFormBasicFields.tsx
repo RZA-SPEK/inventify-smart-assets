@@ -110,7 +110,6 @@ export const AssetFormBasicFields = ({ formData, onFormDataChange }: AssetFormBa
             type="date"
             value={formData.purchaseDate || ""}
             onChange={(e) => handleFieldChange('purchaseDate', e.target.value)}
-            required
           />
         </div>
 
