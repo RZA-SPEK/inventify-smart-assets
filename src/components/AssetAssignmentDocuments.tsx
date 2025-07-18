@@ -89,11 +89,19 @@ export const AssetAssignmentDocuments = ({ assetId, onAssetUpdated }: AssetAssig
   };
 
   const handleDeleteDocument = async (documentId: string) => {
-    if (!canManageAssets) return;
+    console.log('Delete document clicked:', documentId, 'canManageAssets:', canManageAssets);
     
-    if (!confirm('Weet je zeker dat je dit document wilt verwijderen uit de toewijzingsgeschiedenis?')) {
+    if (!canManageAssets) {
+      console.log('User cannot manage assets, aborting delete');
       return;
     }
+    
+    if (!confirm('Weet je zeker dat je dit document wilt verwijderen uit de toewijzingsgeschiedenis?')) {
+      console.log('User cancelled delete confirmation');
+      return;
+    }
+
+    console.log('Starting document deletion process for:', documentId);
 
     try {
       // First get the document to check if it's pending and get the asset_id
