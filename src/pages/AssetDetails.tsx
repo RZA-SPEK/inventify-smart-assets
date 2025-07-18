@@ -381,7 +381,7 @@ const AssetDetails = () => {
             </Card>
             
             {/* Assignment Documents */}
-            <AssetAssignmentDocuments assetId={asset.id} />
+            <AssetAssignmentDocuments assetId={asset.id} onAssetUpdated={fetchAsset} />
           </div>
         </div>
 

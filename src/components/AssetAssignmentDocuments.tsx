@@ -19,9 +19,10 @@ interface AssignmentDocument {
 
 interface AssetAssignmentDocumentsProps {
   assetId: string;
+  onAssetUpdated?: () => void;
 }
 
-export const AssetAssignmentDocuments = ({ assetId }: AssetAssignmentDocumentsProps) => {
+export const AssetAssignmentDocuments = ({ assetId, onAssetUpdated }: AssetAssignmentDocumentsProps) => {
   const [documents, setDocuments] = useState<AssignmentDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -95,15 +96,42 @@ export const AssetAssignmentDocuments = ({ assetId }: AssetAssignmentDocumentsPr
     }
 
     try {
-      const { error } = await supabase
+      // First get the document to check if it's pending and get the asset_id
+      const { data: document, error: fetchError } = await supabase
+        .from('asset_assignment_documents')
+        .select('status, asset_id')
+        .eq('id', documentId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Delete the document
+      const { error: deleteError } = await supabase
         .from('asset_assignment_documents')
         .delete()
         .eq('id', documentId);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
+
+      // If the document was pending, also unassign the asset
+      if (document?.status === 'pending') {
+        const { error: updateError } = await supabase
+          .from('assets')
+          .update({ assigned_to: null })
+          .eq('id', document.asset_id);
+
+        if (updateError) {
+          console.error('Error unassigning asset:', updateError);
+        }
+      }
 
       // Refetch documents to ensure we have the latest state
       await fetchDocuments();
+      
+      // Notify parent component to refresh asset data if assignment was removed
+      if (document?.status === 'pending' && onAssetUpdated) {
+        onAssetUpdated();
+      }
       
       toast({
         title: "Document verwijderd",
