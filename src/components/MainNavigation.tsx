@@ -41,13 +41,13 @@ const MainNavigation = () => {
       name: "Dashboard",
       href: "/dashboard",
       icon: LayoutDashboard,
-      current: location.pathname === "/dashboard",
+      current: location.pathname === "/dashboard" || location.pathname === "/",
     },
     {
       name: "Assets",
       href: "/assets",
       icon: Box,
-      current: location.pathname === "/assets" || location.pathname === "/",
+      current: location.pathname === "/assets",
     },
     ...(canManageAssets
       ? [
