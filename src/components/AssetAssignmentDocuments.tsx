@@ -105,24 +105,37 @@ export const AssetAssignmentDocuments = ({ assetId, onAssetUpdated }: AssetAssig
 
     try {
       // First get the document to check if it's pending and get the asset_id
+      console.log('Fetching document details before deletion...');
       const { data: document, error: fetchError } = await supabase
         .from('asset_assignment_documents')
         .select('status, asset_id')
         .eq('id', documentId)
         .single();
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Error fetching document before deletion:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('Document fetched:', document);
 
       // Delete the document
+      console.log('Attempting to delete document...');
       const { error: deleteError } = await supabase
         .from('asset_assignment_documents')
         .delete()
         .eq('id', documentId);
 
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error('Error deleting document:', deleteError);
+        throw deleteError;
+      }
+
+      console.log('Document deleted successfully');
 
       // If the document was pending, also unassign the asset
       if (document?.status === 'pending') {
+        console.log('Document was pending, unassigning asset...');
         const { error: updateError } = await supabase
           .from('assets')
           .update({ assigned_to: null })
@@ -130,14 +143,18 @@ export const AssetAssignmentDocuments = ({ assetId, onAssetUpdated }: AssetAssig
 
         if (updateError) {
           console.error('Error unassigning asset:', updateError);
+        } else {
+          console.log('Asset unassigned successfully');
         }
       }
 
       // Refetch documents to ensure we have the latest state
+      console.log('Refetching documents...');
       await fetchDocuments();
       
       // Notify parent component to refresh asset data if assignment was removed
       if (document?.status === 'pending' && onAssetUpdated) {
+        console.log('Calling onAssetUpdated callback...');
         onAssetUpdated();
       }
       
@@ -145,6 +162,8 @@ export const AssetAssignmentDocuments = ({ assetId, onAssetUpdated }: AssetAssig
         title: "Document verwijderd",
         description: "Het document is verwijderd uit de toewijzingsgeschiedenis.",
       });
+
+      console.log('Delete operation completed successfully');
     } catch (error) {
       console.error('Error deleting document:', error);
       toast({
