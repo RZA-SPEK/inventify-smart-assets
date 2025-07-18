@@ -5,6 +5,7 @@ import { ExportImportSection } from "@/components/settings/ExportImportSection";
 import { SettingsHeader } from "@/components/settings/SettingsHeader";
 import { RoleManagement } from "@/components/settings/RoleManagement";
 import { AssignmentFormTemplate } from "@/components/settings/AssignmentFormTemplate";
+import AssetImportForm from "@/components/AssetImportForm";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -82,6 +83,7 @@ const Settings = () => {
           <SettingsForm />
           <AssignmentFormTemplate />
           <RoleManagement />
+          <AssetImportForm />
           <SystemConfiguration />
           <ExportImportSection />
         </div>
