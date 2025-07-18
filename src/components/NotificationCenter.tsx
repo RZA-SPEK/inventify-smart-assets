@@ -151,6 +151,77 @@ export const NotificationCenter = () => {
     }
   };
 
+  const clearNotification = async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', notificationId);
+
+      if (error) {
+        console.error('Error deleting notification:', error);
+        toast({
+          title: "Fout",
+          description: "Kon melding niet verwijderen.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setNotifications(prev => 
+        prev.filter(notification => notification.id !== notificationId)
+      );
+      
+      toast({
+        title: "Melding verwijderd",
+        description: "De melding is succesvol verwijderd.",
+      });
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      toast({
+        title: "Fout",
+        description: "Er is een onverwachte fout opgetreden.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error clearing all notifications:', error);
+        toast({
+          title: "Fout",
+          description: "Kon meldingen niet wissen.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setNotifications([]);
+      
+      toast({
+        title: "Alle meldingen gewist",
+        description: "Alle meldingen zijn succesvol verwijderd.",
+      });
+    } catch (error) {
+      console.error('Error clearing all notifications:', error);
+      toast({
+        title: "Fout",
+        description: "Er is een onverwachte fout opgetreden.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "warning":
@@ -194,16 +265,30 @@ export const NotificationCenter = () => {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Meldingen</CardTitle>
-              {unreadCount > 0 && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={markAllAsRead}
-                  className="text-xs"
-                >
-                  Alles markeren als gelezen
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {notifications.length > 0 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={clearAllNotifications}
+                    className="text-xs text-destructive hover:text-destructive"
+                    title="Alle meldingen wissen"
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Alles wissen
+                  </Button>
+                )}
+                {unreadCount > 0 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={markAllAsRead}
+                    className="text-xs"
+                  >
+                    Alles markeren als gelezen
+                  </Button>
+                )}
+              </div>
             </div>
             <CardDescription>
               {unreadCount > 0 ? `${unreadCount} ongelezen meldingen` : "Alle meldingen gelezen"}
@@ -255,10 +340,20 @@ export const NotificationCenter = () => {
                               size="sm"
                               onClick={() => markAsRead(notification.id)}
                               className="h-6 w-6 p-0"
+                              title="Markeer als gelezen"
                             >
                               <Check className="h-3 w-3" />
                             </Button>
                           )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => clearNotification(notification.id)}
+                            className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                            title="Verwijder melding"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
                         </div>
                       </div>
                     </div>
