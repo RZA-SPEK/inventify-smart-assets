@@ -35,6 +35,7 @@ export const AssetAssignmentDocuments = ({ assetId }: AssetAssignmentDocumentsPr
         .from('asset_assignment_documents')
         .select('*')
         .eq('asset_id', assetId)
+        .neq('status', 'cancelled')
         .order('generated_at', { ascending: false });
 
       if (error) throw error;
