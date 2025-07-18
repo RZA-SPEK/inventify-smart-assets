@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Calendar, User } from 'lucide-react';
+import { FileText, Download, Calendar, User, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface AssignmentDocument {
   id: string;
@@ -24,6 +25,7 @@ export const AssetAssignmentDocuments = ({ assetId }: AssetAssignmentDocumentsPr
   const [documents, setDocuments] = useState<AssignmentDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { canManageAssets } = useUserRole();
 
   useEffect(() => {
     fetchDocuments();
@@ -85,6 +87,37 @@ export const AssetAssignmentDocuments = ({ assetId }: AssetAssignmentDocumentsPr
     }
   };
 
+  const handleDeleteDocument = async (documentId: string) => {
+    if (!canManageAssets) return;
+    
+    if (!confirm('Weet je zeker dat je dit document wilt verwijderen uit de toewijzingsgeschiedenis?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('asset_assignment_documents')
+        .delete()
+        .eq('id', documentId);
+
+      if (error) throw error;
+
+      setDocuments(documents.filter(doc => doc.id !== documentId));
+      
+      toast({
+        title: "Document verwijderd",
+        description: "Het document is verwijderd uit de toewijzingsgeschiedenis.",
+      });
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast({
+        title: "Verwijder fout",
+        description: "Kon document niet verwijderen.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -102,10 +135,10 @@ export const AssetAssignmentDocuments = ({ assetId }: AssetAssignmentDocumentsPr
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Toewijzingsdocumenten</CardTitle>
+          <CardTitle>Toewijzingsgeschiedenis</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">Geen toewijzingsdocumenten gevonden.</p>
+          <p className="text-muted-foreground">Geen toewijzingsgeschiedenis gevonden.</p>
         </CardContent>
       </Card>
     );
@@ -116,7 +149,7 @@ export const AssetAssignmentDocuments = ({ assetId }: AssetAssignmentDocumentsPr
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          Toewijzingsdocumenten
+          Toewijzingsgeschiedenis
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -149,14 +182,27 @@ export const AssetAssignmentDocuments = ({ assetId }: AssetAssignmentDocumentsPr
                 </div>
 
                 {doc.signed_document_url && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => downloadSignedDocument(doc)}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => downloadSignedDocument(doc)}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                    
+                    {canManageAssets && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeleteDocument(doc.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
 

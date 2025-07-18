@@ -161,9 +161,10 @@ const AssetEdit = () => {
       console.log('AssetEdit: Database update payload:', dbData);
       console.log('AssetEdit: warranty_expiry in payload:', dbData.warranty_expiry);
 
-      // If assigned_to is changing, clean up pending assignment documents
+      // If assigned_to is changing, only cancel pending (unsigned) assignment documents
+      // Keep signed documents as assignment history
       if (asset.assignedTo !== updatedAsset.assignedTo) {
-        console.log('AssetEdit: Assignment changed, cleaning up pending documents');
+        console.log('AssetEdit: Assignment changed, cleaning up pending documents only');
         const { error: cleanupError } = await supabase
           .from('asset_assignment_documents')
           .update({ status: 'cancelled' })
@@ -173,7 +174,7 @@ const AssetEdit = () => {
         if (cleanupError) {
           console.error('AssetEdit: Error cleaning up pending documents:', cleanupError);
         } else {
-          console.log('AssetEdit: Successfully cancelled pending documents');
+          console.log('AssetEdit: Successfully cancelled pending documents, keeping signed documents as history');
         }
       }
 
