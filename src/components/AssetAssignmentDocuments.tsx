@@ -181,8 +181,8 @@ export const AssetAssignmentDocuments = ({ assetId }: AssetAssignmentDocumentsPr
                   </div>
                 </div>
 
-                {doc.signed_document_url && (
-                  <div className="flex gap-2">
+                <div className="flex gap-2">
+                  {doc.signed_document_url && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -191,22 +191,23 @@ export const AssetAssignmentDocuments = ({ assetId }: AssetAssignmentDocumentsPr
                       <Download className="h-4 w-4 mr-2" />
                       Download
                     </Button>
-                    
-                    {canManageAssets && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDeleteDocument(doc.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                )}
+                  )}
+                  
+                  {canManageAssets && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDeleteDocument(doc.id)}
+                      className="text-destructive hover:text-destructive"
+                      title={doc.status === 'signed' ? 'Verwijder getekend document' : 'Verwijder wachtend document'}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
 
-              {!doc.signed_document_url && (
+              {!doc.signed_document_url && !canManageAssets && (
                 <p className="text-sm text-muted-foreground">
                   Het getekende document is nog niet geüpload.
                 </p>
