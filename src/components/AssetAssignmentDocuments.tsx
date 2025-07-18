@@ -33,6 +33,7 @@ export const AssetAssignmentDocuments = ({ assetId, onAssetUpdated }: AssetAssig
   }, [assetId]);
 
   const fetchDocuments = async () => {
+    console.log('fetchDocuments called for assetId:', assetId);
     try {
       const { data, error } = await supabase
         .from('asset_assignment_documents')
@@ -41,7 +42,13 @@ export const AssetAssignmentDocuments = ({ assetId, onAssetUpdated }: AssetAssig
         .neq('status', 'cancelled')
         .order('generated_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error in fetchDocuments query:', error);
+        throw error;
+      }
+      
+      console.log('fetchDocuments query result:', data);
+      console.log('Setting documents state with', (data || []).length, 'documents');
       setDocuments((data || []) as AssignmentDocument[]);
     } catch (error) {
       console.error('Error fetching assignment documents:', error);
